@@ -1,0 +1,17 @@
+[package]
+name = "ssw-actix"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+actix-web = { workspace = true }
+ssw-core = { path = "../ssw-core" }
+
+[dev-dependencies]
+ssw-html = { path = "../ssw-html" }
+
+[lints]
+workspace = true

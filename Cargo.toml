@@ -1,0 +1,20 @@
+[workspace]
+members = [
+    "crates/ssw-core",
+    "crates/ssw-actix",
+    "crates/ssw-html",
+    "crates/ssw-components",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/rikibbot/ssw-rs"
+
+[workspace.dependencies]
+actix-web = "4.11.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

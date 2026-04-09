@@ -1,0 +1,13 @@
+[package]
+name = "ssw-components"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ssw-html = { path = "../ssw-html" }
+
+[lints]
+workspace = true

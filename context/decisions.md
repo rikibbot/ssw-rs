@@ -13,3 +13,10 @@
 
 - decision: Treat Maud as the starting point for the HTML layer, but do not commit to a full fork until the required semantic changes are identified.
   evidence: [`ARCHITECTURE.md`](../ARCHITECTURE.md)
+
+- decision: For the first compileable slice, keep `ssw-html` as a tiny owned markup and escaping layer instead of importing or forking Maud immediately.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+
+- decision: Use `ssw_core::Render` as the initial cross-crate rendering boundary, with `ssw-actix` converting `ssw-core::Response` values into `actix_web::HttpResponse`.
+  evidence: [`crates/ssw-core/src/lib.rs`](../crates/ssw-core/src/lib.rs)
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
