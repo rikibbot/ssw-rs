@@ -1,3 +1,5 @@
+//! Proc-macro implementation for `ssw_html::html!`.
+
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2, TokenTree};
 use quote::quote;
@@ -8,6 +10,15 @@ use syn::{
 };
 
 #[proc_macro]
+/// Builds `ssw_html::Markup` using a Maud-like HTML syntax.
+///
+/// The current supported surface includes:
+/// - nested HTML elements
+/// - string literals and `(expr)` interpolation
+/// - `@if` and `@for`
+/// - boolean and valued attributes
+/// - `.class` and `#id` shorthand
+/// - empty tags terminated with `;`
 pub fn html(input: TokenStream) -> TokenStream {
     let template = parse_macro_input!(input as Template);
     TokenStream::from(quote! {{

@@ -13,6 +13,7 @@
 - `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
 - `ssw-html` and `ssw-actix` now have field-level validation coverage with accessible error markup and preserved input state.
+- The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
 
@@ -24,6 +25,7 @@
 - Treat HTML semantics as first-class, not just string rendering ergonomics.
 - Pressure the stack with realistic mutation flows before designing larger abstractions for forms, validation, or flash state.
 - Prefer app-shaped validation patterns that expose what abstractions are actually missing, rather than inventing them upfront.
+- Keep the documented public API small and intentional, especially around `ssw-html` macro internals.
 
 ## Open Questions
 
@@ -33,6 +35,7 @@
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
 - What the next mutation-oriented step should be after field-level validation, such as flash messages, CSRF hooks, or reusable field helpers.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
+- Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
 ## Next Likely Steps
 

@@ -1,14 +1,19 @@
-use ssw_html::{Markup, document};
+//! Optional UI components built on top of `ssw-html`.
 
+use ssw_html::{Markup, html, page as html_page};
+
+/// Renders a simple status alert component.
 pub fn alert(message: impl AsRef<str>) -> Markup {
-    let mut markup = Markup::raw("<div class=\"ssw-alert\" role=\"status\">");
-    markup.push_text(message);
-    markup.push_raw("</div>");
-    markup
+    html! {
+        div .ssw_alert role="status" {
+            (message.as_ref())
+        }
+    }
 }
 
+/// Renders a full page using the `ssw-html` document builder.
 pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
-    document(title, body)
+    html_page(title.as_ref()).body(body).render()
 }
 
 #[cfg(test)]

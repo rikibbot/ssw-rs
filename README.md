@@ -12,15 +12,44 @@ Server Side Web for Rust.
 - First-class forms, redirects, validation, and partial rendering
 - Optional progressive enhancement without forcing client-side routing
 
-## Initial shape
+## Current slice
 
-The initial implementation targets Actix, with crate boundaries designed so additional backends can be added later.
+The current implementation targets Actix, with crate boundaries designed so additional backends can be added later.
 
-Planned crates:
+Workspace crates:
 
 - `ssw-core`
 - `ssw-actix`
 - `ssw-html`
 - `ssw-components`
+
+Internal support crate:
+
+- `ssw-html-macros`
+
+Currently implemented:
+
+- `ssw-html::html!` with Maud-like syntax
+- document and fragment rendering
+- `.class` shorthand and composed `class=(...)` values
+- optional attribute omission and HTML boolean-attribute semantics
+- an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, and field-level validation
+
+## Example
+
+```rust
+use ssw_html::{html, page};
+
+let page = page("Dashboard")
+    .body_class("app-shell")
+    .body(html! {
+        main #app .page {
+            h1 { "Server Side Web" }
+            p { "Rendered on the server." }
+            button type="button" disabled=(false) { "Ready" }
+        }
+    })
+    .render();
+```
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap.

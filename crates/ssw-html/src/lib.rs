@@ -1,3 +1,8 @@
+//! HTML authoring primitives for `ssw-rs`.
+//!
+//! This crate exposes the public HTML surface of the framework:
+//! [`Markup`], [`Document`], convenience page builders, and the [`html!`] macro.
+
 extern crate self as ssw_html;
 
 use std::fmt::{Display, Write};
@@ -6,44 +11,54 @@ use ssw_core::{HtmlKind, HtmlResponse, Render};
 
 pub use ssw_html_macros::html;
 
+/// An owned HTML buffer.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Markup(String);
 
 impl Markup {
+    /// Creates an empty markup buffer.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Creates markup from trusted raw HTML.
     pub fn raw(value: impl AsRef<str>) -> Self {
         Self(value.as_ref().to_owned())
     }
 
+    /// Escapes text and stores it as markup.
     pub fn text(value: impl AsRef<str>) -> Self {
         let mut markup = Self::new();
         markup.push_text(value);
         markup
     }
 
+    /// Appends trusted raw HTML to the buffer.
     pub fn push_raw(&mut self, value: impl AsRef<str>) {
         self.0.push_str(value.as_ref());
     }
 
+    /// Escapes and appends text to the buffer.
     pub fn push_text(&mut self, value: impl AsRef<str>) {
         escape_into(&mut self.0, value.as_ref());
     }
 
+    /// Appends another markup value.
     pub fn append(&mut self, markup: impl Into<Markup>) {
         self.0.push_str(&markup.into().0);
     }
 
+    /// Consumes the markup and returns the owned HTML string.
     pub fn into_string(self) -> String {
         self.0
     }
 
+    /// Borrows the rendered HTML string.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
+    /// Converts this markup into an `ssw-core` HTML response.
     pub fn into_html_response(self, kind: HtmlKind) -> HtmlResponse {
         HtmlResponse::new(kind, self.0)
     }
@@ -67,6 +82,7 @@ impl From<String> for Markup {
     }
 }
 
+/// A minimal document builder for full HTML pages.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Document {
     title: String,
@@ -77,6 +93,7 @@ pub struct Document {
 }
 
 impl Document {
+    /// Creates a document builder with a page title.
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             title: title.into(),
@@ -87,26 +104,31 @@ impl Document {
         }
     }
 
+    /// Sets the root `<html lang="...">` value.
     pub fn lang(mut self, lang: impl Into<String>) -> Self {
         self.lang = lang.into();
         self
     }
 
+    /// Appends markup to the document `<head>`.
     pub fn head(mut self, markup: impl Into<Markup>) -> Self {
         self.head.append(markup);
         self
     }
 
+    /// Replaces the document `<body>` content.
     pub fn body(mut self, markup: impl Into<Markup>) -> Self {
         self.body = markup.into();
         self
     }
 
+    /// Sets a class attribute on the document `<body>`.
     pub fn body_class(mut self, class: impl Into<String>) -> Self {
         self.body_class = Some(class.into());
         self
     }
 
+    /// Renders the document into owned markup.
     pub fn render(self) -> Markup {
         let mut markup = Markup::raw("<!DOCTYPE html>");
         markup.append(html! {
@@ -126,19 +148,25 @@ impl Document {
     }
 }
 
+/// Starts building a full HTML document.
 pub fn page(title: impl Into<String>) -> Document {
     Document::new(title)
 }
 
+/// Renders a complete HTML document with a title and body.
 pub fn document(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
     page(title.as_ref()).body(body).render()
 }
 
+/// Wraps a value as an HTML fragment.
 pub fn fragment(body: impl Into<Markup>) -> Markup {
     body.into()
 }
 
+/// Implementation detail used by `html!` to render expression values.
+#[doc(hidden)]
 pub trait RenderValue {
+    /// Appends the rendered value into the provided markup buffer.
     fn render_value(&self, markup: &mut Markup);
 }
 
@@ -165,7 +193,10 @@ where
     }
 }
 
+/// Implementation detail used by `html!` for attribute rendering.
+#[doc(hidden)]
 pub trait AttributeValue {
+    /// Renders the attribute value into the provided markup buffer.
     fn render_attribute_value(&self, markup: &mut Markup, name: &str);
 }
 
@@ -234,16 +265,20 @@ impl AttributeValue for bool {
     }
 }
 
+/// Implementation detail used by `html!` for class attribute composition.
+#[doc(hidden)]
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ClassList {
     values: Vec<String>,
 }
 
 impl ClassList {
+    /// Creates an empty class list.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Pushes a class value when it is not empty.
     pub fn push(&mut self, value: impl Into<String>) {
         let value = value.into();
         if !value.is_empty() {
@@ -251,16 +286,21 @@ impl ClassList {
         }
     }
 
+    /// Returns whether the list has no classes.
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
     }
 
+    /// Joins the classes into a single class attribute string.
     pub fn join(&self) -> String {
         self.values.join(" ")
     }
 }
 
+/// Implementation detail used by `html!` for class value composition.
+#[doc(hidden)]
 pub trait ClassValue {
+    /// Appends one or more class names into the provided class list.
     fn push_classes(&self, classes: &mut ClassList);
 }
 
@@ -355,8 +395,11 @@ impl_class_value_tuple!(A, B, C, D);
 
 #[doc(hidden)]
 pub mod __private {
+    //! Implementation details used by macro expansion.
+
     use super::{AttributeValue, ClassList, ClassValue, Markup, RenderValue};
 
+    /// Renders an interpolated expression.
     pub fn render_value<T>(markup: &mut Markup, value: &T)
     where
         T: RenderValue + ?Sized,
@@ -364,15 +407,18 @@ pub mod __private {
         value.render_value(markup);
     }
 
+    /// Starts an opening tag.
     pub fn begin_element(markup: &mut Markup, name: &str) {
         markup.push_raw("<");
         markup.push_raw(name);
     }
 
+    /// Pushes a literal attribute value.
     pub fn push_attribute_literal(markup: &mut Markup, name: &str, value: &str) {
         super::push_attribute(markup, name, value);
     }
 
+    /// Pushes an expression-backed attribute value.
     pub fn push_attribute_expr<T>(markup: &mut Markup, name: &str, value: &T)
     where
         T: AttributeValue + ?Sized,
@@ -380,11 +426,13 @@ pub mod __private {
         value.render_attribute_value(markup, name);
     }
 
+    /// Pushes a boolean attribute by name.
     pub fn push_boolean_attribute(markup: &mut Markup, name: &str) {
         markup.push_raw(" ");
         markup.push_raw(name);
     }
 
+    /// Appends one or more classes from a value into the class list.
     pub fn push_class_value<T>(classes: &mut ClassList, value: &T)
     where
         T: ClassValue + ?Sized,
@@ -392,22 +440,26 @@ pub mod __private {
         value.push_classes(classes);
     }
 
+    /// Writes the `class` attribute when any classes were collected.
     pub fn push_class_attribute(markup: &mut Markup, classes: &ClassList) {
         if !classes.is_empty() {
             super::push_attribute(markup, "class", &classes.join());
         }
     }
 
+    /// Closes an opening tag.
     pub fn finish_open_tag(markup: &mut Markup) {
         markup.push_raw(">");
     }
 
+    /// Writes a closing tag.
     pub fn end_element(markup: &mut Markup, name: &str) {
         markup.push_raw("</");
         markup.push_raw(name);
         markup.push_raw(">");
     }
 
+    /// Returns whether an element is a void HTML element.
     pub fn is_void_element(name: &str) -> bool {
         matches!(
             name,

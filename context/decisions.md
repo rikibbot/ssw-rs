@@ -50,3 +50,9 @@
 
 - decision: Keep field-level validation logic explicit in the Actix-backed example for now, including per-field errors, `aria-invalid`, and `aria-describedby`, so the next abstraction layer is based on real SSR form markup patterns rather than guessed APIs.
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Keep macro-expansion support types in `ssw-html` public but documented as implementation details, so the user-facing API stays focused while the proc-macro still expands cleanly in downstream crates.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+
+- decision: Keep `ssw-components` aligned with the public `ssw-html` API by using `html!` and the document builder internally instead of hand-built raw HTML strings.
+  evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)

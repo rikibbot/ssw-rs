@@ -1,7 +1,10 @@
+//! Actix integration for `ssw-rs`.
+
 use actix_web::http::StatusCode;
 use actix_web::{HttpRequest, HttpResponse, Responder};
 use ssw_core::{HtmlKind, RedirectKind, Render, Response};
 
+/// A responder wrapper around an `ssw-core` response value.
 pub struct ActixResponse(pub Response);
 
 impl From<Response> for ActixResponse {
@@ -11,6 +14,7 @@ impl From<Response> for ActixResponse {
 }
 
 impl ActixResponse {
+    /// Converts the wrapped response into an Actix `HttpResponse`.
     pub fn into_http_response(self) -> HttpResponse {
         to_http_response(self.0)
     }
@@ -24,22 +28,27 @@ impl Responder for ActixResponse {
     }
 }
 
+/// Renders a document or fragment view into an Actix response.
 pub fn render_html(kind: HtmlKind, view: impl Render) -> HttpResponse {
     to_http_response(Response::html_rendered(kind, view))
 }
 
+/// Renders a full HTML document response.
 pub fn page(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Document, view)
 }
 
+/// Renders an HTML fragment response.
 pub fn fragment(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Fragment, view)
 }
 
+/// Creates a `303 See Other` redirect response.
 pub fn redirect(location: impl Into<String>) -> HttpResponse {
     to_http_response(Response::redirect(location))
 }
 
+/// Converts an `ssw-core` response into an Actix `HttpResponse`.
 pub fn to_http_response(response: Response) -> HttpResponse {
     match response {
         Response::Html(html) => HttpResponse::Ok()
