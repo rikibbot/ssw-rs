@@ -20,3 +20,10 @@
 - decision: Use `ssw_core::Render` as the initial cross-crate rendering boundary, with `ssw-actix` converting `ssw-core::Response` values into `actix_web::HttpResponse`.
   evidence: [`crates/ssw-core/src/lib.rs`](../crates/ssw-core/src/lib.rs)
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Shape `ssw-html` around a Maud-like syntax and authoring experience, but do not preserve Maud compatibility as a goal.
+  evidence: user direction on 2026-04-09
+
+- decision: Keep the public HTML API in `ssw-html`, with an internal `ssw-html-macros` proc-macro crate used as an implementation detail.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+  evidence: [`crates/ssw-html-macros/src/lib.rs`](../crates/ssw-html-macros/src/lib.rs)

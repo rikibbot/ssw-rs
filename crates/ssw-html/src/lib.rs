@@ -1,4 +1,10 @@
+extern crate self as ssw_html;
+
+use std::fmt::{Display, Write};
+
 use ssw_core::{HtmlKind, HtmlResponse, Render};
+
+pub use ssw_html_macros::html;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Markup(String);
@@ -76,6 +82,86 @@ pub fn fragment(body: impl Into<Markup>) -> Markup {
     body.into()
 }
 
+pub trait RenderValue {
+    fn render_value(&self, markup: &mut Markup);
+}
+
+impl RenderValue for Markup {
+    fn render_value(&self, markup: &mut Markup) {
+        markup.append(self.clone());
+    }
+}
+
+impl RenderValue for &Markup {
+    fn render_value(&self, markup: &mut Markup) {
+        markup.append((*self).clone());
+    }
+}
+
+impl<T> RenderValue for T
+where
+    T: Display,
+{
+    fn render_value(&self, markup: &mut Markup) {
+        let mut buffer = String::new();
+        write!(&mut buffer, "{self}").expect("writing into String cannot fail");
+        markup.push_text(buffer);
+    }
+}
+
+#[doc(hidden)]
+pub mod __private {
+    use std::fmt::Display;
+
+    use super::{Markup, RenderValue};
+
+    pub fn render_value<T>(markup: &mut Markup, value: &T)
+    where
+        T: RenderValue + ?Sized,
+    {
+        value.render_value(markup);
+    }
+
+    pub fn begin_element(markup: &mut Markup, name: &str) {
+        markup.push_raw("<");
+        markup.push_raw(name);
+    }
+
+    pub fn push_attribute_literal(markup: &mut Markup, name: &str, value: &str) {
+        markup.push_raw(" ");
+        markup.push_raw(name);
+        markup.push_raw("=\"");
+        markup.push_text(value);
+        markup.push_raw("\"");
+    }
+
+    pub fn push_attribute_expr<T>(markup: &mut Markup, name: &str, value: &T)
+    where
+        T: Display + ?Sized,
+    {
+        markup.push_raw(" ");
+        markup.push_raw(name);
+        markup.push_raw("=\"");
+        markup.push_text(value.to_string());
+        markup.push_raw("\"");
+    }
+
+    pub fn push_boolean_attribute(markup: &mut Markup, name: &str) {
+        markup.push_raw(" ");
+        markup.push_raw(name);
+    }
+
+    pub fn finish_open_tag(markup: &mut Markup) {
+        markup.push_raw(">");
+    }
+
+    pub fn end_element(markup: &mut Markup, name: &str) {
+        markup.push_raw("</");
+        markup.push_raw(name);
+        markup.push_raw(">");
+    }
+}
+
 fn escape_into(output: &mut String, value: &str) {
     for ch in value.chars() {
         match ch {
@@ -91,7 +177,7 @@ fn escape_into(output: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Markup, document};
+    use super::{Markup, document, html};
 
     #[test]
     fn escapes_text_content() {
@@ -107,5 +193,63 @@ mod tests {
         assert!(page.as_str().starts_with("<!DOCTYPE html>"));
         assert!(page.as_str().contains("<title>Home</title>"));
         assert!(page.as_str().contains("<main>Hi</main>"));
+    }
+
+    #[test]
+    fn renders_nested_html_macro() {
+        let user = "Riccardo";
+        let markup = html! {
+            main class="page" {
+                h1 { "Hello, " (user) }
+                p class="lead" { "Server-side first." }
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<main class=\"page\"><h1>Hello, Riccardo</h1><p class=\"lead\">Server-side first.</p></main>"
+        );
+    }
+
+    #[test]
+    fn supports_conditionals_and_loops() {
+        let items = ["one", "two"];
+        let show_footer = true;
+
+        let markup = html! {
+            section data_kind="demo" {
+                ul {
+                    @for item in items {
+                        li { (item) }
+                    }
+                }
+                @if show_footer {
+                    footer hidden { "Done" }
+                }
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<section data-kind=\"demo\"><ul><li>one</li><li>two</li></ul><footer hidden>Done</footer></section>"
+        );
+    }
+
+    #[test]
+    fn escapes_expression_values_but_keeps_markup_raw() {
+        let unsafe_text = "<script>";
+        let trusted = Markup::raw("<strong>trusted</strong>");
+
+        let markup = html! {
+            div {
+                (unsafe_text)
+                (trusted)
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<div>&lt;script&gt;<strong>trusted</strong></div>"
+        );
     }
 }

@@ -3,6 +3,7 @@ members = [
     "crates/ssw-core",
     "crates/ssw-actix",
     "crates/ssw-html",
+    "crates/ssw-html-macros",
     "crates/ssw-components",
 ]
 resolver = "2"
@@ -15,6 +16,9 @@ repository = "https://github.com/rikibbot/ssw-rs"
 
 [workspace.dependencies]
 actix-web = "4.11.0"
+proc-macro2 = "1.0.103"
+quote = "1.0.42"
+syn = { version = "2.0.111", features = ["full", "parsing"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
