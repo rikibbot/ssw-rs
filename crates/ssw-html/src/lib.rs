@@ -67,15 +67,71 @@ impl From<String> for Markup {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Document {
+    title: String,
+    lang: String,
+    head: Markup,
+    body: Markup,
+    body_class: Option<String>,
+}
+
+impl Document {
+    pub fn new(title: impl Into<String>) -> Self {
+        Self {
+            title: title.into(),
+            lang: "en".to_owned(),
+            head: Markup::new(),
+            body: Markup::new(),
+            body_class: None,
+        }
+    }
+
+    pub fn lang(mut self, lang: impl Into<String>) -> Self {
+        self.lang = lang.into();
+        self
+    }
+
+    pub fn head(mut self, markup: impl Into<Markup>) -> Self {
+        self.head.append(markup);
+        self
+    }
+
+    pub fn body(mut self, markup: impl Into<Markup>) -> Self {
+        self.body = markup.into();
+        self
+    }
+
+    pub fn body_class(mut self, class: impl Into<String>) -> Self {
+        self.body_class = Some(class.into());
+        self
+    }
+
+    pub fn render(self) -> Markup {
+        let mut markup = Markup::raw("<!DOCTYPE html>");
+        markup.append(html! {
+            html lang=(self.lang) {
+                head {
+                    meta charset="utf-8";
+                    meta name="viewport" content="width=device-width, initial-scale=1";
+                    title { (self.title) }
+                    (self.head)
+                }
+                body class=(self.body_class) {
+                    (self.body)
+                }
+            }
+        });
+        markup
+    }
+}
+
+pub fn page(title: impl Into<String>) -> Document {
+    Document::new(title)
+}
+
 pub fn document(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
-    let mut markup = Markup::raw(
-        "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>",
-    );
-    markup.push_text(title);
-    markup.push_raw("</title></head><body>");
-    markup.append(body);
-    markup.push_raw("</body></html>");
-    markup
+    page(title.as_ref()).body(body).render()
 }
 
 pub fn fragment(body: impl Into<Markup>) -> Markup {
@@ -109,11 +165,64 @@ where
     }
 }
 
+pub trait AttributeValue {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str);
+}
+
+impl<T> AttributeValue for Option<T>
+where
+    T: AttributeValue,
+{
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        if let Some(value) = self {
+            value.render_attribute_value(markup, name);
+        }
+    }
+}
+
+macro_rules! impl_attribute_value_display {
+    ($($ty:ty),+ $(,)?) => {
+        $(
+            impl AttributeValue for $ty {
+                fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+                    push_attribute(markup, name, self);
+                }
+            }
+        )+
+    };
+}
+
+impl AttributeValue for String {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        push_attribute(markup, name, self);
+    }
+}
+
+impl AttributeValue for str {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        push_attribute(markup, name, self);
+    }
+}
+
+impl AttributeValue for &str {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        push_attribute(markup, name, self);
+    }
+}
+
+impl<'a> AttributeValue for std::borrow::Cow<'a, str> {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        push_attribute(markup, name, self);
+    }
+}
+
+impl_attribute_value_display!(
+    bool, char, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+);
+
 #[doc(hidden)]
 pub mod __private {
-    use std::fmt::Display;
-
-    use super::{Markup, RenderValue};
+    use super::{AttributeValue, Markup, RenderValue};
 
     pub fn render_value<T>(markup: &mut Markup, value: &T)
     where
@@ -128,22 +237,14 @@ pub mod __private {
     }
 
     pub fn push_attribute_literal(markup: &mut Markup, name: &str, value: &str) {
-        markup.push_raw(" ");
-        markup.push_raw(name);
-        markup.push_raw("=\"");
-        markup.push_text(value);
-        markup.push_raw("\"");
+        super::push_attribute(markup, name, value);
     }
 
     pub fn push_attribute_expr<T>(markup: &mut Markup, name: &str, value: &T)
     where
-        T: Display + ?Sized,
+        T: AttributeValue + ?Sized,
     {
-        markup.push_raw(" ");
-        markup.push_raw(name);
-        markup.push_raw("=\"");
-        markup.push_text(value.to_string());
-        markup.push_raw("\"");
+        value.render_attribute_value(markup, name);
     }
 
     pub fn push_boolean_attribute(markup: &mut Markup, name: &str) {
@@ -160,6 +261,34 @@ pub mod __private {
         markup.push_raw(name);
         markup.push_raw(">");
     }
+
+    pub fn is_void_element(name: &str) -> bool {
+        matches!(
+            name,
+            "area"
+                | "base"
+                | "br"
+                | "col"
+                | "embed"
+                | "hr"
+                | "img"
+                | "input"
+                | "link"
+                | "meta"
+                | "param"
+                | "source"
+                | "track"
+                | "wbr"
+        )
+    }
+}
+
+fn push_attribute(markup: &mut Markup, name: &str, value: &(impl Display + ?Sized)) {
+    markup.push_raw(" ");
+    markup.push_raw(name);
+    markup.push_raw("=\"");
+    markup.push_text(value.to_string());
+    markup.push_raw("\"");
 }
 
 fn escape_into(output: &mut String, value: &str) {
@@ -177,7 +306,7 @@ fn escape_into(output: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Markup, document, html};
+    use super::{Markup, document, html, page};
 
     #[test]
     fn escapes_text_content() {
@@ -251,5 +380,76 @@ mod tests {
             markup.as_str(),
             "<div>&lt;script&gt;<strong>trusted</strong></div>"
         );
+    }
+
+    #[test]
+    fn supports_empty_tags_and_shorthand_selectors() {
+        let markup = html! {
+            section #hero .page .stack {
+                meta charset="utf-8";
+                input #email .field type="email";
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<section id=\"hero\" class=\"page stack\"><meta charset=\"utf-8\"><input id=\"email\" class=\"field\" type=\"email\"></section>"
+        );
+    }
+
+    #[test]
+    fn omits_optional_attribute_values() {
+        let label: Option<&str> = None;
+
+        let markup = html! {
+            button type="button" aria_label=(label) { "Save" }
+        };
+
+        assert_eq!(markup.as_str(), "<button type=\"button\">Save</button>");
+    }
+
+    #[test]
+    fn renders_document_builder_for_layouts() {
+        fn app_layout(title: &str, content: Markup) -> Markup {
+            page(title)
+                .lang("en")
+                .body_class("app-shell")
+                .head(html! {
+                    meta name="description" content="SSW demo";
+                    link rel="stylesheet" href="/app.css";
+                })
+                .body(html! {
+                    main #app .page {
+                        header {
+                            h1 { (title) }
+                        }
+                        (content)
+                    }
+                })
+                .render()
+        }
+
+        let page = app_layout(
+            "Dashboard",
+            html! {
+                section .panel {
+                    p { "Everything is rendered on the server." }
+                }
+            },
+        );
+
+        assert!(
+            page.as_str()
+                .starts_with("<!DOCTYPE html><html lang=\"en\">")
+        );
+        assert!(page.as_str().contains("<body class=\"app-shell\">"));
+        assert!(
+            page.as_str()
+                .contains("<link rel=\"stylesheet\" href=\"/app.css\">")
+        );
+        assert!(page.as_str().contains("<main id=\"app\" class=\"page\">"));
+        assert!(page.as_str().contains(
+            "<section class=\"panel\"><p>Everything is rendered on the server.</p></section>"
+        ));
     }
 }

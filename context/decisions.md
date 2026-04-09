@@ -27,3 +27,10 @@
 - decision: Keep the public HTML API in `ssw-html`, with an internal `ssw-html-macros` proc-macro crate used as an implementation detail.
   evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
   evidence: [`crates/ssw-html-macros/src/lib.rs`](../crates/ssw-html-macros/src/lib.rs)
+
+- decision: Add page-oriented ergonomics directly in `ssw-html`, including a small `Document` builder and macro support for empty tags plus shorthand selectors, to keep the API grounded in real SSR page authoring.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+  evidence: [`crates/ssw-html-macros/src/lib.rs`](../crates/ssw-html-macros/src/lib.rs)
+
+- decision: Support optional attribute omission through `Option<T>` attribute expressions instead of forcing conditional markup around every optional attribute.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)

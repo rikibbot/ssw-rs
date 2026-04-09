@@ -108,24 +108,59 @@ impl quote::ToTokens for Node {
 
 struct Element {
     name: LitStr,
+    id: Option<LitStr>,
+    class: Option<LitStr>,
     attrs: Vec<Attribute>,
-    children: Vec<Node>,
+    body: ElementBody,
 }
 
 impl quote::ToTokens for Element {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let name = &self.name;
+        let id = self.id.as_ref().map(|value| {
+            quote! {
+                ::ssw_html::__private::push_attribute_literal(&mut __markup, "id", #value);
+            }
+        });
+        let class = self.class.as_ref().map(|value| {
+            quote! {
+                ::ssw_html::__private::push_attribute_literal(&mut __markup, "class", #value);
+            }
+        });
         let attrs = self.attrs.iter();
-        let children = self.children.iter();
 
-        tokens.extend(quote! {
+        let render_open = quote! {
             ::ssw_html::__private::begin_element(&mut __markup, #name);
+            #id
+            #class
             #(#attrs)*
             ::ssw_html::__private::finish_open_tag(&mut __markup);
-            #(#children)*
-            ::ssw_html::__private::end_element(&mut __markup, #name);
-        });
+        };
+
+        match &self.body {
+            ElementBody::Block(children) => {
+                let children = children.iter();
+                tokens.extend(quote! {
+                    #render_open
+                    #(#children)*
+                    ::ssw_html::__private::end_element(&mut __markup, #name);
+                });
+            }
+            ElementBody::Empty => {
+                tokens.extend(quote! {
+                    #render_open
+                    if !::ssw_html::__private::is_void_element(#name) {
+                        ::ssw_html::__private::end_element(&mut __markup, #name);
+                    }
+                });
+            }
+        }
     }
+}
+
+enum ElementBody {
+    Block(Vec<Node>),
+    Empty,
 }
 
 enum AttributeValue {
@@ -257,24 +292,104 @@ fn parse_expr_until_block(input: ParseStream<'_>) -> Result<Expr> {
 
 fn parse_element(input: ParseStream<'_>) -> Result<Element> {
     let name_ident = input.call(Ident::parse_any)?;
+    let mut id = None;
+    let mut classes = Vec::new();
     let mut attrs = Vec::new();
 
-    while !input.peek(syn::token::Brace) {
-        attrs.push(parse_attribute(input)?);
+    while !input.peek(syn::token::Brace) && !input.peek(Token![;]) {
+        if input.peek(Token![#]) {
+            input.parse::<Token![#]>()?;
+            let value = parse_name_literal(input)?;
+            if id.replace(value).is_some() {
+                return Err(Error::new(
+                    name_ident.span(),
+                    "only one id may be assigned to an element",
+                ));
+            }
+            continue;
+        }
+
+        if input.peek(Token![.]) {
+            input.parse::<Token![.]>()?;
+            classes.push(parse_name_literal(input)?);
+            continue;
+        }
+
+        match parse_attribute(input)? {
+            ParsedAttribute { name, value, span } if name == "id" => {
+                if id.is_some() {
+                    return Err(Error::new(
+                        span,
+                        "cannot mix '#id' shorthand with an explicit id attribute",
+                    ));
+                }
+                let value = value.ok_or_else(|| {
+                    Error::new(span, "the 'id' attribute requires an explicit value")
+                })?;
+                attrs.push(Attribute {
+                    name: LitStr::new("id", span),
+                    value: Some(value),
+                });
+            }
+            ParsedAttribute { name, value, span } if name == "class" => {
+                if !classes.is_empty() {
+                    return Err(Error::new(
+                        span,
+                        "cannot mix '.class' shorthand with an explicit class attribute yet",
+                    ));
+                }
+                let value = value.ok_or_else(|| {
+                    Error::new(span, "the 'class' attribute requires an explicit value")
+                })?;
+                attrs.push(Attribute {
+                    name: LitStr::new("class", span),
+                    value: Some(value),
+                });
+            }
+            ParsedAttribute { name, value, span } => attrs.push(Attribute {
+                name: LitStr::new(&name, span),
+                value,
+            }),
+        }
     }
 
-    let children = parse_block(input)?;
+    let body = if input.peek(syn::token::Brace) {
+        ElementBody::Block(parse_block(input)?)
+    } else {
+        input.parse::<Token![;]>()?;
+        ElementBody::Empty
+    };
 
     Ok(Element {
         name: LitStr::new(&normalize_name(&name_ident), name_ident.span()),
+        id,
+        class: if classes.is_empty() {
+            None
+        } else {
+            let mut joined = String::new();
+            for (index, class) in classes.iter().enumerate() {
+                if index > 0 {
+                    joined.push(' ');
+                }
+                joined.push_str(&class.value());
+            }
+            Some(LitStr::new(&joined, name_ident.span()))
+        },
         attrs,
-        children,
+        body,
     })
 }
 
-fn parse_attribute(input: ParseStream<'_>) -> Result<Attribute> {
+struct ParsedAttribute {
+    name: String,
+    value: Option<AttributeValue>,
+    span: Span,
+}
+
+fn parse_attribute(input: ParseStream<'_>) -> Result<ParsedAttribute> {
     let name_ident = input.call(Ident::parse_any)?;
-    let name = LitStr::new(&normalize_name(&name_ident), name_ident.span());
+    let span = name_ident.span();
+    let name = normalize_name(&name_ident);
 
     let value = if input.peek(Token![=]) {
         input.parse::<Token![=]>()?;
@@ -295,7 +410,12 @@ fn parse_attribute(input: ParseStream<'_>) -> Result<Attribute> {
         None
     };
 
-    Ok(Attribute { name, value })
+    Ok(ParsedAttribute { name, value, span })
+}
+
+fn parse_name_literal(input: ParseStream<'_>) -> Result<LitStr> {
+    let ident = input.call(Ident::parse_any)?;
+    Ok(LitStr::new(&normalize_name(&ident), ident.span()))
 }
 
 fn normalize_name(ident: &Ident) -> String {
