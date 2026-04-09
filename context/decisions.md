@@ -74,3 +74,7 @@
 
 - decision: Separate component structure from default visual styling, with `ssw-components` owning semantic markup and a future theme layer owning first-party CSS.
   evidence: [`COMPONENTS.md`](../COMPONENTS.md)
+
+- decision: Apply the styling contract to the existing component helpers using explicit class strings and `data-*` state hooks, even where the current HTML macro shorthand is not expressive enough for the desired class naming convention.
+  evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
+  evidence: [`styles/ssw-components-default.css`](../styles/ssw-components-default.css)

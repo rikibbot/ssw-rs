@@ -225,7 +225,9 @@ That means:
 
 1. Stabilize the component styling contract.
 2. Add stable class names and state attributes to the existing field and notice helpers.
+   status: done in the current `ssw-components` helpers.
 3. Create a small first-party default stylesheet, even if it is still rough.
+   status: initial stylesheet added at `styles/ssw-components-default.css`.
 4. Add the first layout primitives: container, section, stack.
 5. Add simple form controls like button and select.
 6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.

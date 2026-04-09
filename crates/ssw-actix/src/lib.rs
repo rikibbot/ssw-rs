@@ -630,14 +630,9 @@ mod tests {
         assert!(contact_body.contains("<form method=\"post\" action=\"/contact\">"));
         assert!(contact_body.contains("type=\"hidden\" name=\"csrf_token\""));
         assert!(contact_body.contains(&format!("value=\"{csrf_token}\"")));
-        assert!(
-            contact_body
-                .contains("<input id=\"name\" type=\"text\" name=\"name\" value=\"\" required>")
-        );
-        assert!(
-            contact_body
-                .contains("<input id=\"email\" type=\"email\" name=\"email\" value=\"\" required>")
-        );
+        assert!(contact_body.contains("class=\"ssw-input\""));
+        assert!(contact_body.contains("id=\"name\" type=\"text\" name=\"name\" value=\"\" required"));
+        assert!(contact_body.contains("id=\"email\" type=\"email\" name=\"email\" value=\"\" required"));
 
         let csrf_error_response = test::call_service(
             &app,
@@ -682,11 +677,12 @@ mod tests {
         assert!(invalid_body.contains("Email must look valid."));
         assert!(invalid_body.contains("value=\"sprite-at-example.com\""));
         assert!(invalid_body.contains("aria-invalid=\"true\""));
+        assert!(invalid_body.contains("data-invalid=\"true\""));
         assert!(invalid_body.contains("aria-describedby=\"name-error\""));
         assert!(invalid_body.contains("aria-describedby=\"email-error\""));
         assert!(
             invalid_body
-                .contains("<textarea id=\"message\" name=\"message\" rows=\"4\">Hello</textarea>")
+                .contains("<textarea class=\"ssw-textarea\" id=\"message\" name=\"message\" rows=\"4\">Hello</textarea>")
         );
 
         let valid_response = test::call_service(

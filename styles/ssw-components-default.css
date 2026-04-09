@@ -1,0 +1,112 @@
+:root {
+  --ssw-color-text: #1f2933;
+  --ssw-color-text-muted: #52606d;
+  --ssw-color-surface: #ffffff;
+  --ssw-color-surface-subtle: #f8fafc;
+  --ssw-color-border: #d9e2ec;
+  --ssw-color-accent: #1565c0;
+  --ssw-color-success: #1f7a45;
+  --ssw-color-danger: #b42318;
+  --ssw-space-1: 0.25rem;
+  --ssw-space-2: 0.5rem;
+  --ssw-space-3: 0.75rem;
+  --ssw-space-4: 1rem;
+  --ssw-space-5: 1.5rem;
+  --ssw-radius-md: 0.75rem;
+  --ssw-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
+  --ssw-font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --ssw-focus-ring: 0 0 0 3px rgb(21 101 192 / 0.16);
+  --ssw-field-gap: var(--ssw-space-2);
+}
+
+.ssw-notice,
+.ssw-field,
+.ssw-input,
+.ssw-textarea {
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.ssw-notice {
+  display: grid;
+  gap: var(--ssw-space-2);
+  padding: var(--ssw-space-3) var(--ssw-space-4);
+  border: 1px solid var(--ssw-color-border);
+  border-radius: var(--ssw-radius-md);
+  background: var(--ssw-color-surface-subtle);
+  color: var(--ssw-color-text);
+  box-shadow: var(--ssw-shadow-sm);
+}
+
+.ssw-notice[data-level="success"] {
+  border-color: color-mix(in srgb, var(--ssw-color-success) 30%, white);
+  background: color-mix(in srgb, var(--ssw-color-success) 10%, white);
+}
+
+.ssw-notice[data-level="error"] {
+  border-color: color-mix(in srgb, var(--ssw-color-danger) 30%, white);
+  background: color-mix(in srgb, var(--ssw-color-danger) 10%, white);
+}
+
+.ssw-notice__message {
+  margin: 0;
+  font-family: var(--ssw-font-body);
+  line-height: 1.45;
+}
+
+.ssw-field {
+  display: grid;
+  gap: var(--ssw-field-gap);
+}
+
+.ssw-field__label {
+  color: var(--ssw-color-text);
+  font-family: var(--ssw-font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.ssw-field__error {
+  margin: 0;
+  color: var(--ssw-color-danger);
+  font-family: var(--ssw-font-body);
+  font-size: 0.9rem;
+}
+
+.ssw-input,
+.ssw-textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ssw-color-border);
+  border-radius: var(--ssw-radius-md);
+  background: var(--ssw-color-surface);
+  color: var(--ssw-color-text);
+  font-family: var(--ssw-font-body);
+  line-height: 1.4;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.ssw-input::placeholder,
+.ssw-textarea::placeholder {
+  color: var(--ssw-color-text-muted);
+}
+
+.ssw-input:focus,
+.ssw-textarea:focus {
+  outline: none;
+  border-color: var(--ssw-color-accent);
+  box-shadow: var(--ssw-focus-ring);
+}
+
+.ssw-input[data-invalid="true"],
+.ssw-textarea[data-invalid="true"] {
+  border-color: var(--ssw-color-danger);
+  background: color-mix(in srgb, var(--ssw-color-danger) 4%, white);
+}
+
+.ssw-field[data-invalid="true"] .ssw-field__label {
+  color: var(--ssw-color-danger);
+}

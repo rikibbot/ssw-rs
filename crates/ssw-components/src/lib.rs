@@ -89,13 +89,20 @@ impl<'a> Field<'a> {
     pub fn aria_invalid(&self) -> Option<&'static str> {
         self.error.map(|_| "true")
     }
+
+    /// Returns a semantic invalid-state marker for styling hooks.
+    pub fn data_invalid(&self) -> Option<&'static str> {
+        self.error.map(|_| "true")
+    }
 }
 
 /// Renders a simple status alert component.
 pub fn alert(message: impl AsRef<str>) -> Markup {
     html! {
-        div .ssw_alert role="status" {
-            (message.as_ref())
+        div class=(("ssw-notice", "ssw-notice--info")) data_level="info" role="status" {
+            p class="ssw-notice__message" {
+                (message.as_ref())
+            }
         }
     }
 }
@@ -103,10 +110,11 @@ pub fn alert(message: impl AsRef<str>) -> Markup {
 /// Renders a flash-style notice using semantic level classes.
 pub fn flash_notice(flash: &FlashMessage) -> Markup {
     let level = flash.level().as_str();
+    let level_class = format!("ssw-notice--{level}");
 
     html! {
-        div class=(("notice", format!("notice-{level}"))) role="status" {
-            p { (flash.message()) }
+        div class=(("ssw-notice", level_class.as_str())) data_level=(level) role="status" {
+            p class="ssw-notice__message" { (flash.message()) }
         }
     }
 }
@@ -115,13 +123,14 @@ pub fn flash_notice(flash: &FlashMessage) -> Markup {
 pub fn field(field: &Field<'_>, control: impl Into<Markup>) -> Markup {
     let error_id = field.error_id();
     let error = field.error_message();
+    let invalid = field.data_invalid();
 
     html! {
-        div class=(("field", error.map(|_| "field-error"))) {
-            label for=(field.id()) { (field.label()) }
+        div class="ssw-field" data_invalid=(invalid) {
+            label class="ssw-field__label" for=(field.id()) { (field.label()) }
             (control.into())
             @if error.is_some() {
-                p id=(error_id.as_deref().unwrap()) .field_error {
+                p id=(error_id.as_deref().unwrap()) class="ssw-field__error" {
                     (error.unwrap())
                 }
             }
@@ -135,6 +144,8 @@ pub fn text_input(field_state: &Field<'_>) -> Markup {
         field_state,
         html! {
             input
+                class="ssw-input"
+                data_invalid=(field_state.data_invalid())
                 id=(field_state.id())
                 type="text"
                 name=(field_state.name())
@@ -152,6 +163,8 @@ pub fn email_input(field_state: &Field<'_>) -> Markup {
         field_state,
         html! {
             input
+                class="ssw-input"
+                data_invalid=(field_state.data_invalid())
                 id=(field_state.id())
                 type="email"
                 name=(field_state.name())
@@ -169,6 +182,8 @@ pub fn textarea(field_state: &Field<'_>, rows: usize) -> Markup {
         field_state,
         html! {
             textarea
+                class="ssw-textarea"
+                data_invalid=(field_state.data_invalid())
                 id=(field_state.id())
                 name=(field_state.name())
                 rows=(rows)
@@ -221,19 +236,19 @@ mod tests {
         assert!(
             markup
                 .as_str()
-                .contains("<div class=\"field field-error\"><label for=\"email\">Email</label>")
+                .contains("<div class=\"ssw-field\" data-invalid=\"true\"><label class=\"ssw-field__label\" for=\"email\">Email</label>")
         );
         assert!(
             markup
                 .as_str()
-                .contains("type=\"email\" name=\"email\" value=\"sprite-at-example.com\"")
+                .contains("class=\"ssw-input\" data-invalid=\"true\" id=\"email\" type=\"email\" name=\"email\" value=\"sprite-at-example.com\"")
         );
         assert!(markup.as_str().contains("required"));
         assert!(markup.as_str().contains("aria-invalid=\"true\""));
         assert!(markup.as_str().contains("aria-describedby=\"email-error\""));
         assert!(markup.as_str().contains("<p"));
         assert!(markup.as_str().contains("id=\"email-error\""));
-        assert!(markup.as_str().contains("class=\"field-error\""));
+        assert!(markup.as_str().contains("class=\"ssw-field__error\""));
         assert!(markup.as_str().contains("Email must look valid."));
     }
 
@@ -245,11 +260,11 @@ mod tests {
 
         assert!(
             markup.as_str().contains(
-                "<label for=\"message\">Message</label><textarea id=\"message\" name=\"message\" rows=\"4\">Hello</textarea>"
+                "<label class=\"ssw-field__label\" for=\"message\">Message</label><textarea class=\"ssw-textarea\" id=\"message\" name=\"message\" rows=\"4\">Hello</textarea>"
             )
         );
         assert!(!markup.as_str().contains("aria-invalid"));
-        assert!(!markup.as_str().contains("field-error"));
+        assert!(!markup.as_str().contains("data-invalid"));
     }
 
     #[test]
@@ -265,7 +280,12 @@ mod tests {
     fn flash_notice_uses_semantic_level_classes() {
         let markup = flash_notice(&FlashMessage::success("Saved"));
 
-        assert!(markup.as_str().contains("class=\"notice notice-success\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-notice ssw-notice--success\" data-level=\"success\"")
+        );
+        assert!(markup.as_str().contains("class=\"ssw-notice__message\""));
         assert!(markup.as_str().contains("Saved"));
     }
 

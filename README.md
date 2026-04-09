@@ -36,6 +36,8 @@ Currently implemented:
 - reusable form-field helpers in `ssw-components`
 - redirect-carried flash messages in `ssw-core` and cookie-backed flash handling in `ssw-actix`
 - cookie-backed CSRF hooks in `ssw-actix` with hidden form field helpers in `ssw-components`
+- stable `ssw-*` classes and `data-*` state hooks on the current `ssw-components` primitives
+- a first default component stylesheet at `styles/ssw-components-default.css`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example

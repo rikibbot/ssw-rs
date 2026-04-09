@@ -17,6 +17,8 @@
 - `ssw-core` now models redirect-carried flash messages, and `ssw-actix` now reads and clears them through a cookie-backed request context.
 - `ssw-actix` now exposes cookie-backed CSRF hooks through a `RequestContext`, and the contact form now uses hidden CSRF fields plus request-time verification.
 - The repository now has a dedicated `COMPONENTS.md` design document that defines the `ssw-components` styling contract, token strategy, Base UI-inspired positioning, and initial component scope.
+- The current `ssw-components` helpers now implement the styling contract with stable `ssw-*` classes, slot class names, and `data-invalid` or `data-level` hooks.
+- A first default stylesheet now exists at `styles/ssw-components-default.css` to make the token and class contract concrete.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -52,5 +54,5 @@
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
 - Build a small example app that uses the current flash, CSRF, and form-field stack outside of test-only handlers.
-- Start applying the `COMPONENTS.md` contract to the existing helpers, especially stable `ssw-*` classes and `data-*` state attributes.
+- Add the first layout primitives and simple controls on top of the new component class and token contract.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.
