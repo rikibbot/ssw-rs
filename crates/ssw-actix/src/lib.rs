@@ -79,6 +79,7 @@ mod tests {
     use actix_web::http::{StatusCode, header};
     use actix_web::test;
     use actix_web::{App, HttpResponse, web};
+    use ssw_components::{Field, email_input, text_input, textarea};
     use ssw_core::{HtmlKind, Response};
     use ssw_html::{Markup, html, page as html_page};
 
@@ -127,16 +128,6 @@ mod tests {
     struct ContactField {
         value: String,
         error: Option<String>,
-    }
-
-    impl ContactField {
-        fn aria_invalid(&self) -> Option<&'static str> {
-            self.error.as_ref().map(|_| "true")
-        }
-
-        fn described_by(&self, id: &'static str) -> Option<&'static str> {
-            self.error.as_ref().map(|_| id)
-        }
     }
 
     #[derive(Debug, Clone, Default)]
@@ -188,6 +179,18 @@ mod tests {
     }
 
     fn contact_page(state: &ContactFormState) -> Markup {
+        let name = Field::new("name", "name", "Name")
+            .value(state.name.value.as_str())
+            .error(state.name.error.as_deref())
+            .required(true);
+        let email = Field::new("email", "email", "Email")
+            .value(state.email.value.as_str())
+            .error(state.email.error.as_deref())
+            .required(true);
+        let message = Field::new("message", "message", "Message")
+            .value(state.message.value.as_str())
+            .error(state.message.error.as_deref());
+
         app_layout(
             "Contact",
             html! {
@@ -210,45 +213,9 @@ mod tests {
                     }
 
                     form method="post" action="/contact" {
-                        div class=((".field", state.name.error.as_ref().map(|_| "field-error"))) {
-                            label for="name" { "Name" }
-                            input #name
-                                type="text"
-                                name="name"
-                                value=(state.name.value.as_str())
-                                required=(true)
-                                aria_invalid=(state.name.aria_invalid())
-                                aria_describedby=(state.name.described_by("name-error"));
-                            @if state.name.error.is_some() {
-                                p #name_error .field_error {
-                                    (state.name.error.as_deref().unwrap())
-                                }
-                            }
-                        }
-
-                        div class=((".field", state.email.error.as_ref().map(|_| "field-error"))) {
-                            label for="email" { "Email" }
-                            input #email
-                                type="email"
-                                name="email"
-                                value=(state.email.value.as_str())
-                                required=(true)
-                                aria_invalid=(state.email.aria_invalid())
-                                aria_describedby=(state.email.described_by("email-error"));
-                            @if state.email.error.is_some() {
-                                p #email_error .field_error {
-                                    (state.email.error.as_deref().unwrap())
-                                }
-                            }
-                        }
-
-                        div .field {
-                            label for="message" { "Message" }
-                            textarea #message name="message" rows="4" {
-                                (state.message.value.as_str())
-                            }
-                        }
-
+                        (text_input(&name))
+                        (email_input(&email))
+                        (textarea(&message, 4))
                         button type="submit" { "Send" }
                     }
                 }

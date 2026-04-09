@@ -56,3 +56,7 @@
 
 - decision: Keep `ssw-components` aligned with the public `ssw-html` API by using `html!` and the document builder internally instead of hand-built raw HTML strings.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
+
+- decision: Extract the first reusable SSR form-field layer in `ssw-components`, not `ssw-core`, so the API stays driven by real Actix-backed form markup before any broader form abstraction is committed.
+  evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)

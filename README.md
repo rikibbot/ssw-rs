@@ -33,6 +33,7 @@ Currently implemented:
 - document and fragment rendering
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
+- reusable form-field helpers in `ssw-components`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, and field-level validation
 
 ## Example

@@ -11,6 +11,7 @@ actix-web = { workspace = true }
 ssw-core = { path = "../ssw-core" }
 
 [dev-dependencies]
+ssw-components = { path = "../ssw-components" }
 ssw-html = { path = "../ssw-html" }
 
 [lints]

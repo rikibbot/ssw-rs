@@ -13,6 +13,7 @@
 - `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
 - `ssw-html` and `ssw-actix` now have field-level validation coverage with accessible error markup and preserved input state.
+- `ssw-components` now exposes a small reusable field helper layer, and the Actix-backed contact form now uses it instead of handwritten accessibility markup.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -26,6 +27,7 @@
 - Pressure the stack with realistic mutation flows before designing larger abstractions for forms, validation, or flash state.
 - Prefer app-shaped validation patterns that expose what abstractions are actually missing, rather than inventing them upfront.
 - Keep the documented public API small and intentional, especially around `ssw-html` macro internals.
+- Consolidate repeated SSR form markup in `ssw-components` before considering heavier form abstractions in `ssw-core`.
 
 ## Open Questions
 
@@ -33,12 +35,12 @@
 - How much form and validation support should live in core versus adapter crates.
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
-- What the next mutation-oriented step should be after field-level validation, such as flash messages, CSRF hooks, or reusable field helpers.
+- What the next mutation-oriented step should be after reusable field helpers, such as flash messages, CSRF hooks, or a larger form abstraction.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
 ## Next Likely Steps
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
-- Extend the Actix-backed example coverage toward flash messages, CSRF hooks, and reusable mutation UX patterns.
+- Extend the Actix-backed example coverage toward flash messages, CSRF hooks, and larger mutation UX patterns now that a first reusable field layer exists.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.
