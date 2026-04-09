@@ -217,8 +217,22 @@ impl<'a> AttributeValue for std::borrow::Cow<'a, str> {
 }
 
 impl_attribute_value_display!(
-    bool, char, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+    char, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
 );
+
+impl AttributeValue for bool {
+    fn render_attribute_value(&self, markup: &mut Markup, name: &str) {
+        if is_boolean_attribute(name) {
+            if *self {
+                markup.push_raw(" ");
+                markup.push_raw(name);
+            }
+            return;
+        }
+
+        push_attribute(markup, name, self);
+    }
+}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ClassList {
@@ -423,6 +437,37 @@ fn push_attribute(markup: &mut Markup, name: &str, value: &(impl Display + ?Size
     markup.push_raw("\"");
 }
 
+fn is_boolean_attribute(name: &str) -> bool {
+    matches!(
+        name,
+        "allowfullscreen"
+            | "async"
+            | "autofocus"
+            | "autoplay"
+            | "checked"
+            | "controls"
+            | "default"
+            | "defer"
+            | "disabled"
+            | "formnovalidate"
+            | "hidden"
+            | "inert"
+            | "ismap"
+            | "itemscope"
+            | "loop"
+            | "multiple"
+            | "muted"
+            | "nomodule"
+            | "novalidate"
+            | "open"
+            | "playsinline"
+            | "readonly"
+            | "required"
+            | "reversed"
+            | "selected"
+    )
+}
+
 fn escape_into(output: &mut String, value: &str) {
     for ch in value.chars() {
         match ch {
@@ -612,5 +657,33 @@ mod tests {
         };
 
         assert_eq!(markup.as_str(), "<div>Empty</div>");
+    }
+
+    #[test]
+    fn renders_boolean_html_attributes_by_presence() {
+        let enabled = true;
+        let disabled = false;
+
+        let markup = html! {
+            input checked=(enabled) disabled=(disabled);
+        };
+
+        assert_eq!(markup.as_str(), "<input checked>");
+    }
+
+    #[test]
+    fn keeps_true_false_values_for_non_boolean_attributes() {
+        let expanded = false;
+
+        let markup = html! {
+            button aria_expanded=(expanded) {
+                "Toggle"
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<button aria-expanded=\"false\">Toggle</button>"
+        );
     }
 }

@@ -41,3 +41,6 @@
 
 - decision: Keep `ssw-actix` thin, with convenience helpers like `page`, `fragment`, and `redirect`, plus `Responder` support for `ActixResponse`, rather than inventing a larger adapter layer before real pressure appears.
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Expression-based boolean HTML attributes in `ssw-html` should follow HTML presence semantics for standard boolean attributes, while non-boolean attributes such as `aria-*` keep explicit `"true"` and `"false"` string values.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
