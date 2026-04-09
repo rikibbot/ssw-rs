@@ -44,3 +44,6 @@
 
 - decision: Expression-based boolean HTML attributes in `ssw-html` should follow HTML presence semantics for standard boolean attributes, while non-boolean attributes such as `aria-*` keep explicit `"true"` and `"false"` string values.
   evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+
+- decision: Use Actix-backed end-to-end form flows to shape the next abstraction layer, and avoid inventing generic form APIs in `ssw-core` until invalid redisplay, field errors, and redirect flows have more real usage pressure.
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
