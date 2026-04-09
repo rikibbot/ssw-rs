@@ -9,6 +9,7 @@
 - `ssw-html` now exposes an initial `html!` macro with a Maud-like authoring style.
 - `ssw-html` now supports empty tags, `#id` and `.class` shorthand, optional attribute omission via `Option<T>`, and a small `Document` builder for page layouts.
 - `ssw-html` now supports class composition between `.class` shorthand and explicit `class=(...)` values.
+- `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 
 ## Current Priorities
 
@@ -16,6 +17,7 @@
 - Start with Actix, but avoid coupling the core to Actix-specific concerns.
 - Refine the `ssw-html` authoring experience around real page and layout examples before committing to deeper renderer internals.
 - Keep improving `ssw-html` around app-shaped use cases, not isolated rendering helpers.
+- Keep the Actix integration thin and ergonomic, with helpers that expose the HTML model cleanly instead of hiding it.
 
 ## Open Questions
 
@@ -23,10 +25,10 @@
 - How much form and validation support should live in core versus adapter crates.
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
-- What the first end-to-end Actix example should prove beyond basic HTML responses.
+- What additional workflows the first Actix-backed example should cover next, such as forms or flash-style redirects.
 
 ## Next Likely Steps
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
-- Build a minimal end-to-end Actix example or test app that exercises the new `html!` authoring style.
+- Extend the Actix-backed example coverage toward form flows and mutation responses.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

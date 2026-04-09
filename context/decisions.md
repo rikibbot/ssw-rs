@@ -38,3 +38,6 @@
 - decision: Allow `.class` shorthand and explicit `class=(...)` attributes to compose into a single class list, rather than treating them as conflicting syntax.
   evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
   evidence: [`crates/ssw-html-macros/src/lib.rs`](../crates/ssw-html-macros/src/lib.rs)
+
+- decision: Keep `ssw-actix` thin, with convenience helpers like `page`, `fragment`, and `redirect`, plus `Responder` support for `ActixResponse`, rather than inventing a larger adapter layer before real pressure appears.
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
