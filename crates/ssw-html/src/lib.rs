@@ -220,9 +220,128 @@ impl_attribute_value_display!(
     bool, char, i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
 );
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ClassList {
+    values: Vec<String>,
+}
+
+impl ClassList {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn push(&mut self, value: impl Into<String>) {
+        let value = value.into();
+        if !value.is_empty() {
+            self.values.push(value);
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+
+    pub fn join(&self) -> String {
+        self.values.join(" ")
+    }
+}
+
+pub trait ClassValue {
+    fn push_classes(&self, classes: &mut ClassList);
+}
+
+impl<T> ClassValue for Option<T>
+where
+    T: ClassValue,
+{
+    fn push_classes(&self, classes: &mut ClassList) {
+        if let Some(value) = self {
+            value.push_classes(classes);
+        }
+    }
+}
+
+impl ClassValue for String {
+    fn push_classes(&self, classes: &mut ClassList) {
+        classes.push(self.clone());
+    }
+}
+
+impl ClassValue for str {
+    fn push_classes(&self, classes: &mut ClassList) {
+        classes.push(self);
+    }
+}
+
+impl ClassValue for &str {
+    fn push_classes(&self, classes: &mut ClassList) {
+        classes.push(*self);
+    }
+}
+
+impl<'a> ClassValue for std::borrow::Cow<'a, str> {
+    fn push_classes(&self, classes: &mut ClassList) {
+        classes.push(self.as_ref());
+    }
+}
+
+impl<T, const N: usize> ClassValue for [T; N]
+where
+    T: ClassValue,
+{
+    fn push_classes(&self, classes: &mut ClassList) {
+        for value in self {
+            value.push_classes(classes);
+        }
+    }
+}
+
+impl<T> ClassValue for [T]
+where
+    T: ClassValue,
+{
+    fn push_classes(&self, classes: &mut ClassList) {
+        for value in self {
+            value.push_classes(classes);
+        }
+    }
+}
+
+impl<T> ClassValue for Vec<T>
+where
+    T: ClassValue,
+{
+    fn push_classes(&self, classes: &mut ClassList) {
+        for value in self {
+            value.push_classes(classes);
+        }
+    }
+}
+
+macro_rules! impl_class_value_tuple {
+    ($($name:ident),+ $(,)?) => {
+        impl<$($name),+> ClassValue for ($($name,)+)
+        where
+            $($name: ClassValue),+
+        {
+            fn push_classes(&self, classes: &mut ClassList) {
+                #[allow(non_snake_case)]
+                let ($($name,)+) = self;
+                $(
+                    $name.push_classes(classes);
+                )+
+            }
+        }
+    };
+}
+
+impl_class_value_tuple!(A, B);
+impl_class_value_tuple!(A, B, C);
+impl_class_value_tuple!(A, B, C, D);
+
 #[doc(hidden)]
 pub mod __private {
-    use super::{AttributeValue, Markup, RenderValue};
+    use super::{AttributeValue, ClassList, ClassValue, Markup, RenderValue};
 
     pub fn render_value<T>(markup: &mut Markup, value: &T)
     where
@@ -250,6 +369,19 @@ pub mod __private {
     pub fn push_boolean_attribute(markup: &mut Markup, name: &str) {
         markup.push_raw(" ");
         markup.push_raw(name);
+    }
+
+    pub fn push_class_value<T>(classes: &mut ClassList, value: &T)
+    where
+        T: ClassValue + ?Sized,
+    {
+        value.push_classes(classes);
+    }
+
+    pub fn push_class_attribute(markup: &mut Markup, classes: &ClassList) {
+        if !classes.is_empty() {
+            super::push_attribute(markup, "class", &classes.join());
+        }
     }
 
     pub fn finish_open_tag(markup: &mut Markup) {
@@ -451,5 +583,34 @@ mod tests {
         assert!(page.as_str().contains(
             "<section class=\"panel\"><p>Everything is rendered on the server.</p></section>"
         ));
+    }
+
+    #[test]
+    fn merges_shorthand_and_explicit_class_values() {
+        let extra = Some("featured");
+
+        let markup = html! {
+            article .card class=(("stack", extra)) {
+                "Hello"
+            }
+        };
+
+        assert_eq!(
+            markup.as_str(),
+            "<article class=\"card stack featured\">Hello</article>"
+        );
+    }
+
+    #[test]
+    fn omits_empty_class_attribute_when_all_values_are_missing() {
+        let none_class: Option<&str> = None;
+
+        let markup = html! {
+            div class=(none_class) {
+                "Empty"
+            }
+        };
+
+        assert_eq!(markup.as_str(), "<div>Empty</div>");
     }
 }

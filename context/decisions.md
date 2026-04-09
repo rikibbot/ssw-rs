@@ -34,3 +34,7 @@
 
 - decision: Support optional attribute omission through `Option<T>` attribute expressions instead of forcing conditional markup around every optional attribute.
   evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+
+- decision: Allow `.class` shorthand and explicit `class=(...)` attributes to compose into a single class list, rather than treating them as conflicting syntax.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+  evidence: [`crates/ssw-html-macros/src/lib.rs`](../crates/ssw-html-macros/src/lib.rs)

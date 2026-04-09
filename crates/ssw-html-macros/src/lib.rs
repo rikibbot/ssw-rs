@@ -109,7 +109,7 @@ impl quote::ToTokens for Node {
 struct Element {
     name: LitStr,
     id: Option<LitStr>,
-    class: Option<LitStr>,
+    classes: Vec<AttributeValue>,
     attrs: Vec<Attribute>,
     body: ElementBody,
 }
@@ -122,17 +122,24 @@ impl quote::ToTokens for Element {
                 ::ssw_html::__private::push_attribute_literal(&mut __markup, "id", #value);
             }
         });
-        let class = self.class.as_ref().map(|value| {
-            quote! {
-                ::ssw_html::__private::push_attribute_literal(&mut __markup, "class", #value);
-            }
+        let classes = self.classes.iter().map(|value| match value {
+            AttributeValue::String(value) => quote! {
+                ::ssw_html::__private::push_class_value(&mut __ssw_classes, #value);
+            },
+            AttributeValue::Expr(expr) => quote! {
+                ::ssw_html::__private::push_class_value(&mut __ssw_classes, &(#expr));
+            },
         });
         let attrs = self.attrs.iter();
 
         let render_open = quote! {
             ::ssw_html::__private::begin_element(&mut __markup, #name);
             #id
-            #class
+            {
+                let mut __ssw_classes = ::ssw_html::ClassList::new();
+                #(#classes)*
+                ::ssw_html::__private::push_class_attribute(&mut __markup, &__ssw_classes);
+            }
             #(#attrs)*
             ::ssw_html::__private::finish_open_tag(&mut __markup);
         };
@@ -311,7 +318,7 @@ fn parse_element(input: ParseStream<'_>) -> Result<Element> {
 
         if input.peek(Token![.]) {
             input.parse::<Token![.]>()?;
-            classes.push(parse_name_literal(input)?);
+            classes.push(AttributeValue::String(parse_name_literal(input)?));
             continue;
         }
 
@@ -332,19 +339,10 @@ fn parse_element(input: ParseStream<'_>) -> Result<Element> {
                 });
             }
             ParsedAttribute { name, value, span } if name == "class" => {
-                if !classes.is_empty() {
-                    return Err(Error::new(
-                        span,
-                        "cannot mix '.class' shorthand with an explicit class attribute yet",
-                    ));
-                }
                 let value = value.ok_or_else(|| {
                     Error::new(span, "the 'class' attribute requires an explicit value")
                 })?;
-                attrs.push(Attribute {
-                    name: LitStr::new("class", span),
-                    value: Some(value),
-                });
+                classes.push(value);
             }
             ParsedAttribute { name, value, span } => attrs.push(Attribute {
                 name: LitStr::new(&name, span),
@@ -363,18 +361,7 @@ fn parse_element(input: ParseStream<'_>) -> Result<Element> {
     Ok(Element {
         name: LitStr::new(&normalize_name(&name_ident), name_ident.span()),
         id,
-        class: if classes.is_empty() {
-            None
-        } else {
-            let mut joined = String::new();
-            for (index, class) in classes.iter().enumerate() {
-                if index > 0 {
-                    joined.push(' ');
-                }
-                joined.push_str(&class.value());
-            }
-            Some(LitStr::new(&joined, name_ident.span()))
-        },
+        classes,
         attrs,
         body,
     })
