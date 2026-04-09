@@ -14,6 +14,8 @@
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
 - `ssw-html` and `ssw-actix` now have field-level validation coverage with accessible error markup and preserved input state.
 - `ssw-components` now exposes a small reusable field helper layer, and the Actix-backed contact form now uses it instead of handwritten accessibility markup.
+- `ssw-core` now models redirect-carried flash messages, and `ssw-actix` now reads and clears them through a cookie-backed request context.
+- `ssw-actix` now exposes cookie-backed CSRF hooks through a `RequestContext`, and the contact form now uses hidden CSRF fields plus request-time verification.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -28,6 +30,7 @@
 - Prefer app-shaped validation patterns that expose what abstractions are actually missing, rather than inventing them upfront.
 - Keep the documented public API small and intentional, especially around `ssw-html` macro internals.
 - Consolidate repeated SSR form markup in `ssw-components` before considering heavier form abstractions in `ssw-core`.
+- Keep current flash and CSRF support positioned as hooks, not a complete session or secret-management layer yet.
 
 ## Open Questions
 
@@ -35,12 +38,15 @@
 - How much form and validation support should live in core versus adapter crates.
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
-- What the next mutation-oriented step should be after reusable field helpers, such as flash messages, CSRF hooks, or a larger form abstraction.
+- Whether flash transport should stay cookie-backed and unsigned, or move behind a more explicit application secret/session abstraction.
+- Whether the current cookie-backed CSRF hook should stay Actix-specific or eventually grow a backend-agnostic core shape.
+- What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
 ## Next Likely Steps
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
-- Extend the Actix-backed example coverage toward flash messages, CSRF hooks, and larger mutation UX patterns now that a first reusable field layer exists.
+- Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
+- Build a small example app that uses the current flash, CSRF, and form-field stack outside of test-only handlers.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

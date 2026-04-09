@@ -8,6 +8,7 @@ repository.workspace = true
 
 [dependencies]
 actix-web = { workspace = true }
+getrandom = { workspace = true }
 ssw-core = { path = "../ssw-core" }
 
 [dev-dependencies]

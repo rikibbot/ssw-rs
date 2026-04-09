@@ -1,8 +1,103 @@
 //! Actix integration for `ssw-rs`.
 
+use actix_web::cookie::{Cookie, SameSite};
 use actix_web::http::StatusCode;
 use actix_web::{HttpRequest, HttpResponse, Responder};
-use ssw_core::{HtmlKind, RedirectKind, Render, Response};
+use ssw_core::{FlashLevel, FlashMessage, HtmlKind, RedirectKind, Render, Response};
+
+/// Cookie name used for redirect-carried flash messages.
+pub const FLASH_COOKIE_NAME: &str = "ssw-flash";
+
+/// Cookie name used for CSRF token storage.
+pub const CSRF_COOKIE_NAME: &str = "ssw-csrf";
+
+/// Default hidden form field name used for CSRF tokens.
+pub const CSRF_FORM_FIELD: &str = "csrf_token";
+
+/// Errors returned when a submitted CSRF token does not match the request token.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CsrfError {
+    /// The submitted form did not include the expected token field.
+    MissingFormToken,
+    /// The submitted token did not match the request token.
+    InvalidFormToken,
+}
+
+/// Request-scoped cookie-backed state for flash messages and CSRF tokens.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequestContext {
+    flashes: Vec<FlashMessage>,
+    csrf_token: String,
+    clear_flash: bool,
+    set_csrf_cookie: bool,
+}
+
+impl RequestContext {
+    /// Builds a request context from incoming cookies.
+    pub fn from_request(request: &HttpRequest) -> Self {
+        let flash_cookie = request.cookie(FLASH_COOKIE_NAME);
+        let flashes = flash_cookie
+            .as_ref()
+            .and_then(|cookie| decode_flashes(cookie.value()))
+            .unwrap_or_default();
+
+        let csrf_cookie = request.cookie(CSRF_COOKIE_NAME);
+        let (csrf_token, set_csrf_cookie) = match csrf_cookie {
+            Some(cookie) if is_valid_csrf_token(cookie.value()) => {
+                (cookie.value().to_owned(), false)
+            }
+            _ => (generate_csrf_token(), true),
+        };
+
+        Self {
+            flashes,
+            csrf_token,
+            clear_flash: flash_cookie.is_some(),
+            set_csrf_cookie,
+        }
+    }
+
+    /// Returns the flash messages attached to the current request.
+    pub fn flashes(&self) -> &[FlashMessage] {
+        &self.flashes
+    }
+
+    /// Returns the CSRF token for the current request.
+    pub fn csrf_token(&self) -> &str {
+        &self.csrf_token
+    }
+
+    /// Verifies a submitted form token against the request token.
+    pub fn verify_csrf(&self, form_token: Option<&str>) -> Result<(), CsrfError> {
+        match form_token {
+            None => Err(CsrfError::MissingFormToken),
+            Some(token) if token == self.csrf_token => Ok(()),
+            Some(_) => Err(CsrfError::InvalidFormToken),
+        }
+    }
+
+    /// Applies pending cookie updates to a response.
+    pub fn apply(&self, mut response: HttpResponse) -> HttpResponse {
+        if self.clear_flash {
+            response
+                .add_cookie(&removal_cookie(FLASH_COOKIE_NAME))
+                .expect("failed to clear flash cookie");
+        }
+
+        if self.set_csrf_cookie {
+            response
+                .add_cookie(&csrf_cookie(&self.csrf_token))
+                .expect("failed to attach csrf cookie");
+        }
+
+        response
+    }
+}
+
+/// Builds a request context from incoming Actix request cookies.
+pub fn request_context(request: &HttpRequest) -> RequestContext {
+    RequestContext::from_request(request)
+}
 
 /// A responder wrapper around an `ssw-core` response value.
 pub struct ActixResponse(pub Response);
@@ -38,6 +133,11 @@ pub fn page(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Document, view)
 }
 
+/// Renders a full HTML document response and applies request-scoped cookies.
+pub fn page_with_context(context: &RequestContext, view: impl Render) -> HttpResponse {
+    context.apply(page(view))
+}
+
 /// Renders an HTML fragment response.
 pub fn fragment(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Fragment, view)
@@ -57,9 +157,19 @@ pub fn to_http_response(response: Response) -> HttpResponse {
         Response::Text(text) => HttpResponse::Ok()
             .content_type(text.content_type())
             .body(text.body().to_owned()),
-        Response::Redirect(redirect) => HttpResponse::build(status_for_redirect(redirect.kind()))
-            .insert_header(("Location", redirect.location().to_owned()))
-            .finish(),
+        Response::Redirect(redirect) => {
+            let mut response = HttpResponse::build(status_for_redirect(redirect.kind()))
+                .insert_header(("Location", redirect.location().to_owned()))
+                .finish();
+
+            if !redirect.flashes().is_empty() {
+                response
+                    .add_cookie(&flash_cookie(redirect.flashes()))
+                    .expect("failed to attach flash cookie");
+            }
+
+            response
+        }
     }
 }
 
@@ -71,19 +181,124 @@ fn status_for_redirect(kind: RedirectKind) -> StatusCode {
     }
 }
 
+fn flash_cookie(flashes: &[FlashMessage]) -> Cookie<'static> {
+    Cookie::build(FLASH_COOKIE_NAME, encode_flashes(flashes))
+        .path("/")
+        .http_only(true)
+        .same_site(SameSite::Lax)
+        .finish()
+}
+
+fn csrf_cookie(token: &str) -> Cookie<'static> {
+    Cookie::build(CSRF_COOKIE_NAME, token.to_owned())
+        .path("/")
+        .http_only(true)
+        .same_site(SameSite::Lax)
+        .finish()
+}
+
+fn removal_cookie(name: &str) -> Cookie<'static> {
+    let mut cookie = Cookie::build(name.to_owned(), "")
+        .path("/")
+        .http_only(true)
+        .same_site(SameSite::Lax)
+        .finish();
+    cookie.make_removal();
+    cookie
+}
+
+fn encode_flashes(flashes: &[FlashMessage]) -> String {
+    flashes
+        .iter()
+        .map(|flash| {
+            format!(
+                "{}~{}",
+                flash.level().as_str(),
+                hex_encode(flash.message().as_bytes())
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(".")
+}
+
+fn decode_flashes(value: &str) -> Option<Vec<FlashMessage>> {
+    if value.is_empty() {
+        return Some(Vec::new());
+    }
+
+    value.split('.').map(decode_flash).collect()
+}
+
+fn decode_flash(value: &str) -> Option<FlashMessage> {
+    let (level, message) = value.split_once('~')?;
+    let message = String::from_utf8(hex_decode(message)?).ok()?;
+
+    Some(FlashMessage::new(FlashLevel::parse(level)?, message))
+}
+
+fn generate_csrf_token() -> String {
+    let mut bytes = [0_u8; 32];
+    getrandom::fill(&mut bytes).expect("OS randomness is required for CSRF tokens");
+    hex_encode(&bytes)
+}
+
+fn is_valid_csrf_token(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(bytes.len() * 2);
+
+    for byte in bytes {
+        output.push(char::from(b"0123456789abcdef"[(byte >> 4) as usize]));
+        output.push(char::from(b"0123456789abcdef"[(byte & 0x0f) as usize]));
+    }
+
+    output
+}
+
+fn hex_decode(value: &str) -> Option<Vec<u8>> {
+    let bytes = value.as_bytes();
+    if bytes.len() % 2 != 0 {
+        return None;
+    }
+
+    let mut output = Vec::with_capacity(bytes.len() / 2);
+    for chunk in bytes.chunks_exact(2) {
+        let high = decode_hex_nibble(chunk[0])?;
+        let low = decode_hex_nibble(chunk[1])?;
+        output.push((high << 4) | low);
+    }
+
+    Some(output)
+}
+
+fn decode_hex_nibble(byte: u8) -> Option<u8> {
+    match byte {
+        b'0'..=b'9' => Some(byte - b'0'),
+        b'a'..=b'f' => Some(byte - b'a' + 10),
+        b'A'..=b'F' => Some(byte - b'A' + 10),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
     use actix_web::body::to_bytes;
+    use actix_web::cookie::Cookie;
     use actix_web::http::{StatusCode, header};
     use actix_web::test;
-    use actix_web::{App, HttpResponse, web};
-    use ssw_components::{Field, email_input, text_input, textarea};
-    use ssw_core::{HtmlKind, Response};
+    use actix_web::{App, HttpRequest, HttpResponse, web};
+    use ssw_components::{Field, email_input, flash_notice, hidden_input, text_input, textarea};
+    use ssw_core::{FlashMessage, HtmlKind, Response};
     use ssw_html::{Markup, html, page as html_page};
 
-    use super::{ActixResponse, fragment, page, redirect, render_html, to_http_response};
+    use super::{
+        ActixResponse, CSRF_COOKIE_NAME, CSRF_FORM_FIELD, FLASH_COOKIE_NAME, fragment, page,
+        page_with_context, redirect, render_html, request_context, to_http_response,
+    };
 
     #[actix_web::test]
     async fn converts_html_response() {
@@ -145,21 +360,7 @@ mod tests {
     }
 
     fn validate_contact_form(form: &HashMap<String, String>) -> ContactFormState {
-        let mut state = ContactFormState {
-            name: ContactField {
-                value: form.get("name").cloned().unwrap_or_default(),
-                error: None,
-            },
-            email: ContactField {
-                value: form.get("email").cloned().unwrap_or_default(),
-                error: None,
-            },
-            message: ContactField {
-                value: form.get("message").cloned().unwrap_or_default(),
-                error: None,
-            },
-            summary_error: None,
-        };
+        let mut state = contact_form_state_from(form);
 
         if state.name.value.trim().is_empty() {
             state.name.error = Some("Name is required.".to_owned());
@@ -178,7 +379,29 @@ mod tests {
         state
     }
 
-    fn contact_page(state: &ContactFormState) -> Markup {
+    fn contact_form_state_from(form: &HashMap<String, String>) -> ContactFormState {
+        ContactFormState {
+            name: ContactField {
+                value: form.get("name").cloned().unwrap_or_default(),
+                error: None,
+            },
+            email: ContactField {
+                value: form.get("email").cloned().unwrap_or_default(),
+                error: None,
+            },
+            message: ContactField {
+                value: form.get("message").cloned().unwrap_or_default(),
+                error: None,
+            },
+            summary_error: None,
+        }
+    }
+
+    fn contact_page(
+        state: &ContactFormState,
+        flashes: &[FlashMessage],
+        csrf_token: &str,
+    ) -> Markup {
         let name = Field::new("name", "name", "Name")
             .value(state.name.value.as_str())
             .error(state.name.error.as_deref())
@@ -198,6 +421,10 @@ mod tests {
                     h2 { "Contact us" }
                     p { "Send a simple server-rendered form." }
 
+                    @for flash in flashes {
+                        (flash_notice(flash))
+                    }
+
                     @if state.summary_error.is_some() {
                         div .notice .notice_error role="alert" {
                             p { (state.summary_error.as_deref().unwrap()) }
@@ -213,11 +440,28 @@ mod tests {
                     }
 
                     form method="post" action="/contact" {
+                        (hidden_input(CSRF_FORM_FIELD, csrf_token))
                         (text_input(&name))
                         (email_input(&email))
                         (textarea(&message, 4))
                         button type="submit" { "Send" }
                     }
+                }
+            },
+        )
+    }
+
+    fn thanks_page(flashes: &[FlashMessage]) -> Markup {
+        app_layout(
+            "Thanks",
+            html! {
+                section .panel .panel_success {
+                    @for flash in flashes {
+                        (flash_notice(flash))
+                    }
+
+                    h2 { "Message sent" }
+                    p { "Your form was handled on the server and redirected cleanly." }
                 }
             },
         )
@@ -252,30 +496,67 @@ mod tests {
         redirect("/panel")
     }
 
-    async fn contact_get() -> HttpResponse {
-        page(contact_page(&ContactFormState::default()))
+    async fn contact_get(request: HttpRequest) -> HttpResponse {
+        let context = request_context(&request);
+
+        page_with_context(
+            &context,
+            contact_page(
+                &ContactFormState::default(),
+                context.flashes(),
+                context.csrf_token(),
+            ),
+        )
     }
 
-    async fn contact_post(form: web::Form<HashMap<String, String>>) -> HttpResponse {
+    async fn contact_post(
+        request: HttpRequest,
+        form: web::Form<HashMap<String, String>>,
+    ) -> HttpResponse {
+        let context = request_context(&request);
+
+        if context
+            .verify_csrf(form.get(CSRF_FORM_FIELD).map(String::as_str))
+            .is_err()
+        {
+            let mut state = contact_form_state_from(&form);
+            state.summary_error =
+                Some("Your form expired. Reload the page and try again.".to_owned());
+
+            return page_with_context(
+                &context,
+                contact_page(&state, context.flashes(), context.csrf_token()),
+            );
+        }
+
         let state = validate_contact_form(&form);
 
         if state.has_errors() {
-            return page(contact_page(&state));
+            return page_with_context(
+                &context,
+                contact_page(&state, context.flashes(), context.csrf_token()),
+            );
         }
 
-        redirect("/thanks")
+        to_http_response(Response::redirect_with_flash(
+            "/thanks",
+            FlashMessage::success("Your message was sent."),
+        ))
     }
 
-    async fn thanks() -> HttpResponse {
-        page(app_layout(
-            "Thanks",
-            html! {
-                section .panel .panel_success {
-                    h2 { "Message sent" }
-                    p { "Your form was handled on the server and redirected cleanly." }
-                }
-            },
-        ))
+    async fn thanks(request: HttpRequest) -> HttpResponse {
+        let context = request_context(&request);
+
+        page_with_context(&context, thanks_page(context.flashes()))
+    }
+
+    fn response_cookie(headers: &header::HeaderMap, name: &str) -> Option<Cookie<'static>> {
+        headers
+            .get_all(header::SET_COOKIE)
+            .filter_map(|value| value.to_str().ok())
+            .filter_map(|value| Cookie::parse(value.to_owned()).ok())
+            .map(Cookie::into_owned)
+            .find(|cookie| cookie.name() == name)
     }
 
     #[actix_web::test]
@@ -342,9 +623,13 @@ mod tests {
         let contact_response =
             test::call_service(&app, test::TestRequest::get().uri("/contact").to_request()).await;
         assert_eq!(contact_response.status(), StatusCode::OK);
+        let csrf_cookie = response_cookie(contact_response.headers(), CSRF_COOKIE_NAME).unwrap();
+        let csrf_token = csrf_cookie.value().to_owned();
         let contact_body = to_bytes(contact_response.into_body()).await.unwrap();
         let contact_body = std::str::from_utf8(&contact_body).unwrap();
         assert!(contact_body.contains("<form method=\"post\" action=\"/contact\">"));
+        assert!(contact_body.contains("type=\"hidden\" name=\"csrf_token\""));
+        assert!(contact_body.contains(&format!("value=\"{csrf_token}\"")));
         assert!(
             contact_body
                 .contains("<input id=\"name\" type=\"text\" name=\"name\" value=\"\" required>")
@@ -354,11 +639,34 @@ mod tests {
                 .contains("<input id=\"email\" type=\"email\" name=\"email\" value=\"\" required>")
         );
 
+        let csrf_error_response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/contact")
+                .cookie(Cookie::new(CSRF_COOKIE_NAME, csrf_token.clone()))
+                .set_form([
+                    (CSRF_FORM_FIELD, "wrong-token"),
+                    ("name", "Riccardo"),
+                    ("email", "sprite@example.com"),
+                    ("message", "Hello"),
+                ])
+                .to_request(),
+        )
+        .await;
+        assert_eq!(csrf_error_response.status(), StatusCode::OK);
+        let csrf_error_body = to_bytes(csrf_error_response.into_body()).await.unwrap();
+        let csrf_error_body = std::str::from_utf8(&csrf_error_body).unwrap();
+        assert!(csrf_error_body.contains("Your form expired. Reload the page and try again."));
+        assert!(csrf_error_body.contains("value=\"Riccardo\""));
+        assert!(csrf_error_body.contains("value=\"sprite@example.com\""));
+
         let invalid_response = test::call_service(
             &app,
             test::TestRequest::post()
                 .uri("/contact")
+                .cookie(Cookie::new(CSRF_COOKIE_NAME, csrf_token.clone()))
                 .set_form([
+                    (CSRF_FORM_FIELD, csrf_token.as_str()),
                     ("name", ""),
                     ("email", "sprite-at-example.com"),
                     ("message", "Hello"),
@@ -385,7 +693,9 @@ mod tests {
             &app,
             test::TestRequest::post()
                 .uri("/contact")
+                .cookie(Cookie::new(CSRF_COOKIE_NAME, csrf_token.clone()))
                 .set_form([
+                    (CSRF_FORM_FIELD, csrf_token.as_str()),
                     ("name", "Riccardo"),
                     ("email", "sprite@example.com"),
                     ("message", "Shipping a server-first app"),
@@ -398,13 +708,40 @@ mod tests {
             valid_response.headers().get(header::LOCATION).unwrap(),
             "/thanks"
         );
+        let flash_cookie = response_cookie(valid_response.headers(), FLASH_COOKIE_NAME).unwrap();
 
-        let thanks_response =
-            test::call_service(&app, test::TestRequest::get().uri("/thanks").to_request()).await;
+        let thanks_response = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri("/thanks")
+                .cookie(Cookie::new(CSRF_COOKIE_NAME, csrf_token.clone()))
+                .cookie(Cookie::new(
+                    FLASH_COOKIE_NAME,
+                    flash_cookie.value().to_owned(),
+                ))
+                .to_request(),
+        )
+        .await;
         assert_eq!(thanks_response.status(), StatusCode::OK);
+        let cleared_flash_cookie =
+            response_cookie(thanks_response.headers(), FLASH_COOKIE_NAME).unwrap();
+        assert_eq!(cleared_flash_cookie.value(), "");
         let thanks_body = to_bytes(thanks_response.into_body()).await.unwrap();
         let thanks_body = std::str::from_utf8(&thanks_body).unwrap();
         assert!(thanks_body.contains("Message sent"));
         assert!(thanks_body.contains("handled on the server"));
+        assert!(thanks_body.contains("Your message was sent."));
+
+        let second_thanks_response = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri("/thanks")
+                .cookie(Cookie::new(CSRF_COOKIE_NAME, csrf_token))
+                .to_request(),
+        )
+        .await;
+        let second_thanks_body = to_bytes(second_thanks_response.into_body()).await.unwrap();
+        let second_thanks_body = std::str::from_utf8(&second_thanks_body).unwrap();
+        assert!(!second_thanks_body.contains("Your message was sent."));
     }
 }

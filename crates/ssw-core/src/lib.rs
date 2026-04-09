@@ -126,11 +126,95 @@ pub enum RedirectKind {
     Permanent,
 }
 
+/// The semantic level of a flash-style message.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlashLevel {
+    /// An informational message.
+    Info,
+    /// A success message.
+    Success,
+    /// A warning message.
+    Warning,
+    /// An error message.
+    Error,
+}
+
+impl FlashLevel {
+    /// Returns a stable lowercase identifier for serialization and styling.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Info => "info",
+            Self::Success => "success",
+            Self::Warning => "warning",
+            Self::Error => "error",
+        }
+    }
+
+    /// Parses a lowercase identifier into a flash level.
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "info" => Some(Self::Info),
+            "success" => Some(Self::Success),
+            "warning" => Some(Self::Warning),
+            "error" => Some(Self::Error),
+            _ => None,
+        }
+    }
+}
+
+/// A transient user-facing message, typically carried across a redirect.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FlashMessage {
+    level: FlashLevel,
+    message: String,
+}
+
+impl FlashMessage {
+    /// Creates a flash message with an explicit semantic level.
+    pub fn new(level: FlashLevel, message: impl Into<String>) -> Self {
+        Self {
+            level,
+            message: message.into(),
+        }
+    }
+
+    /// Creates an informational flash message.
+    pub fn info(message: impl Into<String>) -> Self {
+        Self::new(FlashLevel::Info, message)
+    }
+
+    /// Creates a success flash message.
+    pub fn success(message: impl Into<String>) -> Self {
+        Self::new(FlashLevel::Success, message)
+    }
+
+    /// Creates a warning flash message.
+    pub fn warning(message: impl Into<String>) -> Self {
+        Self::new(FlashLevel::Warning, message)
+    }
+
+    /// Creates an error flash message.
+    pub fn error(message: impl Into<String>) -> Self {
+        Self::new(FlashLevel::Error, message)
+    }
+
+    /// Returns the semantic level of the flash message.
+    pub fn level(&self) -> FlashLevel {
+        self.level
+    }
+
+    /// Returns the user-facing message body.
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+}
+
 /// A redirect target plus its semantic redirect kind.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Redirect {
     kind: RedirectKind,
     location: String,
+    flashes: Vec<FlashMessage>,
 }
 
 impl Redirect {
@@ -139,6 +223,7 @@ impl Redirect {
         Self {
             kind,
             location: location.into(),
+            flashes: Vec::new(),
         }
     }
 
@@ -165,6 +250,23 @@ impl Redirect {
     /// Returns the redirect location.
     pub fn location(&self) -> &str {
         &self.location
+    }
+
+    /// Attaches a flash message to the redirect.
+    pub fn with_flash(mut self, flash: FlashMessage) -> Self {
+        self.flashes.push(flash);
+        self
+    }
+
+    /// Attaches multiple flash messages to the redirect.
+    pub fn with_flashes(mut self, flashes: impl IntoIterator<Item = FlashMessage>) -> Self {
+        self.flashes.extend(flashes);
+        self
+    }
+
+    /// Returns the flash messages attached to the redirect.
+    pub fn flashes(&self) -> &[FlashMessage] {
+        &self.flashes
     }
 }
 
@@ -199,11 +301,16 @@ impl Response {
     pub fn redirect(location: impl Into<String>) -> Self {
         Self::Redirect(Redirect::see_other(location))
     }
+
+    /// Creates a `303 See Other` redirect response with a single flash message.
+    pub fn redirect_with_flash(location: impl Into<String>, flash: FlashMessage) -> Self {
+        Self::Redirect(Redirect::see_other(location).with_flash(flash))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{HtmlKind, HtmlResponse, Render, Response};
+    use super::{FlashLevel, HtmlKind, HtmlResponse, Redirect, Render, Response};
 
     struct Greeting<'a>(&'a str);
 
@@ -230,6 +337,31 @@ mod tests {
         match response {
             Response::Html(html) => assert_eq!(html.body(), "Hello, world!"),
             _ => panic!("expected html response"),
+        }
+    }
+
+    #[test]
+    fn carries_flash_messages_on_redirects() {
+        let redirect = Redirect::see_other("/thanks")
+            .with_flash(super::FlashMessage::success("Saved"))
+            .with_flash(super::FlashMessage::info("Queued"));
+
+        assert_eq!(redirect.flashes().len(), 2);
+        assert_eq!(redirect.flashes()[0].level(), FlashLevel::Success);
+        assert_eq!(redirect.flashes()[1].message(), "Queued");
+    }
+
+    #[test]
+    fn wraps_redirect_with_flash_response() {
+        let response = Response::redirect_with_flash("/done", super::FlashMessage::success("Done"));
+
+        match response {
+            Response::Redirect(redirect) => {
+                assert_eq!(redirect.location(), "/done");
+                assert_eq!(redirect.flashes().len(), 1);
+                assert_eq!(redirect.flashes()[0].level(), FlashLevel::Success);
+            }
+            _ => panic!("expected redirect response"),
         }
     }
 }

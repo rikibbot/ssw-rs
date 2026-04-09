@@ -1,5 +1,6 @@
 //! Optional UI components built on top of `ssw-html`.
 
+use ssw_core::FlashMessage;
 use ssw_html::{Markup, html, page as html_page};
 
 /// Borrowed state for rendering a labeled form field.
@@ -99,6 +100,17 @@ pub fn alert(message: impl AsRef<str>) -> Markup {
     }
 }
 
+/// Renders a flash-style notice using semantic level classes.
+pub fn flash_notice(flash: &FlashMessage) -> Markup {
+    let level = flash.level().as_str();
+
+    html! {
+        div class=(("notice", format!("notice-{level}"))) role="status" {
+            p { (flash.message()) }
+        }
+    }
+}
+
 /// Renders a labeled field wrapper around a form control.
 pub fn field(field: &Field<'_>, control: impl Into<Markup>) -> Markup {
     let error_id = field.error_id();
@@ -169,6 +181,16 @@ pub fn textarea(field_state: &Field<'_>, rows: usize) -> Markup {
     )
 }
 
+/// Renders a hidden input, useful for CSRF tokens and method overrides.
+pub fn hidden_input(name: impl AsRef<str>, value: impl AsRef<str>) -> Markup {
+    html! {
+        input
+            type="hidden"
+            name=(name.as_ref())
+            value=(value.as_ref());
+    }
+}
+
 /// Renders a full page using the `ssw-html` document builder.
 pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
     html_page(title.as_ref()).body(body).render()
@@ -176,7 +198,9 @@ pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
 
 #[cfg(test)]
 mod tests {
-    use super::{Field, alert, email_input, text_input, textarea};
+    use ssw_core::FlashMessage;
+
+    use super::{Field, alert, email_input, flash_notice, hidden_input, text_input, textarea};
 
     #[test]
     fn alert_escapes_message() {
@@ -235,5 +259,24 @@ mod tests {
         let markup = text_input(&field);
 
         assert!(markup.as_str().contains("value=\"&lt;unsafe&gt;\""));
+    }
+
+    #[test]
+    fn flash_notice_uses_semantic_level_classes() {
+        let markup = flash_notice(&FlashMessage::success("Saved"));
+
+        assert!(markup.as_str().contains("class=\"notice notice-success\""));
+        assert!(markup.as_str().contains("Saved"));
+    }
+
+    #[test]
+    fn hidden_input_renders_hidden_control() {
+        let markup = hidden_input("csrf_token", "abc123");
+
+        assert!(
+            markup
+                .as_str()
+                .contains("type=\"hidden\" name=\"csrf_token\" value=\"abc123\"")
+        );
     }
 }

@@ -60,3 +60,11 @@
 - decision: Extract the first reusable SSR form-field layer in `ssw-components`, not `ssw-core`, so the API stays driven by real Actix-backed form markup before any broader form abstraction is committed.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Model flash messages in `ssw-core` as redirect-carried response semantics, while keeping the actual transport cookie-backed in `ssw-actix` for now.
+  evidence: [`crates/ssw-core/src/lib.rs`](../crates/ssw-core/src/lib.rs)
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Implement the first CSRF protection slice as an Actix request hook based on a request-scoped context and double-submit-style cookie verification, rather than moving CSRF into `ssw-core` before more backends or app flows exist.
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+  evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)

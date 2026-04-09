@@ -34,7 +34,9 @@ Currently implemented:
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
 - reusable form-field helpers in `ssw-components`
-- an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, and field-level validation
+- redirect-carried flash messages in `ssw-core` and cookie-backed flash handling in `ssw-actix`
+- cookie-backed CSRF hooks in `ssw-actix` with hidden form field helpers in `ssw-components`
+- an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example
 
