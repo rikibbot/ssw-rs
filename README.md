@@ -55,4 +55,4 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, and [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and styling contract.

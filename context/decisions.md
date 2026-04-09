@@ -68,3 +68,9 @@
 - decision: Implement the first CSRF protection slice as an Actix request hook based on a request-scoped context and double-submit-style cookie verification, rather than moving CSRF into `ssw-core` before more backends or app flows exist.
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
+
+- decision: Treat `ssw-components` as a Base UI-like foundation in philosophy, but not as a direct code-porting target; prioritize stable HTML structure, slot classes, state attributes, and styling freedom over copying client-oriented primitive implementations.
+  evidence: [`COMPONENTS.md`](../COMPONENTS.md)
+
+- decision: Separate component structure from default visual styling, with `ssw-components` owning semantic markup and a future theme layer owning first-party CSS.
+  evidence: [`COMPONENTS.md`](../COMPONENTS.md)
