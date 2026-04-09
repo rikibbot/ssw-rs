@@ -12,6 +12,7 @@
 - `ssw-html` now renders expression-based boolean HTML attributes with presence/absence semantics instead of `="true"` or `="false"` strings.
 - `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
+- `ssw-html` and `ssw-actix` now have field-level validation coverage with accessible error markup and preserved input state.
 
 ## Current Priorities
 
@@ -22,6 +23,7 @@
 - Keep the Actix integration thin and ergonomic, with helpers that expose the HTML model cleanly instead of hiding it.
 - Treat HTML semantics as first-class, not just string rendering ergonomics.
 - Pressure the stack with realistic mutation flows before designing larger abstractions for forms, validation, or flash state.
+- Prefer app-shaped validation patterns that expose what abstractions are actually missing, rather than inventing them upfront.
 
 ## Open Questions
 
@@ -29,11 +31,11 @@
 - How much form and validation support should live in core versus adapter crates.
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
-- What the next mutation-oriented step should be after basic form redisplay, such as flash messages, field-level errors, or CSRF hooks.
+- What the next mutation-oriented step should be after field-level validation, such as flash messages, CSRF hooks, or reusable field helpers.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 
 ## Next Likely Steps
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
-- Extend the Actix-backed example coverage toward field-level validation, flash messages, and redirect-driven mutation UX.
+- Extend the Actix-backed example coverage toward flash messages, CSRF hooks, and reusable mutation UX patterns.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

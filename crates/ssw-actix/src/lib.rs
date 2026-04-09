@@ -115,11 +115,67 @@ mod tests {
     }
 
     #[derive(Debug, Clone, Default)]
-    struct ContactFormState {
-        name: String,
-        email: String,
-        message: String,
+    struct ContactField {
+        value: String,
         error: Option<String>,
+    }
+
+    impl ContactField {
+        fn aria_invalid(&self) -> Option<&'static str> {
+            self.error.as_ref().map(|_| "true")
+        }
+
+        fn described_by(&self, id: &'static str) -> Option<&'static str> {
+            self.error.as_ref().map(|_| id)
+        }
+    }
+
+    #[derive(Debug, Clone, Default)]
+    struct ContactFormState {
+        name: ContactField,
+        email: ContactField,
+        message: ContactField,
+        summary_error: Option<String>,
+    }
+
+    impl ContactFormState {
+        fn has_errors(&self) -> bool {
+            self.summary_error.is_some()
+        }
+    }
+
+    fn validate_contact_form(form: &HashMap<String, String>) -> ContactFormState {
+        let mut state = ContactFormState {
+            name: ContactField {
+                value: form.get("name").cloned().unwrap_or_default(),
+                error: None,
+            },
+            email: ContactField {
+                value: form.get("email").cloned().unwrap_or_default(),
+                error: None,
+            },
+            message: ContactField {
+                value: form.get("message").cloned().unwrap_or_default(),
+                error: None,
+            },
+            summary_error: None,
+        };
+
+        if state.name.value.trim().is_empty() {
+            state.name.error = Some("Name is required.".to_owned());
+        }
+
+        if state.email.value.trim().is_empty() {
+            state.email.error = Some("Email is required.".to_owned());
+        } else if !state.email.value.contains('@') {
+            state.email.error = Some("Email must look valid.".to_owned());
+        }
+
+        if state.name.error.is_some() || state.email.error.is_some() {
+            state.summary_error = Some("Please fix the highlighted fields.".to_owned());
+        }
+
+        state
     }
 
     fn contact_page(state: &ContactFormState) -> Markup {
@@ -130,27 +186,57 @@ mod tests {
                     h2 { "Contact us" }
                     p { "Send a simple server-rendered form." }
 
-                    @if state.error.is_some() {
-                        p .notice .notice_error role="alert" {
-                            (state.error.as_deref().unwrap())
+                    @if state.summary_error.is_some() {
+                        div .notice .notice_error role="alert" {
+                            p { (state.summary_error.as_deref().unwrap()) }
+                            ul {
+                                @if state.name.error.is_some() {
+                                    li { (state.name.error.as_deref().unwrap()) }
+                                }
+                                @if state.email.error.is_some() {
+                                    li { (state.email.error.as_deref().unwrap()) }
+                                }
+                            }
                         }
                     }
 
                     form method="post" action="/contact" {
-                        div .field {
+                        div class=((".field", state.name.error.as_ref().map(|_| "field-error"))) {
                             label for="name" { "Name" }
-                            input #name type="text" name="name" value=(state.name.as_str()) required=(true);
+                            input #name
+                                type="text"
+                                name="name"
+                                value=(state.name.value.as_str())
+                                required=(true)
+                                aria_invalid=(state.name.aria_invalid())
+                                aria_describedby=(state.name.described_by("name-error"));
+                            @if state.name.error.is_some() {
+                                p #name_error .field_error {
+                                    (state.name.error.as_deref().unwrap())
+                                }
+                            }
                         }
 
-                        div .field {
+                        div class=((".field", state.email.error.as_ref().map(|_| "field-error"))) {
                             label for="email" { "Email" }
-                            input #email type="email" name="email" value=(state.email.as_str()) required=(true);
+                            input #email
+                                type="email"
+                                name="email"
+                                value=(state.email.value.as_str())
+                                required=(true)
+                                aria_invalid=(state.email.aria_invalid())
+                                aria_describedby=(state.email.described_by("email-error"));
+                            @if state.email.error.is_some() {
+                                p #email_error .field_error {
+                                    (state.email.error.as_deref().unwrap())
+                                }
+                            }
                         }
 
                         div .field {
                             label for="message" { "Message" }
                             textarea #message name="message" rows="4" {
-                                (state.message.as_str())
+                                (state.message.value.as_str())
                             }
                         }
 
@@ -195,15 +281,9 @@ mod tests {
     }
 
     async fn contact_post(form: web::Form<HashMap<String, String>>) -> HttpResponse {
-        let mut state = ContactFormState {
-            name: form.get("name").cloned().unwrap_or_default(),
-            email: form.get("email").cloned().unwrap_or_default(),
-            message: form.get("message").cloned().unwrap_or_default(),
-            error: None,
-        };
+        let state = validate_contact_form(&form);
 
-        if state.name.trim().is_empty() || state.email.trim().is_empty() {
-            state.error = Some("Name and email are required.".to_owned());
+        if state.has_errors() {
             return page(contact_page(&state));
         }
 
@@ -304,7 +384,7 @@ mod tests {
                 .uri("/contact")
                 .set_form([
                     ("name", ""),
-                    ("email", "sprite@example.com"),
+                    ("email", "sprite-at-example.com"),
                     ("message", "Hello"),
                 ])
                 .to_request(),
@@ -313,8 +393,13 @@ mod tests {
         assert_eq!(invalid_response.status(), StatusCode::OK);
         let invalid_body = to_bytes(invalid_response.into_body()).await.unwrap();
         let invalid_body = std::str::from_utf8(&invalid_body).unwrap();
-        assert!(invalid_body.contains("Name and email are required."));
-        assert!(invalid_body.contains("value=\"sprite@example.com\""));
+        assert!(invalid_body.contains("Please fix the highlighted fields."));
+        assert!(invalid_body.contains("Name is required."));
+        assert!(invalid_body.contains("Email must look valid."));
+        assert!(invalid_body.contains("value=\"sprite-at-example.com\""));
+        assert!(invalid_body.contains("aria-invalid=\"true\""));
+        assert!(invalid_body.contains("aria-describedby=\"name-error\""));
+        assert!(invalid_body.contains("aria-describedby=\"email-error\""));
         assert!(
             invalid_body
                 .contains("<textarea id=\"message\" name=\"message\" rows=\"4\">Hello</textarea>")

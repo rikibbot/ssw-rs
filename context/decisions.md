@@ -47,3 +47,6 @@
 
 - decision: Use Actix-backed end-to-end form flows to shape the next abstraction layer, and avoid inventing generic form APIs in `ssw-core` until invalid redisplay, field errors, and redirect flows have more real usage pressure.
   evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
+
+- decision: Keep field-level validation logic explicit in the Actix-backed example for now, including per-field errors, `aria-invalid`, and `aria-describedby`, so the next abstraction layer is based on real SSR form markup patterns rather than guessed APIs.
+  evidence: [`crates/ssw-actix/src/lib.rs`](../crates/ssw-actix/src/lib.rs)
