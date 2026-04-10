@@ -9,16 +9,13 @@ use ssw_components::{
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_html::{Markup, html, page as html_page};
 
-const COMPONENT_CSS: &str = include_str!("../../../styles/ssw-components-default.css");
+const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
 const APP_CSS: &str = r#"
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgb(21 101 192 / 0.12), transparent 26rem),
-    radial-gradient(circle at top right, rgb(15 23 42 / 0.05), transparent 24rem),
-    linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
-  color: #1f2933;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #fafafa 0%, #f4f4f5 100%);
+  color: var(--ssw-color-text, #09090b);
+  font-family: var(--ssw-font-body, "IBM Plex Sans", "Segoe UI", sans-serif);
 }
 
 a {
@@ -26,50 +23,51 @@ a {
 }
 
 .demo-link {
-  color: #1565c0;
+  color: #18181b;
   font-weight: 600;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
 }
 
 .demo-link:hover {
-  text-decoration: underline;
+  color: #09090b;
 }
 
 .demo-shell {
   display: grid;
-  gap: 1.5rem;
-  padding: 2.5rem 0 3.5rem;
+  gap: 1.75rem;
+  padding: 2.75rem 0 3.5rem;
 }
 
 .demo-hero {
   display: grid;
-  gap: 0.9rem;
-  max-width: 56rem;
+  gap: 0.8rem;
+  max-width: 48rem;
 }
 
 .demo-kicker {
   margin: 0;
-  color: #1565c0;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: #71717a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .demo-title {
   margin: 0;
-  max-width: 16ch;
-  font-size: clamp(1.9rem, 4vw, 3rem);
-  line-height: 0.94;
-  letter-spacing: -0.045em;
+  max-width: 15ch;
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
 }
 
 .demo-copy {
-  max-width: 44rem;
+  max-width: 42rem;
   margin: 0;
-  color: #52606d;
+  color: #52525b;
   font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .demo-grid {
@@ -81,7 +79,7 @@ a {
 .demo-points {
   margin: 0;
   padding-left: 1.1rem;
-  color: #52606d;
+  color: #52525b;
   line-height: 1.6;
 }
 
@@ -118,7 +116,7 @@ a {
 
 .demo-card-copy {
   margin: 0;
-  color: #52606d;
+  color: #52525b;
   line-height: 1.6;
 }
 
@@ -255,7 +253,7 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                 p class="demo-kicker" { "Server Side Web" }
                 h1 class="demo-title" { "A small intake flow, rendered on the server." }
                 p class="demo-copy" {
-                    "This example uses the current ssw-rs stack: document rendering, stable component classes, form fields, select, flash messages, CSRF protection, and a linked first-party stylesheet."
+                    "This example uses the current ssw-rs stack: document rendering, stable component classes, form fields, select, flash messages, CSRF protection, and an optional first-party theme stylesheet."
                 }
                 p class="demo-copy" {
                     a class="demo-link" href="/style-guide" { "Browse the live style guide" }
@@ -343,7 +341,7 @@ fn style_guide_page() -> Markup {
             div class="demo-grid" {
                 (section(stack(html! {
                     h2 class="demo-card-title" { "Notices and actions" }
-                    p class="demo-card-copy" { "These are the current feedback and action primitives." }
+                    p class="demo-card-copy" { "These are the current primitives with the optional default theme applied." }
                     div class="demo-style-grid" {
                         (alert("Informational notice"))
                         (flash_notice(&FlashMessage::success("Successful flash message")))
@@ -357,7 +355,7 @@ fn style_guide_page() -> Markup {
 
                 (section(stack(html! {
                     h2 class="demo-card-title" { "Fields and states" }
-                    p class="demo-card-copy" { "Inputs, textarea, and select should remain legible without JavaScript." }
+                    p class="demo-card-copy" { "Inputs, textarea, and select should remain useful without JavaScript, even when the theme is swapped out." }
                     (text_input(&valid_name))
                     (select(&invalid_track, &options))
                     (textarea(&preview_message, 4))
@@ -390,7 +388,7 @@ fn thanks_page(flashes: &[FlashMessage]) -> Markup {
 async fn stylesheet() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/css; charset=utf-8")
-        .body(format!("{COMPONENT_CSS}\n{APP_CSS}"))
+        .body(format!("{THEME_CSS}\n{APP_CSS}"))
 }
 
 async fn intake_get(request: HttpRequest) -> HttpResponse {

@@ -18,13 +18,13 @@
 - `ssw-actix` now exposes cookie-backed CSRF hooks through a `RequestContext`, and the contact form now uses hidden CSRF fields plus request-time verification.
 - The repository now has a dedicated `COMPONENTS.md` design document that defines the `ssw-components` styling contract, token strategy, Base UI-inspired positioning, and initial component scope.
 - The current `ssw-components` helpers now implement the styling contract with stable `ssw-*` classes, slot class names, and `data-invalid` or `data-level` hooks.
-- A first default stylesheet now exists at `styles/ssw-components-default.css` to make the token and class contract concrete.
+- `ssw-components` is now explicitly unstyled by default, and the first-party visual layer now lives separately at `styles/ssw-theme-default.css`.
 - `ssw-components` now also includes the first layout and action primitives: `button`, `submit_button`, `container`, `section`, and `stack`.
 - `ssw-components` now includes a native `select` helper with stable classes and selected-option handling driven by the current field value.
 - A workspace example app now exists at `examples/ssw-intake-demo`, exercising the current component, flash, CSRF, layout, and stylesheet stack in a real binary.
 - The example app now includes a dedicated `/style-guide` route so visual review of the current primitives does not depend on the intake flow alone.
 - The repo now includes `scripts/capture-intake-demo.sh` so visual review can produce repeatable screenshots for `/` and `/style-guide`.
-- The default stylesheet and example shell have now had an initial screenshot-driven polish pass, improving card surfaces, control states, and page rhythm without growing the component API.
+- The optional default theme and example shell have now had an initial screenshot-driven polish pass, improving card surfaces, control states, and page rhythm without growing the component API.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -61,5 +61,6 @@
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
+- Keep the primitive layer structurally stable while iterating on the optional default theme separately.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as top navigation and a polished select field wrapper story.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

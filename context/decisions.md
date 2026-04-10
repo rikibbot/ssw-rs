@@ -77,7 +77,7 @@
 
 - decision: Apply the styling contract to the existing component helpers using explicit class strings and `data-*` state hooks, even where the current HTML macro shorthand is not expressive enough for the desired class naming convention.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
-  evidence: [`styles/ssw-components-default.css`](../styles/ssw-components-default.css)
+  evidence: [`styles/ssw-theme-default.css`](../styles/ssw-theme-default.css)
 
 - decision: Keep the next `ssw-components` expansion focused on primitives with strong no-JS HTML baselines, starting with button and simple layout wrappers, before attempting more interaction-heavy widgets.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
@@ -91,3 +91,7 @@
 
 - decision: Treat screenshot capture as part of the normal refinement loop by keeping a small repo-local script for the example app, instead of relying on ad hoc browser commands each time.
   evidence: [`scripts/capture-intake-demo.sh`](../scripts/capture-intake-demo.sh)
+
+- decision: Keep `ssw-components` unstyled by default, and treat the first-party CSS as an optional `shadcn/ui`-inspired theme layer rather than a component-default stylesheet.
+  evidence: [`COMPONENTS.md`](../COMPONENTS.md)
+  evidence: [`styles/ssw-theme-default.css`](../styles/ssw-theme-default.css)

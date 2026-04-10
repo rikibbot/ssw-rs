@@ -19,7 +19,7 @@ The important difference is that `ssw-components` is being built for an HTML-fir
 - Components render meaningful HTML before any JavaScript runs.
 - Accessibility semantics are part of the component contract, not an optional add-on.
 - Styling is explicit, stable, and easy to override.
-- Components are useful with no default CSS, but there is a clear path for a first-party default theme.
+- Components are unstyled by default, but there is a clear path for a first-party default theme.
 - Advanced interaction stays optional and progressive.
 - Component APIs stay small and predictable.
 
@@ -47,6 +47,23 @@ What not to copy directly:
 - React hooks and client-side state machines
 - hydration-first interaction patterns
 - primitives whose baseline behavior depends on JavaScript
+
+## Relationship to shadcn/ui
+
+`shadcn/ui` is a good reference for the first-party default theme, not for the primitive layer.
+
+What to borrow:
+
+- restrained visual hierarchy
+- clean card and field treatments
+- strong spacing and typography rhythm
+- neutral color palette with carefully placed emphasis
+
+What not to copy directly:
+
+- React-specific component APIs
+- Tailwind-dependent implementation details
+- the assumption that the styled version is the primary public interface
 
 If code is borrowed from external libraries in the future, it should be limited to narrowly scoped enhancement logic where the match is real and the licensing and maintenance burden are clear.
 
@@ -121,7 +138,7 @@ The framework should separate component structure from default visual styling.
 Recommended direction:
 
 - `ssw-components`: semantic HTML, accessibility semantics, stable classes and data attributes
-- future `ssw-theme-default` or `ssw-styles-default`: optional first-party CSS package
+- `ssw-theme-default`: optional first-party CSS theme
 
 This keeps the component crate durable and avoids locking the framework to a single visual taste too early.
 
@@ -129,6 +146,7 @@ Short version:
 
 - structure lives in Rust
 - theme lives in CSS
+- primitives remain useful with no theme loaded
 
 ## DOM and state rules
 
@@ -202,13 +220,14 @@ Avoid:
 - generic configuration objects that hide the output structure
 - component APIs that invent new concepts when HTML already has one
 
-## Default style expectations
+## Default theme expectations
 
-The first-party default style should eventually feel intentional and polished, but it should not drive the initial API.
+The first-party default theme should feel intentional and polished, but it must remain optional.
 
 The immediate goal is a styling contract that can support:
 
-- a restrained, professional default theme
+- unstyled primitives by default
+- a first-party default theme with a `shadcn/ui`-like aesthetic
 - app-level overrides with plain CSS
 - alternate themes without forking component markup
 
@@ -226,15 +245,15 @@ That means:
 1. Stabilize the component styling contract.
 2. Add stable class names and state attributes to the existing field and notice helpers.
    status: done in the current `ssw-components` helpers.
-3. Create a small first-party default stylesheet, even if it is still rough.
-   status: initial stylesheet added at `styles/ssw-components-default.css`.
+3. Keep primitives unstyled by default and move any first-party visual treatment into a separate theme file.
+   status: initial theme split now uses `styles/ssw-theme-default.css` instead of a component-default stylesheet.
 4. Add the first layout primitives: container, section, stack.
    status: initial `container`, `section`, and `stack` helpers added.
 5. Add simple form controls like button and select.
    status: initial button helpers and native select helper added.
 6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
-   status: first example app now exists at `examples/ssw-intake-demo`.
-   note: the example now also exposes a `/style-guide` route to make visual review of the current primitives cheap.
+   status: first example app now exists at `examples/ssw-intake-demo`, and it currently applies `styles/ssw-theme-default.css`.
+   note: the example also exposes a `/style-guide` route to make visual review of the current primitives and theme cheap.
 
 ## Open questions
 
@@ -251,7 +270,8 @@ Do this first:
 
 - define the styling contract
 - keep the component set small
-- build a thin first-party default CSS layer
+- keep primitives unstyled by default
+- build a thin first-party theme layer separately
 - use a real example app to pressure the API
 
 That is a much more solid foundation than copying advanced client-oriented primitives too early.

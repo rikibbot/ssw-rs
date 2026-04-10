@@ -37,7 +37,7 @@ Currently implemented:
 - redirect-carried flash messages in `ssw-core` and cookie-backed flash handling in `ssw-actix`
 - cookie-backed CSRF hooks in `ssw-actix` with hidden form field helpers in `ssw-components`
 - stable `ssw-*` classes and `data-*` state hooks on the current `ssw-components` primitives
-- a first default component stylesheet at `styles/ssw-components-default.css`
+- an optional first-party default theme stylesheet at `styles/ssw-theme-default.css`
 - first layout and action primitives in `ssw-components`, including `button`, `container`, `section`, and `stack`
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
@@ -60,7 +60,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, and [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and styling contract.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, and [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split.
 
 Run the current example app with:
 
