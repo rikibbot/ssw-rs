@@ -5,6 +5,7 @@ members = [
     "crates/ssw-html",
     "crates/ssw-html-macros",
     "crates/ssw-components",
+    "examples/ssw-intake-demo",
 ]
 resolver = "2"
 

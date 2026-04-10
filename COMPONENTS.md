@@ -231,8 +231,9 @@ That means:
 4. Add the first layout primitives: container, section, stack.
    status: initial `container`, `section`, and `stack` helpers added.
 5. Add simple form controls like button and select.
-   status: initial button helpers added; select still pending.
+   status: initial button helpers and native select helper added.
 6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
+   status: first example app now exists at `examples/ssw-intake-demo`.
 
 ## Open questions
 

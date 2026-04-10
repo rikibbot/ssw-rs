@@ -20,6 +20,8 @@
 - The current `ssw-components` helpers now implement the styling contract with stable `ssw-*` classes, slot class names, and `data-invalid` or `data-level` hooks.
 - A first default stylesheet now exists at `styles/ssw-components-default.css` to make the token and class contract concrete.
 - `ssw-components` now also includes the first layout and action primitives: `button`, `submit_button`, `container`, `section`, and `stack`.
+- `ssw-components` now includes a native `select` helper with stable classes and selected-option handling driven by the current field value.
+- A workspace example app now exists at `examples/ssw-intake-demo`, exercising the current component, flash, CSRF, layout, and stylesheet stack in a real binary.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -54,7 +56,6 @@
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
-- Build a small example app that uses the current flash, CSRF, and form-field stack outside of test-only handlers.
-- Add the first layout primitives and simple controls on top of the new component class and token contract.
-- Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, especially `select`, then pressure the current stylesheet in a real example app.
+- Pressure the new example app until it reveals what should change in component APIs, request context, and asset ergonomics.
+- Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as top navigation and a polished select field wrapper story.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

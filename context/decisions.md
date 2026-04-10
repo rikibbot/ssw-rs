@@ -82,3 +82,6 @@
 - decision: Keep the next `ssw-components` expansion focused on primitives with strong no-JS HTML baselines, starting with button and simple layout wrappers, before attempting more interaction-heavy widgets.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
   evidence: [`COMPONENTS.md`](../COMPONENTS.md)
+
+- decision: Validate the current component and mutation stack through a real workspace example app before growing more abstractions, so future API moves are shaped by app-level pressure instead of only tests.
+  evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)

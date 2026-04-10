@@ -12,6 +12,30 @@ pub enum ButtonVariant {
     Secondary,
 }
 
+/// A single option for the native select helper.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SelectOption<'a> {
+    value: &'a str,
+    label: &'a str,
+}
+
+impl<'a> SelectOption<'a> {
+    /// Creates a select option with a form value and visible label.
+    pub fn new(value: &'a str, label: &'a str) -> Self {
+        Self { value, label }
+    }
+
+    /// Returns the submitted value for the option.
+    pub fn value(&self) -> &str {
+        self.value
+    }
+
+    /// Returns the visible label for the option.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+}
+
 impl ButtonVariant {
     /// Returns a stable lowercase variant identifier for styling hooks.
     pub fn as_str(&self) -> &'static str {
@@ -267,6 +291,29 @@ pub fn textarea(field_state: &Field<'_>, rows: usize) -> Markup {
     )
 }
 
+/// Renders a native select control with label, options, and error wiring.
+pub fn select(field_state: &Field<'_>, options: &[SelectOption<'_>]) -> Markup {
+    field(
+        field_state,
+        html! {
+            select
+                class="ssw-select"
+                data_invalid=(field_state.data_invalid())
+                id=(field_state.id())
+                name=(field_state.name())
+                required=(field_state.is_required())
+                aria_invalid=(field_state.aria_invalid())
+                aria_describedby=(field_state.described_by()) {
+                @for option in options {
+                    option value=(option.value()) selected=(field_state.value_str() == option.value()) {
+                        (option.label())
+                    }
+                }
+            }
+        },
+    )
+}
+
 /// Renders a hidden input, useful for CSRF tokens and method overrides.
 pub fn hidden_input(name: impl AsRef<str>, value: impl AsRef<str>) -> Markup {
     html! {
@@ -288,8 +335,9 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, alert, button, button_with_variant, container, email_input,
-        flash_notice, hidden_input, section, stack, submit_button, text_input, textarea,
+        ButtonVariant, Field, SelectOption, alert, button, button_with_variant, container,
+        email_input, flash_notice, hidden_input, section, select, stack, submit_button, text_input,
+        textarea,
     };
 
     #[test]
@@ -410,6 +458,32 @@ mod tests {
             markup
                 .as_str()
                 .contains("<div class=\"ssw-stack\">Hello</div>")
+        );
+    }
+
+    #[test]
+    fn select_marks_current_option_and_uses_stable_classes() {
+        let field = Field::new("topic", "topic", "Topic")
+            .value("support")
+            .required(true);
+        let options = [
+            SelectOption::new("", "Choose a topic"),
+            SelectOption::new("support", "Support"),
+            SelectOption::new("sales", "Sales"),
+        ];
+
+        let markup = select(&field, &options);
+
+        assert!(markup.as_str().contains("class=\"ssw-select\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("<option value=\"support\" selected>Support</option>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<label class=\"ssw-field__label\" for=\"topic\">Topic</label>")
         );
     }
 }

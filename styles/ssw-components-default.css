@@ -26,6 +26,7 @@
 .ssw-button,
 .ssw-field,
 .ssw-input,
+.ssw-select,
 .ssw-textarea,
 .ssw-container,
 .ssw-section,
@@ -101,6 +102,7 @@
 }
 
 .ssw-input,
+.ssw-select,
 .ssw-textarea {
   width: 100%;
   padding: 0.7rem 0.85rem;
@@ -122,6 +124,7 @@
 }
 
 .ssw-input:focus,
+.ssw-select:focus,
 .ssw-textarea:focus {
   outline: none;
   border-color: var(--ssw-color-accent);
@@ -129,6 +132,7 @@
 }
 
 .ssw-input[data-invalid="true"],
+.ssw-select[data-invalid="true"],
 .ssw-textarea[data-invalid="true"] {
   border-color: var(--ssw-color-danger);
   background: color-mix(in srgb, var(--ssw-color-danger) 4%, white);
