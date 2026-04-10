@@ -24,6 +24,7 @@
 - A workspace example app now exists at `examples/ssw-intake-demo`, exercising the current component, flash, CSRF, layout, and stylesheet stack in a real binary.
 - The example app now includes a dedicated `/style-guide` route so visual review of the current primitives does not depend on the intake flow alone.
 - The repo now includes `scripts/capture-intake-demo.sh` so visual review can produce repeatable screenshots for `/` and `/style-guide`.
+- The default stylesheet and example shell have now had an initial screenshot-driven polish pass, improving card surfaces, control states, and page rhythm without growing the component API.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities

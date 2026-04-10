@@ -14,7 +14,8 @@ const APP_CSS: &str = r#"
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgb(21 101 192 / 0.08), transparent 28rem),
+    radial-gradient(circle at top left, rgb(21 101 192 / 0.12), transparent 26rem),
+    radial-gradient(circle at top right, rgb(15 23 42 / 0.05), transparent 24rem),
     linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
   color: #1f2933;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
@@ -36,14 +37,14 @@ a {
 
 .demo-shell {
   display: grid;
-  gap: 1.25rem;
-  padding: 2.25rem 0 3.25rem;
+  gap: 1.5rem;
+  padding: 2.5rem 0 3.5rem;
 }
 
 .demo-hero {
   display: grid;
-  gap: 0.85rem;
-  max-width: 60rem;
+  gap: 0.9rem;
+  max-width: 56rem;
 }
 
 .demo-kicker {
@@ -57,23 +58,23 @@ a {
 
 .demo-title {
   margin: 0;
-  max-width: 18ch;
-  font-size: clamp(1.9rem, 4.4vw, 3.25rem);
-  line-height: 0.92;
-  letter-spacing: -0.04em;
+  max-width: 16ch;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
 }
 
 .demo-copy {
-  max-width: 46rem;
+  max-width: 44rem;
   margin: 0;
   color: #52606d;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .demo-grid {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
@@ -93,6 +94,7 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  padding-top: 0.25rem;
 }
 
 .demo-style-grid {
@@ -109,8 +111,9 @@ a {
 
 .demo-card-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .demo-card-copy {
@@ -121,7 +124,7 @@ a {
 
 @media (min-width: 56rem) {
   .demo-grid {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-items: start;
   }
 }
