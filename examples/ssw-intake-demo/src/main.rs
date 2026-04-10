@@ -4,8 +4,8 @@ use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
 use ssw_components::{
     ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header, container,
-    email_input, flash_notice, hidden_input, page_actions, page_header, page_shell, section,
-    select, stack, submit_button, text_input, textarea,
+    email_input, flash_notice, hidden_input, link_button, page_actions, page_header, page_shell,
+    section, select, stack, submit_button, text_input, textarea,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_html::{Markup, fonts, html, page as html_page};
@@ -21,17 +21,6 @@ body {
 
 a {
   color: inherit;
-}
-
-.demo-link {
-  color: #18181b;
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 0.16em;
-}
-
-.demo-link:hover {
-  color: #09090b;
 }
 
 .demo-grid {
@@ -203,7 +192,7 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/style-guide" { "Browse the live style guide" }
+                    (link_button("/style-guide", "Browse the live style guide"))
                 })),
             ))
 
@@ -285,7 +274,7 @@ fn style_guide_page() -> Markup {
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/" { "Back to the intake demo" }
+                    (link_button("/", "Back to the intake demo"))
                 })),
             ))
 
@@ -331,9 +320,9 @@ fn thanks_page(flashes: &[FlashMessage]) -> Markup {
                         "The redirect, flash message, and success page are all coming from the current ssw-rs request model."
                     }
                 }))
-                p class="ssw-card-header__body" {
-                    a href="/" { "Back to the intake form" }
-                }
+                (page_actions(html! {
+                    (link_button("/", "Back to the intake form"))
+                }))
             })))
         },
     )

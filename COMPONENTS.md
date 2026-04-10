@@ -257,7 +257,9 @@ That means:
    status: initial `page_shell`, `page_header`, `page_actions`, and `card_header` helpers added from the intake demo.
 7. Add the first app-level navigation and empty-state helpers once a second example reveals the need for them.
    status: initial `top_nav` and `empty_state` helpers added while building the projects demo.
-8. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
+8. Extract repeated page-level metadata and link-action patterns before adding broader app-shell surface area.
+   status: initial `link_button`, `MetaItem`, and `meta_list` helpers now replace app-local link and metadata markup across the examples.
+9. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
    status: first example app now exists at `examples/ssw-intake-demo`, and it currently applies `styles/ssw-theme-default.css`.
    note: the example also exposes a `/style-guide` route to make visual review of the current primitives and theme cheap.
 

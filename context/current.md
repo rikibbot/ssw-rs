@@ -32,6 +32,7 @@
 - `ssw-components` is now internally split into domain modules (`button`, `field`, `layout`, `notice`, `page`) while keeping the public API flat through re-exports, which should make the next phase of component work easier to scale.
 - `ssw-components` now also includes the first reusable app-shell primitives (`page_shell`, `page_header`, `page_actions`, `card_header`), and the intake demo now uses them instead of app-local hero and card-heading markup.
 - `ssw-components` now also includes a simple `top_nav` and `empty_state`, and a second example app now exists at `examples/ssw-projects-demo` to pressure list/detail/edit flows against the current shell, nav, empty-state, flash, and form primitives.
+- `ssw-components` now also includes `link_button`, `MetaItem`, and `meta_list`, and both example apps now use those shared page-level helpers instead of app-local link and metadata markup.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 
 ## Current Priorities
@@ -70,5 +71,5 @@
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
-- Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as top navigation and a polished select field wrapper story.
+- Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

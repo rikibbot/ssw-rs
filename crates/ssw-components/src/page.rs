@@ -8,6 +8,30 @@ pub struct NavItem<'a> {
     current: bool,
 }
 
+/// A single labeled row for compact project or entity metadata.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MetaItem<'a> {
+    label: &'a str,
+    value: &'a str,
+}
+
+impl<'a> MetaItem<'a> {
+    /// Creates a metadata row with a label and plain-text value.
+    pub fn new(label: &'a str, value: &'a str) -> Self {
+        Self { label, value }
+    }
+
+    /// Returns the row label.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+
+    /// Returns the row value.
+    pub fn value(&self) -> &str {
+        self.value
+    }
+}
+
 impl<'a> NavItem<'a> {
     /// Creates a navigation item with an href and visible label.
     pub fn new(href: &'a str, label: &'a str) -> Self {
@@ -143,6 +167,20 @@ pub fn empty_state(
             @if actions.is_some() {
                 div class="ssw-empty-state__actions" {
                     (actions.unwrap())
+                }
+            }
+        }
+    }
+}
+
+/// Renders a simple labeled metadata list.
+pub fn meta_list(items: &[MetaItem<'_>]) -> Markup {
+    html! {
+        dl class="ssw-meta-list" {
+            @for item in items {
+                div class="ssw-meta-list__row" {
+                    dt class="ssw-meta-list__label" { (item.label()) }
+                    dd class="ssw-meta-list__value" { (item.value()) }
                 }
             }
         }

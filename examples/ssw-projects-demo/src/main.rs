@@ -4,9 +4,9 @@ use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
 use ssw_components::{
-    Field, NavItem, SelectOption, button_with_variant, card_header, container, email_input,
-    empty_state, flash_notice, hidden_input, page_actions, page_header, page_shell, section,
-    select, stack, submit_button, text_input, textarea, top_nav,
+    Field, MetaItem, NavItem, SelectOption, button_with_variant, card_header, container,
+    email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
+    page_header, page_shell, section, select, stack, submit_button, text_input, textarea, top_nav,
 };
 use ssw_core::{FlashMessage, Response};
 use ssw_html::{Markup, fonts, html, page as html_page};
@@ -22,17 +22,6 @@ body {
 
 a {
   color: inherit;
-}
-
-.demo-link {
-  color: #18181b;
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 0.16em;
-}
-
-.demo-link:hover {
-  color: #09090b;
 }
 
 .projects-grid {
@@ -62,7 +51,7 @@ a {
 }
 
 .project-card__eyebrow,
-.project-meta dt {
+.ssw-meta-list__label {
   margin: 0;
   color: var(--ssw-color-text-muted);
   font-size: 0.75rem;
@@ -81,22 +70,12 @@ a {
 }
 
 .project-card__summary,
-.project-meta dd,
+.ssw-meta-list__value,
 .detail-copy {
   margin: 0;
   color: #52525b;
   font-size: 0.95rem;
   line-height: 1.6;
-}
-
-.project-meta {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.project-meta__row {
-  display: grid;
-  gap: 0.2rem;
 }
 
 .project-form {
@@ -193,6 +172,30 @@ fn nav_items(current: &str) -> [NavItem<'static>; 2] {
     [
         NavItem::new("/projects", "Projects").current(current == "projects"),
         NavItem::new("/projects/archive", "Archive").current(current == "archive"),
+    ]
+}
+
+fn overview_meta_items() -> [MetaItem<'static>; 3] {
+    [
+        MetaItem::new("Pages", "List, detail, archive, and edit"),
+        MetaItem::new(
+            "Primitives under pressure",
+            "Top nav, page header, action rows, card headers, empty states, field helpers",
+        ),
+        MetaItem::new(
+            "Intentional limit",
+            "No persistence yet, so the focus stays on rendering and request flow.",
+        ),
+    ]
+}
+
+fn project_meta_items(project: Project) -> [MetaItem<'static>; 5] {
+    [
+        MetaItem::new("Status", project.status),
+        MetaItem::new("Track", project.track),
+        MetaItem::new("Owner", project.owner),
+        MetaItem::new("Due", project.due),
+        MetaItem::new("Contact", project.contact_email),
     ]
 }
 
@@ -347,7 +350,7 @@ fn projects_page(flashes: &[FlashMessage]) -> Markup {
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/projects/archive" { "View archive" }
+                    (link_button("/projects/archive", "View archive"))
                 })),
             ))
 
@@ -374,20 +377,7 @@ fn projects_page(flashes: &[FlashMessage]) -> Markup {
                     (card_header("Why this example matters", html! {
                         p { "The intake flow was good for forms. This one is better for page shell and app-level composition." }
                     }))
-                    dl class="project-meta" {
-                        div class="project-meta__row" {
-                            dt { "Pages" }
-                            dd { "List, detail, archive, and edit" }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Primitives under pressure" }
-                            dd { "Top nav, page header, action rows, card headers, empty states, field helpers" }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Intentional limit" }
-                            dd { "No persistence yet, so the focus stays on rendering and request flow." }
-                        }
-                    }
+                    (meta_list(&overview_meta_items()))
                 })))
             }
         },
@@ -408,7 +398,7 @@ fn archive_page() -> Markup {
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/projects" { "Back to active projects" }
+                    (link_button("/projects", "Back to active projects"))
                 })),
             ))
 
@@ -420,7 +410,7 @@ fn archive_page() -> Markup {
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/projects" { "Browse active work" }
+                    (link_button("/projects", "Browse active work"))
                 })),
             ))
         },
@@ -439,8 +429,8 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
                     p { (project.summary) }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href="/projects" { "All projects" }
-                    a class="demo-link" href=(format!("/projects/{}/edit", project.slug)) { "Edit brief" }
+                    (link_button("/projects", "All projects"))
+                    (link_button(format!("/projects/{}/edit", project.slug), "Edit brief"))
                 })),
             ))
 
@@ -462,28 +452,7 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
                     (card_header("Project metadata", html! {
                         p { "This is intentionally boring data, because the layout should still feel deliberate." }
                     }))
-                    dl class="project-meta" {
-                        div class="project-meta__row" {
-                            dt { "Status" }
-                            dd { (project.status) }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Track" }
-                            dd { (project.track) }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Owner" }
-                            dd { (project.owner) }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Due" }
-                            dd { (project.due) }
-                        }
-                        div class="project-meta__row" {
-                            dt { "Contact" }
-                            dd { (project.contact_email) }
-                        }
-                    }
+                    (meta_list(&project_meta_items(project)))
                 })))
             }
         },
@@ -532,7 +501,7 @@ fn project_edit_page(
                     }
                 },
                 Some(page_actions(html! {
-                    a class="demo-link" href=(format!("/projects/{}", project.slug)) { "Back to project" }
+                    (link_button(format!("/projects/{}", project.slug), "Back to project"))
                 })),
             ))
 
@@ -561,7 +530,7 @@ fn project_edit_page(
                         (textarea(&summary, 6))
                         (page_actions(html! {
                             (submit_button("Review update"))
-                            a class="demo-link" href=(format!("/projects/{}", project.slug)) { "Cancel" }
+                            (link_button(format!("/projects/{}", project.slug), "Cancel"))
                         }))
                     }
                 })))

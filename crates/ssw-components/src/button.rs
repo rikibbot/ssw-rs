@@ -43,3 +43,12 @@ pub fn submit_button(label: impl AsRef<str>) -> Markup {
         }
     }
 }
+
+/// Renders a link-shaped action for page headers and inline action rows.
+pub fn link_button(href: impl AsRef<str>, label: impl AsRef<str>) -> Markup {
+    html! {
+        a class="ssw-link-button" href=(href.as_ref()) {
+            (label.as_ref())
+        }
+    }
+}

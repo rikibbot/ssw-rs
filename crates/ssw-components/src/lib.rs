@@ -6,14 +6,15 @@ mod layout;
 mod notice;
 mod page;
 
-pub use button::{ButtonVariant, button, button_with_variant, submit_button};
+pub use button::{ButtonVariant, button, button_with_variant, link_button, submit_button};
 pub use field::{
     Field, SelectOption, email_input, field, hidden_input, select, text_input, textarea,
 };
 pub use layout::{container, section, stack};
 pub use notice::{alert, flash_notice};
 pub use page::{
-    NavItem, card_header, empty_state, page, page_actions, page_header, page_shell, top_nav,
+    MetaItem, NavItem, card_header, empty_state, meta_list, page, page_actions, page_header,
+    page_shell, top_nav,
 };
 
 #[cfg(test)]
@@ -22,10 +23,10 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, NavItem, SelectOption, alert, button, button_with_variant,
-        card_header, container, email_input, empty_state, flash_notice, hidden_input, page_actions,
-        page_header, page_shell, section, select, stack, submit_button, text_input, textarea,
-        top_nav,
+        ButtonVariant, Field, MetaItem, NavItem, SelectOption, alert, button, button_with_variant,
+        card_header, container, email_input, empty_state, flash_notice, hidden_input, link_button,
+        meta_list, page_actions, page_header, page_shell, section, select, stack, submit_button,
+        text_input, textarea, top_nav,
     };
 
     #[test]
@@ -143,6 +144,17 @@ mod tests {
 
         assert!(markup.as_str().contains("type=\"submit\""));
         assert!(markup.as_str().contains("Send"));
+    }
+
+    #[test]
+    fn link_button_renders_stable_link_markup() {
+        let markup = link_button("/projects", "Browse projects");
+
+        assert!(
+            markup
+                .as_str()
+                .contains("<a class=\"ssw-link-button\" href=\"/projects\">Browse projects</a>")
+        );
     }
 
     #[test]
@@ -276,6 +288,27 @@ mod tests {
             markup
                 .as_str()
                 .contains("class=\"ssw-empty-state__actions\"")
+        );
+    }
+
+    #[test]
+    fn meta_list_renders_labeled_rows() {
+        let items = [
+            MetaItem::new("Status", "Active"),
+            MetaItem::new("Owner", "Mina"),
+        ];
+        let markup = meta_list(&items);
+
+        assert!(markup.as_str().contains("class=\"ssw-meta-list\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("<dt class=\"ssw-meta-list__label\">Status</dt><dd class=\"ssw-meta-list__value\">Active</dd>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<dt class=\"ssw-meta-list__label\">Owner</dt><dd class=\"ssw-meta-list__value\">Mina</dd>")
         );
     }
 }

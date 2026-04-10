@@ -44,6 +44,7 @@ Currently implemented:
 - first layout and action primitives in `ssw-components`, including `button`, `container`, `section`, and `stack`
 - first page-shell primitives in `ssw-components`, including `page_shell`, `page_header`, `page_actions`, and `card_header`
 - first app-navigation and empty-state primitives in `ssw-components`, including `top_nav` and `empty_state`
+- shared page-link and metadata primitives in `ssw-components`, including `link_button`, `MetaItem`, and `meta_list`
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
@@ -100,6 +101,8 @@ Run the second example app with:
 ```bash
 cargo run -p ssw-projects-demo
 ```
+
+The two examples now share page-level primitives instead of app-local link and metadata markup, which makes them a better pressure test for what should stay in `ssw-components`.
 
 Useful capture knobs:
 
