@@ -7,7 +7,7 @@ use ssw_components::{
     flash_notice, hidden_input, section, select, stack, submit_button, text_input, textarea,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
-use ssw_html::{Markup, html, page as html_page};
+use ssw_html::{Markup, fonts, html, page as html_page};
 
 const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
 const APP_CSS: &str = r#"
@@ -15,7 +15,7 @@ body {
   margin: 0;
   background: linear-gradient(180deg, #fcfcfc 0%, #f4f4f5 100%);
   color: var(--ssw-color-text, #09090b);
-  font-family: var(--ssw-font-body, "IBM Plex Sans", "Segoe UI", sans-serif);
+  font-family: var(--ssw-font-body, "Inter", "Segoe UI", sans-serif);
 }
 
 a {
@@ -214,6 +214,7 @@ fn track_options() -> [SelectOption<'static>; 4] {
 
 fn app_page(title: &str, content: Markup) -> Markup {
     html_page(title)
+        .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
         .head(html! {
             link rel="stylesheet" href="/app.css";
         })

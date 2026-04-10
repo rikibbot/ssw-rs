@@ -99,3 +99,7 @@
 - decision: Keep the default theme visually restrained and utility-like, preferring denser spacing, flatter surfaces, lighter shadows, and quieter page chrome over a more editorial or decorative look.
   evidence: [`styles/ssw-theme-default.css`](../styles/ssw-theme-default.css)
   evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)
+
+- decision: Add Google Fonts as an optional `ssw-html` head helper, not as a hard dependency of `ssw-components` or the default theme, so remote font loading stays opt-in and can later be replaced by self-hosted assets.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
+  evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)

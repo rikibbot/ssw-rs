@@ -10,6 +10,7 @@
 - `ssw-html` now supports empty tags, `#id` and `.class` shorthand, optional attribute omission via `Option<T>`, and a small `Document` builder for page layouts.
 - `ssw-html` now supports class composition between `.class` shorthand and explicit `class=(...)` values.
 - `ssw-html` now renders expression-based boolean HTML attributes with presence/absence semantics instead of `="true"` or `="false"` strings.
+- `ssw-html` now exposes a small `fonts` helper module for Google Fonts `<head>` integration, including preconnect tags and stylesheet URLs.
 - `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
 - `ssw-html` and `ssw-actix` now have field-level validation coverage with accessible error markup and preserved input state.
@@ -49,6 +50,7 @@
 - How much form and validation support should live in core versus adapter crates.
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
+- Whether remote font helpers should eventually sit behind a broader asset or self-hosting pipeline.
 - Whether flash transport should stay cookie-backed and unsigned, or move behind a more explicit application secret/session abstraction.
 - Whether the current cookie-backed CSRF hook should stay Actix-specific or eventually grow a backend-agnostic core shape.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.

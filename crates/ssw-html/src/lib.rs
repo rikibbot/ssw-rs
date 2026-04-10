@@ -11,6 +11,139 @@ use ssw_core::{HtmlKind, HtmlResponse, Render};
 
 pub use ssw_html_macros::html;
 
+/// Font loading helpers for document `<head>` markup.
+pub mod fonts {
+    use super::{Markup, html};
+
+    /// The supported `font-display` strategies for Google Fonts stylesheets.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum FontDisplay {
+        /// Lets the browser choose the loading strategy.
+        Auto,
+        /// Hides text until the font is ready.
+        Block,
+        /// Uses fallback text immediately, then swaps in the font.
+        Swap,
+        /// Uses a short block period before falling back.
+        Fallback,
+        /// Uses the font only if it loads immediately.
+        Optional,
+    }
+
+    impl FontDisplay {
+        fn as_str(self) -> &'static str {
+            match self {
+                Self::Auto => "auto",
+                Self::Block => "block",
+                Self::Swap => "swap",
+                Self::Fallback => "fallback",
+                Self::Optional => "optional",
+            }
+        }
+    }
+
+    /// A small helper for rendering Google Fonts `<link>` tags.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct GoogleFont {
+        family: String,
+        weights: Vec<u16>,
+        display: FontDisplay,
+    }
+
+    impl GoogleFont {
+        /// Creates a Google Fonts helper for a font family name.
+        pub fn new(family: impl Into<String>) -> Self {
+            Self {
+                family: family.into(),
+                weights: Vec::new(),
+                display: FontDisplay::Swap,
+            }
+        }
+
+        /// Adds a single font weight to the stylesheet request.
+        pub fn weight(mut self, weight: u16) -> Self {
+            self.weights.push(weight);
+            self
+        }
+
+        /// Replaces the requested font weights.
+        pub fn weights(mut self, weights: &[u16]) -> Self {
+            self.weights = weights.to_vec();
+            self
+        }
+
+        /// Sets the `font-display` strategy for the stylesheet request.
+        pub fn display(mut self, display: FontDisplay) -> Self {
+            self.display = display;
+            self
+        }
+
+        /// Uses `font-display: swap`.
+        pub fn display_swap(self) -> Self {
+            self.display(FontDisplay::Swap)
+        }
+
+        /// Returns the Google Fonts stylesheet URL.
+        pub fn stylesheet_url(&self) -> String {
+            let family = self.family.trim().replace(' ', "+");
+            let weights = normalized_weights(&self.weights);
+
+            if weights.is_empty() {
+                return format!(
+                    "https://fonts.googleapis.com/css2?family={family}&display={}",
+                    self.display.as_str()
+                );
+            }
+
+            let weights = weights
+                .iter()
+                .map(u16::to_string)
+                .collect::<Vec<_>>()
+                .join(";");
+
+            format!(
+                "https://fonts.googleapis.com/css2?family={family}:wght@{weights}&display={}",
+                self.display.as_str()
+            )
+        }
+
+        /// Renders preconnect and stylesheet tags for the font.
+        pub fn render(&self) -> Markup {
+            let stylesheet_url = self.stylesheet_url();
+
+            html! {
+                link rel="preconnect" href="https://fonts.googleapis.com";
+                link rel="preconnect" href="https://fonts.gstatic.com" crossorigin;
+                link rel="stylesheet" href=(stylesheet_url);
+            }
+        }
+    }
+
+    impl From<GoogleFont> for Markup {
+        fn from(font: GoogleFont) -> Self {
+            font.render()
+        }
+    }
+
+    impl From<&GoogleFont> for Markup {
+        fn from(font: &GoogleFont) -> Self {
+            font.render()
+        }
+    }
+
+    /// Creates a Google Fonts helper for a family name.
+    pub fn google_font(family: impl Into<String>) -> GoogleFont {
+        GoogleFont::new(family)
+    }
+
+    fn normalized_weights(weights: &[u16]) -> Vec<u16> {
+        let mut weights = weights.to_vec();
+        weights.sort_unstable();
+        weights.dedup();
+        weights
+    }
+}
+
 /// An owned HTML buffer.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Markup(String);
@@ -535,7 +668,7 @@ fn escape_into(output: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Markup, document, html, page};
+    use super::{Markup, document, fonts, html, page};
 
     #[test]
     fn escapes_text_content() {
@@ -736,6 +869,29 @@ mod tests {
         assert_eq!(
             markup.as_str(),
             "<button aria-expanded=\"false\">Toggle</button>"
+        );
+    }
+
+    #[test]
+    fn renders_google_font_head_markup() {
+        let markup = fonts::google_font("Inter")
+            .weights(&[600, 400, 500, 500])
+            .display_swap()
+            .render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap\">"
+        );
+    }
+
+    #[test]
+    fn renders_google_font_without_weights() {
+        let markup = fonts::google_font("Source Sans 3").render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Source+Sans+3&amp;display=swap\">"
         );
     }
 }

@@ -31,6 +31,7 @@ Currently implemented:
 
 - `ssw-html::html!` with Maud-like syntax
 - document and fragment rendering
+- first-class Google Fonts head helpers in `ssw-html::fonts`
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
 - reusable form-field helpers in `ssw-components`
@@ -47,9 +48,11 @@ Currently implemented:
 
 ```rust
 use ssw_html::{html, page};
+use ssw_html::fonts;
 
 let page = page("Dashboard")
     .body_class("app-shell")
+    .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
     .body(html! {
         main #app .page {
             h1 { "Server Side Web" }
