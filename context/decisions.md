@@ -103,3 +103,6 @@
 - decision: Add Google Fonts as an optional `ssw-html` head helper, not as a hard dependency of `ssw-components` or the default theme, so remote font loading stays opt-in and can later be replaced by self-hosted assets.
   evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)
   evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)
+
+- decision: Extend the `ssw-html::fonts` layer with local `@font-face` and preload helpers before building a larger asset pipeline, so apps can choose self-hosted fonts without changing their page-level composition model.
+  evidence: [`crates/ssw-html/src/lib.rs`](../crates/ssw-html/src/lib.rs)

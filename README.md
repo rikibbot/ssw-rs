@@ -31,7 +31,7 @@ Currently implemented:
 
 - `ssw-html::html!` with Maud-like syntax
 - document and fragment rendering
-- first-class Google Fonts head helpers in `ssw-html::fonts`
+- first-class remote and local font head helpers in `ssw-html::fonts`
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
 - reusable form-field helpers in `ssw-components`
@@ -52,7 +52,9 @@ use ssw_html::fonts;
 
 let page = page("Dashboard")
     .body_class("app-shell")
-    .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
+    .head(fonts::local_font("Inter", "/static/fonts/Inter.var.woff2")
+        .weight_range(100, 900)
+        .preload())
     .body(html! {
         main #app .page {
             h1 { "Server Side Web" }

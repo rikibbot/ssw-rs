@@ -42,6 +42,60 @@ pub mod fonts {
         }
     }
 
+    /// The supported font file formats for local `@font-face` rules.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum FontFormat {
+        /// A modern compressed web font.
+        Woff2,
+        /// The older Web Open Font Format.
+        Woff,
+        /// A TrueType font file.
+        TrueType,
+        /// An OpenType font file.
+        OpenType,
+    }
+
+    impl FontFormat {
+        fn css_format(self) -> &'static str {
+            match self {
+                Self::Woff2 => "woff2",
+                Self::Woff => "woff",
+                Self::TrueType => "truetype",
+                Self::OpenType => "opentype",
+            }
+        }
+
+        fn mime_type(self) -> &'static str {
+            match self {
+                Self::Woff2 => "font/woff2",
+                Self::Woff => "font/woff",
+                Self::TrueType => "font/ttf",
+                Self::OpenType => "font/otf",
+            }
+        }
+    }
+
+    /// The supported `font-style` values for local `@font-face` rules.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum FontStyle {
+        /// Upright text.
+        Normal,
+        /// Italic text.
+        Italic,
+        /// Oblique text.
+        Oblique,
+    }
+
+    impl FontStyle {
+        fn as_str(self) -> &'static str {
+            match self {
+                Self::Normal => "normal",
+                Self::Italic => "italic",
+                Self::Oblique => "oblique",
+            }
+        }
+    }
+
     /// A small helper for rendering Google Fonts `<link>` tags.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct GoogleFont {
@@ -131,9 +185,179 @@ pub mod fonts {
         }
     }
 
+    /// A small helper for rendering a local `@font-face` rule and optional preload tag.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct LocalFontFace {
+        family: String,
+        source: String,
+        format: Option<FontFormat>,
+        display: FontDisplay,
+        style: FontStyle,
+        weight: Option<String>,
+        preload: bool,
+        cross_origin: bool,
+    }
+
+    impl LocalFontFace {
+        /// Creates a local font helper for a family name and file URL.
+        pub fn new(family: impl Into<String>, source: impl Into<String>) -> Self {
+            Self {
+                family: family.into(),
+                source: source.into(),
+                format: None,
+                display: FontDisplay::Swap,
+                style: FontStyle::Normal,
+                weight: None,
+                preload: false,
+                cross_origin: false,
+            }
+        }
+
+        /// Declares the file format for the font source.
+        pub fn format(mut self, format: FontFormat) -> Self {
+            self.format = Some(format);
+            self
+        }
+
+        /// Sets the `font-display` strategy for the font face.
+        pub fn display(mut self, display: FontDisplay) -> Self {
+            self.display = display;
+            self
+        }
+
+        /// Uses `font-display: swap`.
+        pub fn display_swap(self) -> Self {
+            self.display(FontDisplay::Swap)
+        }
+
+        /// Sets the `font-style` for the font face.
+        pub fn style(mut self, style: FontStyle) -> Self {
+            self.style = style;
+            self
+        }
+
+        /// Uses `font-style: normal`.
+        pub fn normal(self) -> Self {
+            self.style(FontStyle::Normal)
+        }
+
+        /// Uses `font-style: italic`.
+        pub fn italic(self) -> Self {
+            self.style(FontStyle::Italic)
+        }
+
+        /// Uses `font-style: oblique`.
+        pub fn oblique(self) -> Self {
+            self.style(FontStyle::Oblique)
+        }
+
+        /// Sets a single font weight.
+        pub fn weight(mut self, weight: u16) -> Self {
+            self.weight = Some(weight.to_string());
+            self
+        }
+
+        /// Sets an inclusive font-weight range for variable fonts.
+        pub fn weight_range(mut self, start: u16, end: u16) -> Self {
+            self.weight = Some(format!("{start} {end}"));
+            self
+        }
+
+        /// Sets a custom `font-weight` value.
+        pub fn weight_value(mut self, value: impl Into<String>) -> Self {
+            self.weight = Some(value.into());
+            self
+        }
+
+        /// Emits a preload link for the font source.
+        pub fn preload(mut self) -> Self {
+            self.preload = true;
+            self
+        }
+
+        /// Adds `crossorigin` to the preload link.
+        pub fn cross_origin(mut self) -> Self {
+            self.cross_origin = true;
+            self
+        }
+
+        /// Renders preload and `@font-face` markup for the font.
+        pub fn render(&self) -> Markup {
+            let mut markup = Markup::new();
+
+            if self.preload {
+                let mime_type = self.format.map(FontFormat::mime_type);
+                let crossorigin = if self.cross_origin {
+                    Some("anonymous")
+                } else {
+                    None
+                };
+
+                markup.append(html! {
+                    link
+                        rel="preload"
+                        href=(self.source.as_str())
+                        as="font"
+                        type=(mime_type)
+                        crossorigin=(crossorigin);
+                });
+            }
+
+            let mut css = String::from("@font-face{font-family:\"");
+            push_css_string(&mut css, &self.family);
+            css.push_str("\";src:url(\"");
+            push_css_string(&mut css, &self.source);
+            css.push_str("\")");
+
+            if let Some(format) = self.format {
+                css.push_str(" format(\"");
+                css.push_str(format.css_format());
+                css.push_str("\")");
+            }
+
+            css.push(';');
+            css.push_str("font-display:");
+            css.push_str(self.display.as_str());
+            css.push(';');
+            css.push_str("font-style:");
+            css.push_str(self.style.as_str());
+            css.push(';');
+
+            if let Some(weight) = &self.weight {
+                css.push_str("font-weight:");
+                css.push_str(weight);
+                css.push(';');
+            }
+
+            css.push('}');
+
+            markup.push_raw("<style>");
+            markup.push_raw(&css);
+            markup.push_raw("</style>");
+            markup
+        }
+    }
+
+    impl From<LocalFontFace> for Markup {
+        fn from(font: LocalFontFace) -> Self {
+            font.render()
+        }
+    }
+
+    impl From<&LocalFontFace> for Markup {
+        fn from(font: &LocalFontFace) -> Self {
+            font.render()
+        }
+    }
+
     /// Creates a Google Fonts helper for a family name.
     pub fn google_font(family: impl Into<String>) -> GoogleFont {
         GoogleFont::new(family)
+    }
+
+    /// Creates a local `@font-face` helper for a family name and source URL.
+    pub fn local_font(family: impl Into<String>, source: impl Into<String>) -> LocalFontFace {
+        LocalFontFace::new(family, source)
     }
 
     fn normalized_weights(weights: &[u16]) -> Vec<u16> {
@@ -141,6 +365,21 @@ pub mod fonts {
         weights.sort_unstable();
         weights.dedup();
         weights
+    }
+
+    fn push_css_string(output: &mut String, value: &str) {
+        for ch in value.chars() {
+            match ch {
+                '\\' => output.push_str("\\\\"),
+                '"' => output.push_str("\\\""),
+                '\n' => output.push_str("\\a "),
+                '\r' => {}
+                '<' => output.push_str("\\3C "),
+                '>' => output.push_str("\\3E "),
+                '&' => output.push_str("\\26 "),
+                _ => output.push(ch),
+            }
+        }
     }
 }
 
@@ -892,6 +1131,40 @@ mod tests {
         assert_eq!(
             markup.as_str(),
             "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Source+Sans+3&amp;display=swap\">"
+        );
+    }
+
+    #[test]
+    fn renders_local_font_face_with_preload() {
+        let markup = fonts::local_font("Inter", "/static/fonts/Inter.var.woff2")
+            .format(fonts::FontFormat::Woff2)
+            .weight_range(100, 900)
+            .preload()
+            .render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<link rel=\"preload\" href=\"/static/fonts/Inter.var.woff2\" as=\"font\" type=\"font/woff2\"><style>@font-face{font-family:\"Inter\";src:url(\"/static/fonts/Inter.var.woff2\") format(\"woff2\");font-display:swap;font-style:normal;font-weight:100 900;}</style>"
+        );
+    }
+
+    #[test]
+    fn renders_local_font_face_with_custom_style_and_cross_origin() {
+        let markup = fonts::local_font(
+            "Newsreader",
+            "https://cdn.example.com/fonts/newsreader.woff",
+        )
+        .format(fonts::FontFormat::Woff)
+        .italic()
+        .weight(600)
+        .cross_origin()
+        .preload()
+        .display(fonts::FontDisplay::Optional)
+        .render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<link rel=\"preload\" href=\"https://cdn.example.com/fonts/newsreader.woff\" as=\"font\" type=\"font/woff\" crossorigin=\"anonymous\"><style>@font-face{font-family:\"Newsreader\";src:url(\"https://cdn.example.com/fonts/newsreader.woff\") format(\"woff\");font-display:optional;font-style:italic;font-weight:600;}</style>"
         );
     }
 }
