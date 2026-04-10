@@ -36,13 +36,14 @@ a {
 
 .demo-shell {
   display: grid;
-  gap: 1.5rem;
-  padding: 3rem 0 4rem;
+  gap: 1.25rem;
+  padding: 2.25rem 0 3.25rem;
 }
 
 .demo-hero {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
+  max-width: 60rem;
 }
 
 .demo-kicker {
@@ -56,12 +57,14 @@ a {
 
 .demo-title {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3.75rem);
-  line-height: 0.95;
+  max-width: 18ch;
+  font-size: clamp(1.9rem, 4.4vw, 3.25rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
 }
 
 .demo-copy {
-  max-width: 42rem;
+  max-width: 46rem;
   margin: 0;
   color: #52606d;
   font-size: 1.05rem;
@@ -71,6 +74,7 @@ a {
 .demo-grid {
   display: grid;
   gap: 1.5rem;
+  align-items: start;
 }
 
 .demo-points {
@@ -106,6 +110,7 @@ a {
 .demo-card-title {
   margin: 0;
   font-size: 1.25rem;
+  line-height: 1.1;
 }
 
 .demo-card-copy {

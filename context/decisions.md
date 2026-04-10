@@ -88,3 +88,6 @@
 
 - decision: Use a dedicated style-guide route inside the example app for visual review of current primitives, rather than relying only on feature flows to expose component regressions or styling gaps.
   evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)
+
+- decision: Treat screenshot capture as part of the normal refinement loop by keeping a small repo-local script for the example app, instead of relying on ad hoc browser commands each time.
+  evidence: [`scripts/capture-intake-demo.sh`](../scripts/capture-intake-demo.sh)

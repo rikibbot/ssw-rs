@@ -72,3 +72,15 @@ Then open:
 
 - `http://127.0.0.1:3000/` for the intake flow
 - `http://127.0.0.1:3000/style-guide` for the live component preview
+
+Capture fresh screenshots with:
+
+```bash
+./scripts/capture-intake-demo.sh
+```
+
+Or against a custom URL and output directory:
+
+```bash
+./scripts/capture-intake-demo.sh http://127.0.0.1:3001 ./artifacts/demo-pass
+```
