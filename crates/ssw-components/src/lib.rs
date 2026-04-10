@@ -12,7 +12,9 @@ pub use field::{
 };
 pub use layout::{container, section, stack};
 pub use notice::{alert, flash_notice};
-pub use page::{card_header, page, page_actions, page_header, page_shell};
+pub use page::{
+    NavItem, card_header, empty_state, page, page_actions, page_header, page_shell, top_nav,
+};
 
 #[cfg(test)]
 mod tests {
@@ -20,9 +22,10 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header,
-        container, email_input, flash_notice, hidden_input, page_actions, page_header, page_shell,
-        section, select, stack, submit_button, text_input, textarea,
+        ButtonVariant, Field, NavItem, SelectOption, alert, button, button_with_variant,
+        card_header, container, email_input, empty_state, flash_notice, hidden_input, page_actions,
+        page_header, page_shell, section, select, stack, submit_button, text_input, textarea,
+        top_nav,
     };
 
     #[test]
@@ -232,5 +235,47 @@ mod tests {
         );
         assert!(markup.as_str().contains("&lt;unsafe&gt;"));
         assert!(!markup.as_str().contains("<unsafe>"));
+    }
+
+    #[test]
+    fn top_nav_marks_the_current_item() {
+        let items = [
+            NavItem::new("/projects", "Projects").current(true),
+            NavItem::new("/archive", "Archive"),
+        ];
+        let markup = top_nav("/", "Server Side Web", &items);
+
+        assert!(markup.as_str().contains("class=\"ssw-top-nav\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-top-nav__brand\" href=\"/\">Server Side Web</a>")
+        );
+        assert!(markup.as_str().contains(
+            "href=\"/projects\" data-current=\"true\" aria-current=\"page\">Projects</a>"
+        ));
+        assert!(markup.as_str().contains("href=\"/archive\">Archive</a>"));
+    }
+
+    #[test]
+    fn empty_state_renders_optional_actions() {
+        let markup = empty_state(
+            "No projects",
+            Markup::text("Start by adding one."),
+            Some(page_actions(Markup::text("Create"))),
+        );
+
+        assert!(markup.as_str().contains("class=\"ssw-empty-state\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("<h2 class=\"ssw-empty-state__title\">No projects</h2>")
+        );
+        assert!(markup.as_str().contains("Start by adding one."));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-empty-state__actions\"")
+        );
     }
 }

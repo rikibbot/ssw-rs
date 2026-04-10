@@ -31,6 +31,7 @@
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 - `ssw-components` is now internally split into domain modules (`button`, `field`, `layout`, `notice`, `page`) while keeping the public API flat through re-exports, which should make the next phase of component work easier to scale.
 - `ssw-components` now also includes the first reusable app-shell primitives (`page_shell`, `page_header`, `page_actions`, `card_header`), and the intake demo now uses them instead of app-local hero and card-heading markup.
+- `ssw-components` now also includes a simple `top_nav` and `empty_state`, and a second example app now exists at `examples/ssw-projects-demo` to pressure list/detail/edit flows against the current shell, nav, empty-state, flash, and form primitives.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 
 ## Current Priorities

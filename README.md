@@ -43,8 +43,10 @@ Currently implemented:
 - an optional first-party default theme stylesheet at `styles/ssw-theme-default.css`
 - first layout and action primitives in `ssw-components`, including `button`, `container`, `section`, and `stack`
 - first page-shell primitives in `ssw-components`, including `page_shell`, `page_header`, `page_actions`, and `card_header`
+- first app-navigation and empty-state primitives in `ssw-components`, including `top_nav` and `empty_state`
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
+- a second workspace example app at `examples/ssw-projects-demo`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example
@@ -91,6 +93,12 @@ Or against a custom URL and output directory:
 
 ```bash
 ./scripts/capture-intake-demo.sh http://127.0.0.1:3001 ./artifacts/demo-pass
+```
+
+Run the second example app with:
+
+```bash
+cargo run -p ssw-projects-demo
 ```
 
 Useful capture knobs:

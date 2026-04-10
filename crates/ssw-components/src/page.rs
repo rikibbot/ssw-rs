@@ -1,8 +1,76 @@
 use ssw_html::{Markup, html, page as html_page};
 
+/// A navigation item for a simple top-level app navigation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NavItem<'a> {
+    href: &'a str,
+    label: &'a str,
+    current: bool,
+}
+
+impl<'a> NavItem<'a> {
+    /// Creates a navigation item with an href and visible label.
+    pub fn new(href: &'a str, label: &'a str) -> Self {
+        Self {
+            href,
+            label,
+            current: false,
+        }
+    }
+
+    /// Marks the item as the current page.
+    pub fn current(mut self, current: bool) -> Self {
+        self.current = current;
+        self
+    }
+
+    /// Returns the navigation target.
+    pub fn href(&self) -> &str {
+        self.href
+    }
+
+    /// Returns the visible label.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+
+    /// Returns whether this item represents the current page.
+    pub fn is_current(&self) -> bool {
+        self.current
+    }
+}
+
 /// Renders a full page using the `ssw-html` document builder.
 pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
     html_page(title.as_ref()).body(body).render()
+}
+
+/// Renders a simple top navigation bar with a brand link and current-page state.
+pub fn top_nav(
+    brand_href: impl AsRef<str>,
+    brand_label: impl AsRef<str>,
+    items: &[NavItem<'_>],
+) -> Markup {
+    html! {
+        nav class="ssw-top-nav" aria_label="Primary" {
+            a class="ssw-top-nav__brand" href=(brand_href.as_ref()) {
+                (brand_label.as_ref())
+            }
+            ul class="ssw-top-nav__list" {
+                @for item in items {
+                    li class="ssw-top-nav__item" {
+                        a
+                            class="ssw-top-nav__link"
+                            href=(item.href())
+                            data_current=(item.is_current().then_some("true"))
+                            aria_current=(item.is_current().then_some("page")) {
+                            (item.label())
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Renders a vertical shell for top-level page composition.
@@ -53,6 +121,29 @@ pub fn card_header(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
             h2 class="ssw-card-header__title" { (title.as_ref()) }
             div class="ssw-card-header__body" {
                 (body.into())
+            }
+        }
+    }
+}
+
+/// Renders an empty-state block with optional actions.
+pub fn empty_state(
+    title: impl AsRef<str>,
+    body: impl Into<Markup>,
+    actions: Option<Markup>,
+) -> Markup {
+    html! {
+        section class="ssw-empty-state" {
+            div class="ssw-empty-state__body" {
+                h2 class="ssw-empty-state__title" { (title.as_ref()) }
+                div class="ssw-empty-state__copy" {
+                    (body.into())
+                }
+            }
+            @if actions.is_some() {
+                div class="ssw-empty-state__actions" {
+                    (actions.unwrap())
+                }
             }
         }
     }
