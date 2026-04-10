@@ -95,3 +95,7 @@
 - decision: Keep `ssw-components` unstyled by default, and treat the first-party CSS as an optional `shadcn/ui`-inspired theme layer rather than a component-default stylesheet.
   evidence: [`COMPONENTS.md`](../COMPONENTS.md)
   evidence: [`styles/ssw-theme-default.css`](../styles/ssw-theme-default.css)
+
+- decision: Keep the default theme visually restrained and utility-like, preferring denser spacing, flatter surfaces, lighter shadows, and quieter page chrome over a more editorial or decorative look.
+  evidence: [`styles/ssw-theme-default.css`](../styles/ssw-theme-default.css)
+  evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)

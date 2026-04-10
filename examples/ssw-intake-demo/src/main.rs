@@ -13,7 +13,7 @@ const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
 const APP_CSS: &str = r#"
 body {
   margin: 0;
-  background: linear-gradient(180deg, #fafafa 0%, #f4f4f5 100%);
+  background: linear-gradient(180deg, #fcfcfc 0%, #f4f4f5 100%);
   color: var(--ssw-color-text, #09090b);
   font-family: var(--ssw-font-body, "IBM Plex Sans", "Segoe UI", sans-serif);
 }
@@ -24,7 +24,7 @@ a {
 
 .demo-link {
   color: #18181b;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 0.16em;
 }
@@ -35,20 +35,20 @@ a {
 
 .demo-shell {
   display: grid;
-  gap: 1.75rem;
-  padding: 2.75rem 0 3.5rem;
+  gap: 1.5rem;
+  padding: 2.35rem 0 3rem;
 }
 
 .demo-hero {
   display: grid;
-  gap: 0.8rem;
-  max-width: 48rem;
+  gap: 0.7rem;
+  max-width: 44rem;
 }
 
 .demo-kicker {
   margin: 0;
   color: #71717a;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -57,22 +57,22 @@ a {
 .demo-title {
   margin: 0;
   max-width: 15ch;
-  font-size: clamp(2rem, 4vw, 3.15rem);
+  font-size: clamp(1.85rem, 3.7vw, 2.75rem);
   line-height: 0.98;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.045em;
 }
 
 .demo-copy {
-  max-width: 42rem;
+  max-width: 38rem;
   margin: 0;
   color: #52525b;
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: 0.975rem;
+  line-height: 1.65;
 }
 
 .demo-grid {
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: start;
 }
 
@@ -85,31 +85,31 @@ a {
 
 .demo-form {
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .demo-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  padding-top: 0.25rem;
+  gap: 0.65rem;
+  padding-top: 0.15rem;
 }
 
 .demo-style-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .demo-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.65rem;
   align-items: center;
 }
 
 .demo-card-title {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -117,7 +117,7 @@ a {
 .demo-card-copy {
   margin: 0;
   color: #52525b;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 @media (min-width: 56rem) {

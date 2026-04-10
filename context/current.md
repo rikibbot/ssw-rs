@@ -25,6 +25,7 @@
 - The example app now includes a dedicated `/style-guide` route so visual review of the current primitives does not depend on the intake flow alone.
 - The repo now includes `scripts/capture-intake-demo.sh` so visual review can produce repeatable screenshots for `/` and `/style-guide`.
 - The optional default theme and example shell have now had an initial screenshot-driven polish pass, improving card surfaces, control states, and page rhythm without growing the component API.
+- The optional default theme has now had a second screenshot-driven pass toward a more restrained `shadcn/ui`-like direction, with denser spacing, lighter shadows, flatter surfaces, and quieter page chrome.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
