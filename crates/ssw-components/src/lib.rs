@@ -12,6 +12,13 @@ pub enum ButtonVariant {
     Secondary,
 }
 
+fn notice_role(level: ssw_core::FlashLevel) -> &'static str {
+    match level {
+        ssw_core::FlashLevel::Info | ssw_core::FlashLevel::Success => "status",
+        ssw_core::FlashLevel::Warning | ssw_core::FlashLevel::Error => "alert",
+    }
+}
+
 /// A single option for the native select helper.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SelectOption<'a> {
@@ -142,7 +149,7 @@ impl<'a> Field<'a> {
 /// Renders a simple status alert component.
 pub fn alert(message: impl AsRef<str>) -> Markup {
     html! {
-        div class=(("ssw-notice", "ssw-notice--info")) data_level="info" role="status" {
+        div class=(("ssw-notice", "ssw-notice--info")) data_level="info" role=(notice_role(ssw_core::FlashLevel::Info)) {
             p class="ssw-notice__message" {
                 (message.as_ref())
             }
@@ -154,9 +161,10 @@ pub fn alert(message: impl AsRef<str>) -> Markup {
 pub fn flash_notice(flash: &FlashMessage) -> Markup {
     let level = flash.level().as_str();
     let level_class = format!("ssw-notice--{level}");
+    let role = notice_role(flash.level());
 
     html! {
-        div class=(("ssw-notice", level_class.as_str())) data_level=(level) role="status" {
+        div class=(("ssw-notice", level_class.as_str())) data_level=(level) role=(role) {
             p class="ssw-notice__message" { (flash.message()) }
         }
     }
@@ -403,13 +411,22 @@ mod tests {
     fn flash_notice_uses_semantic_level_classes() {
         let markup = flash_notice(&FlashMessage::success("Saved"));
 
+        assert!(markup.as_str().contains(
+            "class=\"ssw-notice ssw-notice--success\" data-level=\"success\" role=\"status\""
+        ));
+        assert!(markup.as_str().contains("class=\"ssw-notice__message\""));
+        assert!(markup.as_str().contains("Saved"));
+    }
+
+    #[test]
+    fn error_flash_notice_uses_alert_role() {
+        let markup = flash_notice(&FlashMessage::error("Failed"));
+
         assert!(
             markup
                 .as_str()
-                .contains("class=\"ssw-notice ssw-notice--success\" data-level=\"success\"")
+                .contains("data-level=\"error\" role=\"alert\"")
         );
-        assert!(markup.as_str().contains("class=\"ssw-notice__message\""));
-        assert!(markup.as_str().contains("Saved"));
     }
 
     #[test]
@@ -459,6 +476,14 @@ mod tests {
                 .as_str()
                 .contains("<div class=\"ssw-stack\">Hello</div>")
         );
+    }
+
+    #[test]
+    fn layout_primitives_escape_plain_text_content() {
+        let markup = container("<unsafe>");
+
+        assert!(markup.as_str().contains("&lt;unsafe&gt;"));
+        assert!(!markup.as_str().contains("<unsafe>"));
     }
 
     #[test]

@@ -15,7 +15,7 @@ pub use ssw_html_macros::html;
 pub mod fonts {
     use super::{Markup, html};
 
-    /// The supported `font-display` strategies for Google Fonts stylesheets.
+    /// The supported `font-display` strategies for font loading helpers.
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub enum FontDisplay {
         /// Lets the browser choose the loading strategy.
@@ -394,6 +394,10 @@ impl Markup {
     }
 
     /// Creates markup from trusted raw HTML.
+    ///
+    /// Prefer [`Markup::text`] for plain text. This constructor is intended for
+    /// already-sanitized HTML and framework internals that need to emit known
+    /// markup directly.
     pub fn raw(value: impl AsRef<str>) -> Self {
         Self(value.as_ref().to_owned())
     }
@@ -444,13 +448,13 @@ impl Render for Markup {
 
 impl From<&str> for Markup {
     fn from(value: &str) -> Self {
-        Self::raw(value)
+        Self::text(value)
     }
 }
 
 impl From<String> for Markup {
     fn from(value: String) -> Self {
-        Self(value)
+        Self::text(value)
     }
 }
 
@@ -526,11 +530,17 @@ pub fn page(title: impl Into<String>) -> Document {
 }
 
 /// Renders a complete HTML document with a title and body.
+///
+/// Plain string bodies are escaped by default. Use [`Markup::raw`] for trusted
+/// HTML that should be inserted without escaping.
 pub fn document(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
     page(title.as_ref()).body(body).render()
 }
 
 /// Wraps a value as an HTML fragment.
+///
+/// Plain string bodies are escaped by default. Use [`Markup::raw`] for trusted
+/// HTML that should be inserted without escaping.
 pub fn fragment(body: impl Into<Markup>) -> Markup {
     body.into()
 }
@@ -907,7 +917,7 @@ fn escape_into(output: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Markup, document, fonts, html, page};
+    use super::{Markup, document, fonts, fragment, html, page};
 
     #[test]
     fn escapes_text_content() {
@@ -1052,6 +1062,15 @@ mod tests {
         assert!(page.as_str().contains(
             "<section class=\"panel\"><p>Everything is rendered on the server.</p></section>"
         ));
+    }
+
+    #[test]
+    fn plain_string_markup_conversions_escape_text() {
+        let document = document("Docs", "<unsafe>");
+        let fragment = fragment("<unsafe>");
+
+        assert!(document.as_str().contains("&lt;unsafe&gt;"));
+        assert_eq!(fragment.as_str(), "&lt;unsafe&gt;");
     }
 
     #[test]

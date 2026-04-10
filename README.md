@@ -4,6 +4,8 @@ Server Side Web for Rust.
 
 `ssw-rs` is an HTML-first framework for building durable web apps in Rust. It starts with server-side rendering, keeps application logic on the server, and treats JavaScript as an optional enhancement layer rather than the foundation of the app.
 
+Plain strings passed into `ssw-html` document and component helpers are escaped by default. Use `Markup::raw(...)` only for trusted HTML.
+
 ## Goals
 
 - Fast and predictable server-rendered web apps
