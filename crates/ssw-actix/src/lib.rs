@@ -631,8 +631,12 @@ mod tests {
         assert!(contact_body.contains("type=\"hidden\" name=\"csrf_token\""));
         assert!(contact_body.contains(&format!("value=\"{csrf_token}\"")));
         assert!(contact_body.contains("class=\"ssw-input\""));
-        assert!(contact_body.contains("id=\"name\" type=\"text\" name=\"name\" value=\"\" required"));
-        assert!(contact_body.contains("id=\"email\" type=\"email\" name=\"email\" value=\"\" required"));
+        assert!(
+            contact_body.contains("id=\"name\" type=\"text\" name=\"name\" value=\"\" required")
+        );
+        assert!(
+            contact_body.contains("id=\"email\" type=\"email\" name=\"email\" value=\"\" required")
+        );
 
         let csrf_error_response = test::call_service(
             &app,

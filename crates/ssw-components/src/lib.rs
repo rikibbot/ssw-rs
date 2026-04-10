@@ -3,6 +3,25 @@
 use ssw_core::FlashMessage;
 use ssw_html::{Markup, html, page as html_page};
 
+/// The supported visual variants for button components.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ButtonVariant {
+    /// The default emphasized button treatment.
+    Primary,
+    /// A quieter secondary treatment.
+    Secondary,
+}
+
+impl ButtonVariant {
+    /// Returns a stable lowercase variant identifier for styling hooks.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Primary => "primary",
+            Self::Secondary => "secondary",
+        }
+    }
+}
+
 /// Borrowed state for rendering a labeled form field.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Field<'a> {
@@ -119,6 +138,58 @@ pub fn flash_notice(flash: &FlashMessage) -> Markup {
     }
 }
 
+/// Renders a button with the default primary styling.
+pub fn button(label: impl AsRef<str>) -> Markup {
+    button_with_variant(label, ButtonVariant::Primary)
+}
+
+/// Renders a button with an explicit visual variant.
+pub fn button_with_variant(label: impl AsRef<str>, variant: ButtonVariant) -> Markup {
+    let variant_name = variant.as_str();
+
+    html! {
+        button class="ssw-button" data_variant=(variant_name) type="button" {
+            (label.as_ref())
+        }
+    }
+}
+
+/// Renders a submit button with the default primary styling.
+pub fn submit_button(label: impl AsRef<str>) -> Markup {
+    html! {
+        button class="ssw-button" data_variant="primary" type="submit" {
+            (label.as_ref())
+        }
+    }
+}
+
+/// Renders a constrained layout container.
+pub fn container(content: impl Into<Markup>) -> Markup {
+    html! {
+        div class="ssw-container" {
+            (content.into())
+        }
+    }
+}
+
+/// Renders a section wrapper for page composition.
+pub fn section(content: impl Into<Markup>) -> Markup {
+    html! {
+        section class="ssw-section" {
+            (content.into())
+        }
+    }
+}
+
+/// Renders a vertical stack wrapper for grouped content.
+pub fn stack(content: impl Into<Markup>) -> Markup {
+    html! {
+        div class="ssw-stack" {
+            (content.into())
+        }
+    }
+}
+
 /// Renders a labeled field wrapper around a form control.
 pub fn field(field: &Field<'_>, control: impl Into<Markup>) -> Markup {
     let error_id = field.error_id();
@@ -214,8 +285,12 @@ pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
 #[cfg(test)]
 mod tests {
     use ssw_core::FlashMessage;
+    use ssw_html::Markup;
 
-    use super::{Field, alert, email_input, flash_notice, hidden_input, text_input, textarea};
+    use super::{
+        ButtonVariant, Field, alert, button, button_with_variant, container, email_input,
+        flash_notice, hidden_input, section, stack, submit_button, text_input, textarea,
+    };
 
     #[test]
     fn alert_escapes_message() {
@@ -297,6 +372,44 @@ mod tests {
             markup
                 .as_str()
                 .contains("type=\"hidden\" name=\"csrf_token\" value=\"abc123\"")
+        );
+    }
+
+    #[test]
+    fn button_uses_default_primary_variant() {
+        let markup = button("Save");
+
+        assert!(markup.as_str().contains(
+            "<button class=\"ssw-button\" data-variant=\"primary\" type=\"button\">Save</button>"
+        ));
+    }
+
+    #[test]
+    fn button_supports_secondary_variant() {
+        let markup = button_with_variant("Cancel", ButtonVariant::Secondary);
+
+        assert!(markup.as_str().contains("data-variant=\"secondary\""));
+        assert!(markup.as_str().contains("Cancel"));
+    }
+
+    #[test]
+    fn submit_button_sets_submit_type() {
+        let markup = submit_button("Send");
+
+        assert!(markup.as_str().contains("type=\"submit\""));
+        assert!(markup.as_str().contains("Send"));
+    }
+
+    #[test]
+    fn layout_primitives_wrap_content_with_stable_classes() {
+        let markup = container(section(stack(Markup::text("Hello"))));
+
+        assert!(markup.as_str().contains("<div class=\"ssw-container\">"));
+        assert!(markup.as_str().contains("<section class=\"ssw-section\">"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<div class=\"ssw-stack\">Hello</div>")
         );
     }
 }

@@ -78,3 +78,7 @@
 - decision: Apply the styling contract to the existing component helpers using explicit class strings and `data-*` state hooks, even where the current HTML macro shorthand is not expressive enough for the desired class naming convention.
   evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
   evidence: [`styles/ssw-components-default.css`](../styles/ssw-components-default.css)
+
+- decision: Keep the next `ssw-components` expansion focused on primitives with strong no-JS HTML baselines, starting with button and simple layout wrappers, before attempting more interaction-heavy widgets.
+  evidence: [`crates/ssw-components/src/lib.rs`](../crates/ssw-components/src/lib.rs)
+  evidence: [`COMPONENTS.md`](../COMPONENTS.md)

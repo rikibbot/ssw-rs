@@ -19,6 +19,7 @@
 - The repository now has a dedicated `COMPONENTS.md` design document that defines the `ssw-components` styling contract, token strategy, Base UI-inspired positioning, and initial component scope.
 - The current `ssw-components` helpers now implement the styling contract with stable `ssw-*` classes, slot class names, and `data-invalid` or `data-level` hooks.
 - A first default stylesheet now exists at `styles/ssw-components-default.css` to make the token and class contract concrete.
+- `ssw-components` now also includes the first layout and action primitives: `button`, `submit_button`, `container`, `section`, and `stack`.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 
 ## Current Priorities
@@ -55,4 +56,5 @@
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
 - Build a small example app that uses the current flash, CSRF, and form-field stack outside of test-only handlers.
 - Add the first layout primitives and simple controls on top of the new component class and token contract.
+- Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, especially `select`, then pressure the current stylesheet in a real example app.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

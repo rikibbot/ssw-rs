@@ -13,18 +13,45 @@
   --ssw-space-4: 1rem;
   --ssw-space-5: 1.5rem;
   --ssw-radius-md: 0.75rem;
+  --ssw-radius-lg: 1.25rem;
   --ssw-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
+  --ssw-shadow-md: 0 12px 30px rgb(15 23 42 / 0.08);
   --ssw-font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
   --ssw-focus-ring: 0 0 0 3px rgb(21 101 192 / 0.16);
   --ssw-field-gap: var(--ssw-space-2);
+  --ssw-container-width: 72rem;
 }
 
 .ssw-notice,
+.ssw-button,
 .ssw-field,
 .ssw-input,
-.ssw-textarea {
+.ssw-textarea,
+.ssw-container,
+.ssw-section,
+.ssw-stack {
   box-sizing: border-box;
   font: inherit;
+}
+
+.ssw-container {
+  width: min(100% - (var(--ssw-space-4) * 2), var(--ssw-container-width));
+  margin-inline: auto;
+}
+
+.ssw-section {
+  display: grid;
+  gap: var(--ssw-space-4);
+  padding: var(--ssw-space-5);
+  border: 1px solid var(--ssw-color-border);
+  border-radius: var(--ssw-radius-lg);
+  background: linear-gradient(180deg, #fff 0%, var(--ssw-color-surface-subtle) 100%);
+  box-shadow: var(--ssw-shadow-md);
+}
+
+.ssw-stack {
+  display: grid;
+  gap: var(--ssw-space-4);
 }
 
 .ssw-notice {
@@ -109,4 +136,42 @@
 
 .ssw-field[data-invalid="true"] .ssw-field__label {
   color: var(--ssw-color-danger);
+}
+
+.ssw-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--ssw-radius-md);
+  background: var(--ssw-color-accent);
+  color: #fff;
+  font-family: var(--ssw-font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ssw-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--ssw-shadow-sm);
+}
+
+.ssw-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ssw-focus-ring);
+}
+
+.ssw-button[data-variant="secondary"] {
+  border-color: var(--ssw-color-border);
+  background: var(--ssw-color-surface);
+  color: var(--ssw-color-text);
 }

@@ -229,7 +229,9 @@ That means:
 3. Create a small first-party default stylesheet, even if it is still rough.
    status: initial stylesheet added at `styles/ssw-components-default.css`.
 4. Add the first layout primitives: container, section, stack.
+   status: initial `container`, `section`, and `stack` helpers added.
 5. Add simple form controls like button and select.
+   status: initial button helpers added; select still pending.
 6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
 
 ## Open questions

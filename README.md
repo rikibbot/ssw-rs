@@ -38,6 +38,7 @@ Currently implemented:
 - cookie-backed CSRF hooks in `ssw-actix` with hidden form field helpers in `ssw-components`
 - stable `ssw-*` classes and `data-*` state hooks on the current `ssw-components` primitives
 - a first default component stylesheet at `styles/ssw-components-default.css`
+- first layout and action primitives in `ssw-components`, including `button`, `container`, `section`, and `stack`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example
