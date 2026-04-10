@@ -91,3 +91,10 @@ Or against a custom URL and output directory:
 ```bash
 ./scripts/capture-intake-demo.sh http://127.0.0.1:3001 ./artifacts/demo-pass
 ```
+
+Useful capture knobs:
+
+```bash
+VIEWPORT_WIDTH=1720 VIEWPORT_HEIGHT=1320 ./scripts/capture-intake-demo.sh
+FULL_PAGE=true ./scripts/capture-intake-demo.sh
+```

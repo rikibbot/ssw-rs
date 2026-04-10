@@ -29,6 +29,8 @@
 - The optional default theme has now had a second screenshot-driven pass toward a more restrained `shadcn/ui`-like direction, with denser spacing, lighter shadows, flatter surfaces, and quieter page chrome.
 - A review and polish pass tightened the public API: plain strings flowing into `Markup` now escape by default, error-level notices now use `role="alert"`, and the README plus doc comments now better distinguish escaped text from trusted raw HTML.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
+- `ssw-components` is now internally split into domain modules (`button`, `field`, `layout`, `notice`, `page`) while keeping the public API flat through re-exports, which should make the next phase of component work easier to scale.
+- The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 
 ## Current Priorities
 
