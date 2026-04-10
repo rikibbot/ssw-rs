@@ -85,3 +85,6 @@
 
 - decision: Validate the current component and mutation stack through a real workspace example app before growing more abstractions, so future API moves are shaped by app-level pressure instead of only tests.
   evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)
+
+- decision: Use a dedicated style-guide route inside the example app for visual review of current primitives, rather than relying only on feature flows to expose component regressions or styling gaps.
+  evidence: [`examples/ssw-intake-demo/src/main.rs`](../examples/ssw-intake-demo/src/main.rs)

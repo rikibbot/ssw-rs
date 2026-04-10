@@ -234,6 +234,7 @@ That means:
    status: initial button helpers and native select helper added.
 6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
    status: first example app now exists at `examples/ssw-intake-demo`.
+   note: the example now also exposes a `/style-guide` route to make visual review of the current primitives cheap.
 
 ## Open questions
 

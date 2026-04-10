@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
 use ssw_components::{
-    ButtonVariant, Field, SelectOption, button_with_variant, container, email_input, flash_notice,
-    hidden_input, section, select, stack, submit_button, text_input, textarea,
+    ButtonVariant, Field, SelectOption, alert, button, button_with_variant, container, email_input,
+    flash_notice, hidden_input, section, select, stack, submit_button, text_input, textarea,
 };
-use ssw_core::{FlashMessage, Response};
+use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_html::{Markup, html, page as html_page};
 
 const COMPONENT_CSS: &str = include_str!("../../../styles/ssw-components-default.css");
@@ -22,6 +22,16 @@ body {
 
 a {
   color: inherit;
+}
+
+.demo-link {
+  color: #1565c0;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.demo-link:hover {
+  text-decoration: underline;
 }
 
 .demo-shell {
@@ -79,6 +89,18 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.demo-style-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.demo-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .demo-card-title {
@@ -187,7 +209,6 @@ fn track_options() -> [SelectOption<'static>; 4] {
 fn app_page(title: &str, content: Markup) -> Markup {
     html_page(title)
         .head(html! {
-            meta name="viewport" content="width=device-width, initial-scale=1";
             link rel="stylesheet" href="/app.css";
         })
         .body(html! {
@@ -228,6 +249,9 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                 p class="demo-copy" {
                     "This example uses the current ssw-rs stack: document rendering, stable component classes, form fields, select, flash messages, CSRF protection, and a linked first-party stylesheet."
                 }
+                p class="demo-copy" {
+                    a class="demo-link" href="/style-guide" { "Browse the live style guide" }
+                }
             }
 
             div class="demo-grid" {
@@ -242,8 +266,8 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                         li { "Flash messages across redirects" }
                         li { "Cookie-backed CSRF hooks" }
                     }
-                    div class="demo-actions" {
-                        (button_with_variant("Preview timeline", ButtonVariant::Secondary))
+                    p class="demo-card-copy" {
+                        "Use the style guide route to inspect the current primitives outside the intake flow."
                     }
                 })))
 
@@ -276,6 +300,60 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                         }
                     }
                 }))
+            }
+        },
+    )
+}
+
+fn style_guide_page() -> Markup {
+    let valid_name = Field::new("preview-name", "preview_name", "Preview field")
+        .value("Riccardo")
+        .required(true);
+    let invalid_track = Field::new("preview-track", "preview_track", "Invalid select")
+        .value("")
+        .error(Some("A selection is required."))
+        .required(true);
+    let preview_message = Field::new("preview-message", "preview_message", "Textarea")
+        .value("Server-rendered interfaces can still feel polished.")
+        .required(true);
+    let options = track_options();
+
+    app_page(
+        "Component style guide",
+        html! {
+            div class="demo-hero" {
+                p class="demo-kicker" { "Component Preview" }
+                h1 class="demo-title" { "A live style guide for the current primitives." }
+                p class="demo-copy" {
+                    "This page exists to make visual review cheap. It is not a design system yet, but it gives us a real place to inspect structure, spacing, and state styling."
+                }
+                p class="demo-copy" {
+                    a class="demo-link" href="/" { "Back to the intake demo" }
+                }
+            }
+
+            div class="demo-grid" {
+                (section(stack(html! {
+                    h2 class="demo-card-title" { "Notices and actions" }
+                    p class="demo-card-copy" { "These are the current feedback and action primitives." }
+                    div class="demo-style-grid" {
+                        (alert("Informational notice"))
+                        (flash_notice(&FlashMessage::success("Successful flash message")))
+                        (flash_notice(&FlashMessage::error("Error flash message")))
+                    }
+                    div class="demo-inline" {
+                        (button("Primary button"))
+                        (button_with_variant("Secondary button", ButtonVariant::Secondary))
+                    }
+                })))
+
+                (section(stack(html! {
+                    h2 class="demo-card-title" { "Fields and states" }
+                    p class="demo-card-copy" { "Inputs, textarea, and select should remain legible without JavaScript." }
+                    (text_input(&valid_name))
+                    (select(&invalid_track, &options))
+                    (textarea(&preview_message, 4))
+                })))
             }
         },
     )
@@ -359,6 +437,13 @@ async fn thanks(request: HttpRequest) -> HttpResponse {
     page_with_context(&context, thanks_page(context.flashes()))
 }
 
+async fn style_guide() -> HttpResponse {
+    to_http_response(Response::html_rendered(
+        HtmlKind::Document,
+        style_guide_page(),
+    ))
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let port = std::env::var("PORT")
@@ -374,6 +459,7 @@ async fn main() -> std::io::Result<()> {
             .route("/", web::get().to(intake_get))
             .route("/intake", web::post().to(intake_post))
             .route("/thanks", web::get().to(thanks))
+            .route("/style-guide", web::get().to(style_guide))
             .route("/app.css", web::get().to(stylesheet))
     })
     .bind(address)?

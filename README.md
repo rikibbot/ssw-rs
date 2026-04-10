@@ -67,3 +67,8 @@ Run the current example app with:
 ```bash
 cargo run -p ssw-intake-demo
 ```
+
+Then open:
+
+- `http://127.0.0.1:3000/` for the intake flow
+- `http://127.0.0.1:3000/style-guide` for the live component preview
