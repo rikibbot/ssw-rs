@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
 use ssw_components::{
-    ButtonVariant, Field, SelectOption, alert, button, button_with_variant, container, email_input,
-    flash_notice, hidden_input, section, select, stack, submit_button, text_input, textarea,
+    ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header, container,
+    email_input, flash_notice, hidden_input, page_actions, page_header, page_shell, section,
+    select, stack, submit_button, text_input, textarea,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_html::{Markup, fonts, html, page as html_page};
@@ -33,43 +34,6 @@ a {
   color: #09090b;
 }
 
-.demo-shell {
-  display: grid;
-  gap: 1.5rem;
-  padding: 2.35rem 0 3rem;
-}
-
-.demo-hero {
-  display: grid;
-  gap: 0.7rem;
-  max-width: 44rem;
-}
-
-.demo-kicker {
-  margin: 0;
-  color: #71717a;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.demo-title {
-  margin: 0;
-  max-width: 15ch;
-  font-size: clamp(1.85rem, 3.7vw, 2.75rem);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
-}
-
-.demo-copy {
-  max-width: 38rem;
-  margin: 0;
-  color: #52525b;
-  font-size: 0.975rem;
-  line-height: 1.65;
-}
-
 .demo-grid {
   display: grid;
   gap: 1rem;
@@ -88,13 +52,6 @@ a {
   gap: 0.9rem;
 }
 
-.demo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  padding-top: 0.15rem;
-}
-
 .demo-style-grid {
   display: grid;
   gap: 0.75rem;
@@ -105,19 +62,6 @@ a {
   flex-wrap: wrap;
   gap: 0.65rem;
   align-items: center;
-}
-
-.demo-card-title {
-  margin: 0;
-  font-size: 1.2rem;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.demo-card-copy {
-  margin: 0;
-  color: #52525b;
-  line-height: 1.55;
 }
 
 @media (min-width: 56rem) {
@@ -220,9 +164,9 @@ fn app_page(title: &str, content: Markup) -> Markup {
         })
         .body(html! {
             (container(html! {
-                div class="demo-shell" {
+                (page_shell(html! {
                     (content)
-                }
+                }))
             }))
         })
         .render()
@@ -250,30 +194,33 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
     app_page(
         "ssw-rs Intake Demo",
         html! {
-            div class="demo-hero" {
-                p class="demo-kicker" { "Server Side Web" }
-                h1 class="demo-title" { "A small intake flow, rendered on the server." }
-                p class="demo-copy" {
-                    "This example uses the current ssw-rs stack: document rendering, stable component classes, form fields, select, flash messages, CSRF protection, and an optional first-party theme stylesheet."
-                }
-                p class="demo-copy" {
+            (page_header(
+                "Server Side Web",
+                "A small intake flow, rendered on the server.",
+                html! {
+                    p {
+                        "This example uses the current ssw-rs stack: document rendering, stable component classes, form fields, select, flash messages, CSRF protection, and an optional first-party theme stylesheet."
+                    }
+                },
+                Some(page_actions(html! {
                     a class="demo-link" href="/style-guide" { "Browse the live style guide" }
-                }
-            }
+                })),
+            ))
 
             div class="demo-grid" {
                 (section(stack(html! {
-                    h2 class="demo-card-title" { "Why this example exists" }
-                    p class="demo-card-copy" {
-                        "It is intentionally narrow. The goal is to pressure the current primitives in a real route flow before the framework grows more abstraction."
-                    }
+                    (card_header("Why this example exists", html! {
+                        p {
+                            "It is intentionally narrow. The goal is to pressure the current primitives in a real route flow before the framework grows more abstraction."
+                        }
+                    }))
                     ul class="demo-points" {
                         li { "Layout wrappers and section surfaces" }
                         li { "Field, input, textarea, and select helpers" }
                         li { "Flash messages across redirects" }
                         li { "Cookie-backed CSRF hooks" }
                     }
-                    p class="demo-card-copy" {
+                    p class="ssw-card-header__body" {
                         "Use the style guide route to inspect the current primitives outside the intake flow."
                     }
                 })))
@@ -290,10 +237,11 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                             )))
                         }
 
-                        h2 class="demo-card-title" { "Start a project" }
-                        p class="demo-card-copy" {
-                            "Send a short intake note. Successful submissions redirect with a flash notice; invalid ones stay on the same page with preserved values."
-                        }
+                        (card_header("Start a project", html! {
+                            p {
+                                "Send a short intake note. Successful submissions redirect with a flash notice; invalid ones stay on the same page with preserved values."
+                            }
+                        }))
 
                         form class="demo-form" method="post" action="/intake" {
                             (hidden_input(CSRF_FORM_FIELD, csrf_token))
@@ -301,9 +249,9 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                             (email_input(&email))
                             (select(&track, &track_options))
                             (textarea(&message, 5))
-                            div class="demo-actions" {
+                            (page_actions(html! {
                                 (submit_button("Send request"))
-                            }
+                            }))
                         }
                     }
                 }))
@@ -328,21 +276,24 @@ fn style_guide_page() -> Markup {
     app_page(
         "Component style guide",
         html! {
-            div class="demo-hero" {
-                p class="demo-kicker" { "Component Preview" }
-                h1 class="demo-title" { "A live style guide for the current primitives." }
-                p class="demo-copy" {
-                    "This page exists to make visual review cheap. It is not a design system yet, but it gives us a real place to inspect structure, spacing, and state styling."
-                }
-                p class="demo-copy" {
+            (page_header(
+                "Component Preview",
+                "A live style guide for the current primitives.",
+                html! {
+                    p {
+                        "This page exists to make visual review cheap. It is not a design system yet, but it gives us a real place to inspect structure, spacing, and state styling."
+                    }
+                },
+                Some(page_actions(html! {
                     a class="demo-link" href="/" { "Back to the intake demo" }
-                }
-            }
+                })),
+            ))
 
             div class="demo-grid" {
                 (section(stack(html! {
-                    h2 class="demo-card-title" { "Notices and actions" }
-                    p class="demo-card-copy" { "These are the current primitives with the optional default theme applied." }
+                    (card_header("Notices and actions", html! {
+                        p { "These are the current primitives with the optional default theme applied." }
+                    }))
                     div class="demo-style-grid" {
                         (alert("Informational notice"))
                         (flash_notice(&FlashMessage::success("Successful flash message")))
@@ -355,8 +306,9 @@ fn style_guide_page() -> Markup {
                 })))
 
                 (section(stack(html! {
-                    h2 class="demo-card-title" { "Fields and states" }
-                    p class="demo-card-copy" { "Inputs, textarea, and select should remain useful without JavaScript, even when the theme is swapped out." }
+                    (card_header("Fields and states", html! {
+                        p { "Inputs, textarea, and select should remain useful without JavaScript, even when the theme is swapped out." }
+                    }))
                     (text_input(&valid_name))
                     (select(&invalid_track, &options))
                     (textarea(&preview_message, 4))
@@ -374,11 +326,12 @@ fn thanks_page(flashes: &[FlashMessage]) -> Markup {
                 @for flash in flashes {
                     (flash_notice(flash))
                 }
-                h1 class="demo-card-title" { "Request sent" }
-                p class="demo-card-copy" {
-                    "The redirect, flash message, and success page are all coming from the current ssw-rs request model."
-                }
-                p class="demo-card-copy" {
+                (card_header("Request sent", html! {
+                    p {
+                        "The redirect, flash message, and success page are all coming from the current ssw-rs request model."
+                    }
+                }))
+                p class="ssw-card-header__body" {
                     a href="/" { "Back to the intake form" }
                 }
             })))

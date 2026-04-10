@@ -251,7 +251,9 @@ That means:
    status: initial `container`, `section`, and `stack` helpers added.
 5. Add simple form controls like button and select.
    status: initial button helpers and native select helper added.
-6. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
+6. Extract the first app-shell primitives once an example app reveals repeated page anatomy.
+   status: initial `page_shell`, `page_header`, `page_actions`, and `card_header` helpers added from the intake demo.
+7. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
    status: first example app now exists at `examples/ssw-intake-demo`, and it currently applies `styles/ssw-theme-default.css`.
    note: the example also exposes a `/style-guide` route to make visual review of the current primitives and theme cheap.
 

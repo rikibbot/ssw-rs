@@ -42,6 +42,7 @@ Currently implemented:
 - stable `ssw-*` classes and `data-*` state hooks on the current `ssw-components` primitives
 - an optional first-party default theme stylesheet at `styles/ssw-theme-default.css`
 - first layout and action primitives in `ssw-components`, including `button`, `container`, `section`, and `stack`
+- first page-shell primitives in `ssw-components`, including `page_shell`, `page_header`, `page_actions`, and `card_header`
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification

@@ -30,6 +30,7 @@
 - A review and polish pass tightened the public API: plain strings flowing into `Markup` now escape by default, error-level notices now use `role="alert"`, and the README plus doc comments now better distinguish escaped text from trusted raw HTML.
 - The public API across crates is now documented, and the README reflects the currently implemented slice instead of only the original architecture intent.
 - `ssw-components` is now internally split into domain modules (`button`, `field`, `layout`, `notice`, `page`) while keeping the public API flat through re-exports, which should make the next phase of component work easier to scale.
+- `ssw-components` now also includes the first reusable app-shell primitives (`page_shell`, `page_header`, `page_actions`, `card_header`), and the intake demo now uses them instead of app-local hero and card-heading markup.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 
 ## Current Priorities

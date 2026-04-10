@@ -12,7 +12,7 @@ pub use field::{
 };
 pub use layout::{container, section, stack};
 pub use notice::{alert, flash_notice};
-pub use page::page;
+pub use page::{card_header, page, page_actions, page_header, page_shell};
 
 #[cfg(test)]
 mod tests {
@@ -20,9 +20,9 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, SelectOption, alert, button, button_with_variant, container,
-        email_input, flash_notice, hidden_input, section, select, stack, submit_button, text_input,
-        textarea,
+        ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header,
+        container, email_input, flash_notice, hidden_input, page_actions, page_header, page_shell,
+        section, select, stack, submit_button, text_input, textarea,
     };
 
     #[test]
@@ -187,5 +187,50 @@ mod tests {
                 .as_str()
                 .contains("<label class=\"ssw-field__label\" for=\"topic\">Topic</label>")
         );
+    }
+
+    #[test]
+    fn page_shell_primitives_render_stable_structure() {
+        let markup = page_shell(page_header(
+            "Server Side Web",
+            "Rendered on the server.",
+            Markup::text("A quieter, reusable page shell."),
+            Some(page_actions(Markup::text("Actions"))),
+        ));
+
+        assert!(markup.as_str().contains("<div class=\"ssw-page-shell\">"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<header class=\"ssw-page-header\">")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<p class=\"ssw-page-header__eyebrow\">Server Side Web</p>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<h1 class=\"ssw-page-header__title\">Rendered on the server.</h1>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<div class=\"ssw-page-actions\">Actions</div>")
+        );
+    }
+
+    #[test]
+    fn card_header_escapes_plain_text_body() {
+        let markup = card_header("Overview", "<unsafe>");
+
+        assert!(
+            markup
+                .as_str()
+                .contains("<h2 class=\"ssw-card-header__title\">Overview</h2>")
+        );
+        assert!(markup.as_str().contains("&lt;unsafe&gt;"));
+        assert!(!markup.as_str().contains("<unsafe>"));
     }
 }
