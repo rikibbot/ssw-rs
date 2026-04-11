@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 actix-web = { workspace = true }
 ssw-actix = { path = "../../crates/ssw-actix" }
+ssw-css = { path = "../../crates/ssw-css" }
 ssw-components = { path = "../../crates/ssw-components" }
 ssw-core = { path = "../../crates/ssw-core" }
 ssw-html = { path = "../../crates/ssw-html" }

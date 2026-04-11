@@ -35,6 +35,7 @@
 - `ssw-components` now also includes `link_button`, `MetaItem`, and `meta_list`, and both example apps now use those shared page-level helpers instead of app-local link and metadata markup.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
+- An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, and a first proof-of-concept block in the intake demo style guide.
 
 ## Current Priorities
 
@@ -63,7 +64,7 @@
 - Whether the current cookie-backed CSRF hook should stay Actix-specific or eventually grow a backend-agnostic core shape.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
-- Whether `ssw-css` should become a real crate after a proof-of-concept, and if so how scoping keys and extraction should work without making debugging worse.
+- How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, and whether extraction can arrive without making debugging worse.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
@@ -74,6 +75,6 @@
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
-- Decide whether `ssw-css` should be prototyped as a tiny scoped-style companion crate or remain only a design note until a real example proves that plain CSS is not enough.
+- Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

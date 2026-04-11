@@ -4,6 +4,14 @@
 
 `ssw-css` should be a small companion styling layer for `ssw-rs`.
 
+Current state: an initial experimental prototype now exists in `crates/ssw-css`. The implementation is intentionally narrower than the full design note:
+
+- string-literal selectors
+- string-literal declaration values
+- local class selector rewriting
+- `@media` blocks
+- `styles.class(...)`, `render()`, and `style_tag()`
+
 The goal is not to replace CSS. The goal is to make component-local styling more ergonomic while still emitting plain, predictable CSS for the browser.
 
 Short version:

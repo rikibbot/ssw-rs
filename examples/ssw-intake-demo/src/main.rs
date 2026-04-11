@@ -8,6 +8,7 @@ use ssw_components::{
     section, select, stack, submit_button, text_input, textarea,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
+use ssw_css::css;
 use ssw_html::{Markup, fonts, html, page as html_page};
 
 const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -261,6 +262,7 @@ fn style_guide_page() -> Markup {
         .value("Server-rendered interfaces can still feel polished.")
         .required(true);
     let options = track_options();
+    let scoped_preview = scoped_css_preview();
 
     app_page(
         "Component style guide",
@@ -303,8 +305,84 @@ fn style_guide_page() -> Markup {
                     (textarea(&preview_message, 4))
                 })))
             }
+
+            (section(stack(html! {
+                (card_header("Scoped CSS prototype", html! {
+                    p { "This is the current proof-of-concept direction for `ssw-css`: local classes, plain CSS output, and no client runtime." }
+                }))
+                (scoped_preview)
+            })))
         },
     )
+}
+
+fn scoped_css_preview() -> Markup {
+    let styles = css! {
+        ".root" {
+            display: "grid";
+            gap: "0.75rem";
+            padding: "1rem";
+            border: "1px solid var(--ssw-color-border)";
+            border-radius: "0.8rem";
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ssw-color-surface) 92%, #eef2ff) 0%, color-mix(in srgb, var(--ssw-color-surface) 96%, #f8fafc) 100%)";
+        }
+
+        ".eyebrow" {
+            margin: "0";
+            color: "var(--ssw-color-text-muted)";
+            font-size: "0.75rem";
+            font-weight: "600";
+            letter-spacing: "0.08em";
+            text-transform: "uppercase";
+        }
+
+        ".title" {
+            margin: "0";
+            color: "var(--ssw-color-text)";
+            font-size: "1.15rem";
+            font-weight: "600";
+            letter-spacing: "-0.02em";
+        }
+
+        ".copy" {
+            margin: "0";
+            color: "#52525b";
+            font-size: "0.95rem";
+            line-height: "1.6";
+        }
+
+        ".aside" {
+            margin: "0";
+            color: "var(--ssw-color-accent)";
+            font-size: "0.85rem";
+            font-weight: "500";
+        }
+
+        ".root:hover .title" {
+            color: "#1d4ed8";
+        }
+
+        @media "(min-width: 56rem)" {
+            ".root" {
+                grid-template-columns: "minmax(0, 1fr) auto";
+                align-items: "end";
+            }
+        }
+    };
+
+    html! {
+        (styles.style_tag())
+        article class=(styles.class("root")) {
+            div {
+                p class=(styles.class("eyebrow")) { "Local to this component" }
+                h3 class=(styles.class("title")) { "Scoped CSS, rendered as normal CSS." }
+                p class=(styles.class("copy")) {
+                    "The local selector names stay small in Rust code, but the browser still receives predictable scoped classes and a regular style block."
+                }
+            }
+            p class=(styles.class("aside")) { "No runtime injection." }
+        }
+    }
 }
 
 fn thanks_page(flashes: &[FlashMessage]) -> Markup {

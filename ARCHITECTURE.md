@@ -103,7 +103,7 @@ Responsibilities:
 
 This crate must remain an optional layer. It should prove the framework's UX direction, not define the framework's core architecture.
 
-### `ssw-css` (proposed)
+### `ssw-css`
 
 Responsibilities:
 
@@ -113,6 +113,8 @@ Responsibilities:
 - later, optional static extraction
 
 This crate should remain optional. It should improve component-local CSS ergonomics without introducing a client runtime or replacing plain linked stylesheets as a first-class path.
+
+Current state: an initial experimental crate exists with deterministic class-based scoping, plain CSS output, `@media` support, and inline style-tag rendering. Static extraction and broader CSS coverage are still future work.
 
 ## Backend strategy
 

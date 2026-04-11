@@ -23,17 +23,20 @@ Workspace crates:
 - `ssw-core`
 - `ssw-actix`
 - `ssw-html`
+- `ssw-css`
 - `ssw-components`
 
 Internal support crate:
 
 - `ssw-html-macros`
+- `ssw-css-macros`
 
 Currently implemented:
 
 - `ssw-html::html!` with Maud-like syntax
 - document and fragment rendering
 - first-class remote and local font head helpers in `ssw-html::fonts`
+- an experimental `ssw-css::css!` macro for deterministic scoped component-local CSS
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
 - reusable form-field helpers in `ssw-components`
@@ -48,6 +51,7 @@ Currently implemented:
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
+- a first `ssw-css` proof-of-concept in the intake style guide
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example
