@@ -103,6 +103,17 @@ Responsibilities:
 
 This crate must remain an optional layer. It should prove the framework's UX direction, not define the framework's core architecture.
 
+### `ssw-css` (proposed)
+
+Responsibilities:
+
+- scoped CSS authoring for component-local styles
+- deterministic scoped class generation
+- rendering plain CSS strings or style blocks
+- later, optional static extraction
+
+This crate should remain optional. It should improve component-local CSS ergonomics without introducing a client runtime or replacing plain linked stylesheets as a first-class path.
+
 ## Backend strategy
 
 `ssw-rs` should start with Actix because:

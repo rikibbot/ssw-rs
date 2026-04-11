@@ -71,7 +71,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, and [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, and [`SSW_CSS.md`](./SSW_CSS.md) for the proposed scoped CSS design.
 
 Run the current example app with:
 
