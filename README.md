@@ -52,6 +52,7 @@ Currently implemented:
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
 - a first `ssw-css` proof-of-concept in the intake style guide
+- a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
 
 ## Example

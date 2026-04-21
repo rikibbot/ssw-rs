@@ -9,6 +9,7 @@ use ssw_components::{
     page_header, page_shell, section, select, stack, submit_button, text_input, textarea, top_nav,
 };
 use ssw_core::{FlashMessage, Response};
+use ssw_css::{StyleSheet, css};
 use ssw_html::{Markup, fonts, html, page as html_page};
 
 const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -34,23 +35,6 @@ a {
   display: grid;
   gap: 0.85rem;
 }
-
-.project-card {
-  display: grid;
-  gap: 0.65rem;
-  padding: 1rem;
-  border: 1px solid var(--ssw-color-border);
-  border-radius: var(--ssw-radius-md);
-  background: color-mix(in srgb, var(--ssw-color-surface) 84%, white);
-  text-decoration: none;
-}
-
-.project-card:hover {
-  border-color: var(--ssw-color-border-strong);
-  background: var(--ssw-color-surface);
-}
-
-.project-card__eyebrow,
 .ssw-meta-list__label {
   margin: 0;
   color: var(--ssw-color-text-muted);
@@ -60,16 +44,6 @@ a {
   text-transform: uppercase;
 }
 
-.project-card__title {
-  margin: 0;
-  color: var(--ssw-color-text);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.project-card__summary,
 .ssw-meta-list__value,
 .detail-copy {
   margin: 0;
@@ -321,12 +295,124 @@ fn validate_edit_form(form: &HashMap<String, String>, project: Project) -> EditF
     state
 }
 
-fn app_page(title: &str, nav_current: &str, body: Markup) -> Markup {
+fn project_ui_styles() -> StyleSheet {
+    css! {
+        ".card" {
+            display: grid;
+            gap: 0.65 rem;
+            padding: 1 rem;
+            border: 1 px solid var(--ssw-color-border);
+            border-radius: var(--ssw-radius-md);
+            background: color-mix(in srgb, var(--ssw-color-surface) 84%, white);
+            text-decoration: none;
+            transition: border-color 160 ms ease, background-color 160 ms ease, transform 160 ms ease;
+        }
+
+        ".card:hover" {
+            border-color: var(--ssw-color-border-strong);
+            background: var(--ssw-color-surface);
+            transform: translateY(-1 px);
+        }
+
+        ".card-head" {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.65 rem;
+        }
+
+        ".eyebrow" {
+            margin: 0;
+            color: var(--ssw-color-text-muted);
+            font-size: 0.75 rem;
+            font-weight: 600;
+            letter-spacing: 0.08 em;
+            text-transform: uppercase;
+        }
+
+        ".title" {
+            margin: 0;
+            color: var(--ssw-color-text);
+            font-size: 1.05 rem;
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.02 em;
+        }
+
+        ".summary" {
+            margin: 0;
+            color: #52525b;
+            font-size: 0.95 rem;
+            line-height: 1.6;
+        }
+
+        ".status-badge" {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.6 rem;
+            padding: 0.1 rem 0.55 rem;
+            border-radius: 999 px;
+            font-size: 0.75 rem;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: 0.02 em;
+            text-transform: capitalize;
+            background: color-mix(in srgb, var(--ssw-color-surface-subtle) 85%, white);
+            color: var(--ssw-color-text-muted);
+        }
+
+        ".status-active" {
+            background: color-mix(in srgb, #dcfce7 82%, white);
+            color: #166534;
+        }
+
+        ".status-review" {
+            background: color-mix(in srgb, #dbeafe 82%, white);
+            color: #1d4ed8;
+        }
+
+        ".status-queued" {
+            background: color-mix(in srgb, #ede9fe 82%, white);
+            color: #6d28d9;
+        }
+    }
+}
+
+fn status_badge(styles: &StyleSheet, status: &str) -> Markup {
+    let variant = match status {
+        "active" => "status-active",
+        "review" => "status-review",
+        _ => "status-queued",
+    };
+
+    html! {
+        span class=(styles.classes(["status-badge", variant])) {
+            (status)
+        }
+    }
+}
+
+fn project_card(styles: &StyleSheet, project: Project) -> Markup {
+    html! {
+        a class=(styles.class("card")) href=(format!("/projects/{}", project.slug)) {
+            div class=(styles.class("card-head")) {
+                p class=(styles.class("eyebrow")) { (project.client) }
+                (status_badge(styles, project.status))
+            }
+            h2 class=(styles.class("title")) { (project.title) }
+            p class=(styles.class("summary")) { (project.summary) }
+        }
+    }
+}
+
+fn app_page(title: &str, nav_current: &str, head: Markup, body: Markup) -> Markup {
     html_page(title)
         .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
         .head(html! {
             link rel="stylesheet" href="/app.css";
         })
+        .head(head)
         .body(html! {
             (container(page_shell(html! {
                 (top_nav("/", "Server Side Web", &nav_items(nav_current)))
@@ -337,9 +423,12 @@ fn app_page(title: &str, nav_current: &str, body: Markup) -> Markup {
 }
 
 fn projects_page(flashes: &[FlashMessage]) -> Markup {
+    let styles = project_ui_styles();
+
     app_page(
         "Projects",
         "projects",
+        styles.style_tag(),
         html! {
             (page_header(
                 "Project Studio",
@@ -364,11 +453,7 @@ fn projects_page(flashes: &[FlashMessage]) -> Markup {
                     }))
                     div class="projects-list" {
                         @for project in PROJECTS {
-                            a class="project-card" href=(format!("/projects/{}", project.slug)) {
-                                p class="project-card__eyebrow" { (project.client) }
-                                h2 class="project-card__title" { (project.title) }
-                                p class="project-card__summary" { (project.summary) }
-                            }
+                            (project_card(&styles, project))
                         }
                     }
                 })))
@@ -388,6 +473,7 @@ fn archive_page() -> Markup {
     app_page(
         "Archive",
         "archive",
+        Markup::new(),
         html! {
             (page_header(
                 "Project Studio",
@@ -418,14 +504,18 @@ fn archive_page() -> Markup {
 }
 
 fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
+    let styles = project_ui_styles();
+
     app_page(
         project.title,
         "projects",
+        styles.style_tag(),
         html! {
             (page_header(
                 project.client,
                 project.title,
                 html! {
+                    (status_badge(&styles, project.status))
                     p { (project.summary) }
                 },
                 Some(page_actions(html! {
@@ -491,6 +581,7 @@ fn project_edit_page(
     app_page(
         "Edit project",
         "projects",
+        Markup::new(),
         html! {
             (page_header(
                 project.client,

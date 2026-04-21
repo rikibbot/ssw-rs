@@ -12,6 +12,11 @@ Current state: an initial experimental prototype now exists in `crates/ssw-css`.
 - raw `@media` queries
 - `styles.class(...)`, `styles.classes(...)`, `render()`, and `style_tag()`
 
+It is currently proven in two places:
+
+- a small isolated block in the intake style guide
+- repeated project-card and status-badge UI in the projects demo
+
 The goal is not to replace CSS. The goal is to make component-local styling more ergonomic while still emitting plain, predictable CSS for the browser.
 
 Short version:
