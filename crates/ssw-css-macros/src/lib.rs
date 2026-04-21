@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 use proc_macro::TokenStream;
-use proc_macro2::{Span, TokenTree};
+use proc_macro2::{Delimiter, Span, TokenTree};
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{Error, Ident, LitStr, Result, Token, braced, parse_macro_input};
@@ -13,9 +13,9 @@ use syn::{Error, Ident, LitStr, Result, Token, braced, parse_macro_input};
 ///
 /// The current supported surface intentionally stays small:
 /// - string-literal selectors
-/// - string-literal declaration values
+/// - raw CSS-like declaration values
 /// - local class selector rewriting
-/// - `@media "..." { ... }` blocks
+/// - `@media ... { ... }` blocks
 pub fn css(input: TokenStream) -> TokenStream {
     let source = proc_macro2::TokenStream::from(input.clone()).to_string();
     let stylesheet = parse_macro_input!(input as StyleSheetInput);
@@ -127,7 +127,7 @@ impl Rule {
 }
 
 struct MediaRule {
-    query: LitStr,
+    query: CssTokens,
     rules: Vec<Rule>,
 }
 
@@ -143,7 +143,7 @@ impl Parse for MediaRule {
             ));
         }
 
-        let query: LitStr = input.parse()?;
+        let query = CssTokens::parse_until(input, |input| input.peek(syn::token::Brace))?;
         let content;
         braced!(content in input);
 
@@ -159,7 +159,7 @@ impl Parse for MediaRule {
 impl MediaRule {
     fn render(&self, output: &mut String, scope: &str, slots: &mut BTreeSet<String>) -> Result<()> {
         output.push_str("@media ");
-        output.push_str(&self.query.value());
+        output.push_str(&self.query.render());
         output.push('{');
 
         for rule in &self.rules {
@@ -173,14 +173,14 @@ impl MediaRule {
 
 struct Declaration {
     name: String,
-    value: LitStr,
+    value: CssTokens,
 }
 
 impl Parse for Declaration {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let name = parse_property_name(input)?;
         input.parse::<Token![:]>()?;
-        let value: LitStr = input.parse()?;
+        let value = CssTokens::parse_until(input, |input| input.peek(Token![;]))?;
         input.parse::<Token![;]>()?;
 
         Ok(Self { name, value })
@@ -191,8 +191,37 @@ impl Declaration {
     fn render(&self, output: &mut String) {
         output.push_str(&self.name);
         output.push(':');
-        output.push_str(&self.value.value());
+        output.push_str(&self.value.render());
         output.push(';');
+    }
+}
+
+struct CssTokens {
+    tokens: Vec<TokenTree>,
+}
+
+impl CssTokens {
+    fn parse_until(input: ParseStream<'_>, stop: impl Fn(ParseStream<'_>) -> bool) -> Result<Self> {
+        let mut tokens = Vec::new();
+        let mut span = Span::call_site();
+
+        while !input.is_empty() && !stop(input) {
+            let tree: TokenTree = input.parse()?;
+            if tokens.is_empty() {
+                span = tree.span();
+            }
+            tokens.push(tree);
+        }
+
+        if tokens.is_empty() {
+            return Err(Error::new(span, "expected CSS value"));
+        }
+
+        Ok(Self { tokens })
+    }
+
+    fn render(&self) -> String {
+        render_css_tokens(&self.tokens)
     }
 }
 
@@ -228,6 +257,207 @@ fn parse_property_name(input: ParseStream<'_>) -> Result<String> {
     }
 
     Ok(name)
+}
+
+fn render_css_tokens(tokens: &[TokenTree]) -> String {
+    let mut output = String::new();
+    let mut previous = None;
+
+    for token in tokens {
+        let kind = TokenKind::from(token);
+        if needs_space(previous.as_ref(), &kind) {
+            output.push(' ');
+        }
+        push_css_token(&mut output, token);
+        previous = Some(kind);
+    }
+
+    output
+}
+
+fn push_css_token(output: &mut String, token: &TokenTree) {
+    match token {
+        TokenTree::Ident(ident) => output.push_str(&ident.to_string()),
+        TokenTree::Literal(literal) => output.push_str(&literal.to_string()),
+        TokenTree::Punct(punct) => output.push(punct.as_char()),
+        TokenTree::Group(group) => {
+            let (open, close) = match group.delimiter() {
+                Delimiter::Parenthesis => ('(', ')'),
+                Delimiter::Bracket => ('[', ']'),
+                Delimiter::Brace => ('{', '}'),
+                Delimiter::None => ('\0', '\0'),
+            };
+
+            if group.delimiter() == Delimiter::None {
+                output.push_str(&render_css_tokens(
+                    &group.stream().into_iter().collect::<Vec<_>>(),
+                ));
+                return;
+            }
+
+            output.push(open);
+            output.push_str(&render_css_tokens(
+                &group.stream().into_iter().collect::<Vec<_>>(),
+            ));
+            output.push(close);
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+enum TokenKind {
+    Ident(String),
+    Literal(String),
+    Group(Delimiter),
+    Punct(char),
+}
+
+impl From<&TokenTree> for TokenKind {
+    fn from(value: &TokenTree) -> Self {
+        match value {
+            TokenTree::Ident(ident) => Self::Ident(ident.to_string()),
+            TokenTree::Literal(literal) => Self::Literal(literal.to_string()),
+            TokenTree::Punct(punct) => Self::Punct(punct.as_char()),
+            TokenTree::Group(group) => Self::Group(group.delimiter()),
+        }
+    }
+}
+
+fn needs_space(previous: Option<&TokenKind>, next: &TokenKind) -> bool {
+    let Some(previous) = previous else {
+        return false;
+    };
+
+    if matches!(next, TokenKind::Punct(_)) {
+        return false;
+    }
+
+    match previous {
+        TokenKind::Punct(',') => return true,
+        TokenKind::Punct(_) => return false,
+        _ => {}
+    }
+
+    match (previous, next) {
+        (TokenKind::Ident(_), TokenKind::Ident(_)) => true,
+        (TokenKind::Ident(_), TokenKind::Literal(_)) => true,
+        (TokenKind::Ident(name), TokenKind::Group(Delimiter::Parenthesis)) => {
+            !is_css_function(name)
+        }
+        (TokenKind::Ident(_), TokenKind::Group(_)) => true,
+        (TokenKind::Literal(left), TokenKind::Ident(right)) => !is_unit_suffix(left, right),
+        (TokenKind::Literal(_), TokenKind::Literal(_)) => true,
+        (TokenKind::Literal(_), TokenKind::Group(_)) => true,
+        (TokenKind::Group(_), TokenKind::Ident(_)) => true,
+        (TokenKind::Group(_), TokenKind::Literal(_)) => true,
+        (TokenKind::Group(_), TokenKind::Group(_)) => true,
+        _ => false,
+    }
+}
+
+fn is_unit_suffix(literal: &str, ident: &str) -> bool {
+    is_numeric_literal(literal)
+        && matches!(
+            ident,
+            "px" | "rem"
+                | "em"
+                | "ex"
+                | "ch"
+                | "fr"
+                | "vw"
+                | "vh"
+                | "vmin"
+                | "vmax"
+                | "svw"
+                | "svh"
+                | "lvw"
+                | "lvh"
+                | "dvw"
+                | "dvh"
+                | "cqw"
+                | "cqh"
+                | "cqi"
+                | "cqb"
+                | "cqmin"
+                | "cqmax"
+                | "cm"
+                | "mm"
+                | "q"
+                | "in"
+                | "pt"
+                | "pc"
+                | "deg"
+                | "rad"
+                | "grad"
+                | "turn"
+                | "s"
+                | "ms"
+                | "hz"
+                | "khz"
+                | "dpi"
+                | "dpcm"
+                | "dppx"
+        )
+}
+
+fn is_numeric_literal(value: &str) -> bool {
+    value
+        .chars()
+        .all(|ch| matches!(ch, '0'..='9' | '.' | '+' | '-' | 'e' | 'E'))
+}
+
+fn is_css_function(name: &str) -> bool {
+    matches!(
+        name,
+        "attr"
+            | "blur"
+            | "brightness"
+            | "calc"
+            | "circle"
+            | "clamp"
+            | "color"
+            | "color-mix"
+            | "conic-gradient"
+            | "contrast"
+            | "cubic-bezier"
+            | "drop-shadow"
+            | "ellipse"
+            | "env"
+            | "fit-content"
+            | "grayscale"
+            | "hsl"
+            | "hsla"
+            | "hwb"
+            | "inset"
+            | "invert"
+            | "lab"
+            | "lch"
+            | "linear-gradient"
+            | "local"
+            | "matrix"
+            | "matrix3d"
+            | "max"
+            | "min"
+            | "minmax"
+            | "oklab"
+            | "oklch"
+            | "opacity"
+            | "path"
+            | "polygon"
+            | "radial-gradient"
+            | "rgba"
+            | "rgb"
+            | "repeat"
+            | "rotate"
+            | "saturate"
+            | "scale"
+            | "sepia"
+            | "skew"
+            | "steps"
+            | "translate"
+            | "url"
+            | "var"
+    )
 }
 
 fn rewrite_selector(

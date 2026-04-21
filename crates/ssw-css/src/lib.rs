@@ -58,9 +58,26 @@ impl StyleSheet {
             .unwrap_or_else(|| panic!("unknown scoped css slot `{slot}`"))
     }
 
+    /// Returns a space-separated class string for multiple local slots.
+    ///
+    /// Panics when any slot name is not present in the stylesheet.
+    pub fn classes<I, S>(&self, slots: I) -> String
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        slots
+            .into_iter()
+            .map(|slot| self.class(slot.as_ref()))
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
     /// Renders the stylesheet as an inline `<style>` tag.
     pub fn style_tag(&self) -> Markup {
-        let mut markup = Markup::raw("<style>");
+        let mut markup = Markup::raw("<style data-ssw-css=\"");
+        markup.push_raw(self.scope);
+        markup.push_raw("\">");
         markup.push_raw(self.css);
         markup.push_raw("</style>");
         markup
@@ -89,16 +106,16 @@ mod tests {
     fn renders_scoped_css_and_resolves_slot_classes() {
         let styles = css! {
             ".root" {
-                display: "grid";
-                gap: "1rem";
+                display: grid;
+                gap: 1 rem;
             }
 
             ".title" {
-                font-weight: "600";
+                font-weight: 600;
             }
 
             ".root:hover .title" {
-                color: "var(--accent)";
+                color: var(--accent);
             }
         };
 
@@ -124,12 +141,12 @@ mod tests {
     fn supports_media_queries() {
         let styles = css! {
             ".root" {
-                gap: "1rem";
+                gap: 1 rem;
             }
 
-            @media "(min-width: 48rem)" {
+            @media (min-width: 48 rem) {
                 ".root" {
-                    gap: "1.5rem";
+                    gap: 1.5 rem;
                 }
             }
         };
@@ -138,7 +155,7 @@ mod tests {
 
         assert!(styles.render().contains(&format!(".{root}{{gap:1rem;}}")));
         assert!(styles.render().contains(&format!(
-            "@media (min-width: 48rem){{.{root}{{gap:1.5rem;}}}}"
+            "@media (min-width:48rem){{.{root}{{gap:1.5rem;}}}}"
         )));
     }
 
@@ -146,7 +163,7 @@ mod tests {
     fn style_tag_integrates_with_html_rendering() {
         let styles = css! {
             ".root" {
-                padding: "1rem";
+                padding: 1 rem;
             }
         };
 
@@ -155,9 +172,29 @@ mod tests {
             div class=(styles.class("root")) { "Scoped" }
         };
 
-        assert!(markup.as_str().contains("<style>"));
+        assert!(markup.as_str().contains("<style data-ssw-css=\""));
         assert!(markup.as_str().contains("Scoped"));
         assert!(markup.as_str().contains("class=\""));
+    }
+
+    #[test]
+    fn classes_joins_multiple_local_slots() {
+        let styles = css! {
+            ".root" {
+                display: block;
+            }
+
+            ".active" {
+                color: red;
+            }
+        };
+
+        let classes = styles.classes(["root", "active"]);
+
+        assert!(classes.contains("sswc-"));
+        assert!(classes.contains("-root"));
+        assert!(classes.contains("-active"));
+        assert!(classes.contains(' '));
     }
 
     #[test]

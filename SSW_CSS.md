@@ -7,10 +7,10 @@
 Current state: an initial experimental prototype now exists in `crates/ssw-css`. The implementation is intentionally narrower than the full design note:
 
 - string-literal selectors
-- string-literal declaration values
+- raw CSS-like declaration values
 - local class selector rewriting
-- `@media` blocks
-- `styles.class(...)`, `render()`, and `style_tag()`
+- raw `@media` queries
+- `styles.class(...)`, `styles.classes(...)`, `render()`, and `style_tag()`
 
 The goal is not to replace CSS. The goal is to make component-local styling more ergonomic while still emitting plain, predictable CSS for the browser.
 
@@ -115,16 +115,16 @@ use ssw_html::html;
 let styles = css! {
     ".root" {
         display: grid;
-        gap: "1rem";
+        gap: 1 rem;
     }
 
     ".title" {
         font-weight: 600;
-        letter-spacing: "-0.02em";
+        letter-spacing: -0.02 em;
     }
 
     ".root:hover .title" {
-        color: "var(--accent)";
+        color: var(--accent);
     }
 };
 
@@ -146,12 +146,17 @@ The exact prefix matters less than the properties:
 - deterministic across requests
 - readable enough for debugging
 
+Current caveat:
+
+- CSS dimensions must currently be written as `1 rem`, `0.75 rem`, or `-0.02 em` because Rust tokenization does not allow tokens like `1rem` directly inside a macro input. `ssw-css` joins them back into normal CSS output.
+
 ## Public API shape
 
 The initial API should stay narrow:
 
 - `css! { ... }` to define a stylesheet
 - `styles.class("slot")` to resolve a scoped class
+- `styles.classes([...])` to join multiple scoped classes
 - `styles.render()` to emit CSS text
 - `styles.style_tag()` to emit a `<style>` block through `ssw-html`
 
@@ -286,7 +291,7 @@ If those rules stop being true, the project should fall back to plain CSS files 
 
 1. Create a tiny `ssw-css` crate.
 2. Support `css!` with local class selectors only.
-3. Add `styles.class(...)`, `render()`, and `style_tag()`.
+3. Add `styles.class(...)`, `styles.classes(...)`, `render()`, and `style_tag()`.
 4. Prove it in a small example component, not in `ssw-components` first.
 5. Validate whether inline rendering is ergonomic enough before designing extraction.
 

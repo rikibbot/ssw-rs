@@ -319,53 +319,53 @@ fn style_guide_page() -> Markup {
 fn scoped_css_preview() -> Markup {
     let styles = css! {
         ".root" {
-            display: "grid";
-            gap: "0.75rem";
-            padding: "1rem";
-            border: "1px solid var(--ssw-color-border)";
-            border-radius: "0.8rem";
-            background: "linear-gradient(135deg, color-mix(in srgb, var(--ssw-color-surface) 92%, #eef2ff) 0%, color-mix(in srgb, var(--ssw-color-surface) 96%, #f8fafc) 100%)";
+            display: grid;
+            gap: 0.75 rem;
+            padding: 1 rem;
+            border: 1px solid var(--ssw-color-border);
+            border-radius: 0.8 rem;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--ssw-color-surface) 92%, #eef2ff) 0%, color-mix(in srgb, var(--ssw-color-surface) 96%, #f8fafc) 100%);
         }
 
         ".eyebrow" {
-            margin: "0";
-            color: "var(--ssw-color-text-muted)";
-            font-size: "0.75rem";
-            font-weight: "600";
-            letter-spacing: "0.08em";
-            text-transform: "uppercase";
+            margin: 0;
+            color: var(--ssw-color-text-muted);
+            font-size: 0.75 rem;
+            font-weight: 600;
+            letter-spacing: 0.08 em;
+            text-transform: uppercase;
         }
 
         ".title" {
-            margin: "0";
-            color: "var(--ssw-color-text)";
-            font-size: "1.15rem";
-            font-weight: "600";
-            letter-spacing: "-0.02em";
+            margin: 0;
+            color: var(--ssw-color-text);
+            font-size: 1.15 rem;
+            font-weight: 600;
+            letter-spacing: -0.02 em;
         }
 
         ".copy" {
-            margin: "0";
-            color: "#52525b";
-            font-size: "0.95rem";
-            line-height: "1.6";
+            margin: 0;
+            color: #52525b;
+            font-size: 0.95 rem;
+            line-height: 1.6;
         }
 
         ".aside" {
-            margin: "0";
-            color: "var(--ssw-color-accent)";
-            font-size: "0.85rem";
-            font-weight: "500";
+            margin: 0;
+            color: var(--ssw-color-accent);
+            font-size: 0.85 rem;
+            font-weight: 500;
         }
 
         ".root:hover .title" {
-            color: "#1d4ed8";
+            color: #1d4ed8;
         }
 
-        @media "(min-width: 56rem)" {
+        @media (min-width: 56 rem) {
             ".root" {
-                grid-template-columns: "minmax(0, 1fr) auto";
-                align-items: "end";
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: end;
             }
         }
     };

@@ -35,7 +35,7 @@
 - `ssw-components` now also includes `link_button`, `MetaItem`, and `meta_list`, and both example apps now use those shared page-level helpers instead of app-local link and metadata markup.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
-- An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, and a first proof-of-concept block in the intake demo style guide.
+- An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and a first proof-of-concept block in the intake demo style guide.
 
 ## Current Priorities
 
@@ -64,7 +64,7 @@
 - Whether the current cookie-backed CSRF hook should stay Actix-specific or eventually grow a backend-agnostic core shape.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
-- How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, and whether extraction can arrive without making debugging worse.
+- How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
