@@ -1,2 +1,6 @@
 /target
 Cargo.lock
+/examples/ssw-workers-demo/build
+/examples/ssw-workers-demo/node_modules
+/examples/ssw-workers-demo/.wrangler-tools
+/examples/ssw-workers-demo/.wrangler

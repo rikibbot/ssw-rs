@@ -1,13 +1,15 @@
 #[cfg(target_arch = "wasm32")]
 mod app {
     use ssw_components::{
-        Field, container, flash_notice, hidden_input, link_button, page as component_page,
-        page_actions, page_header, page_shell, section, stack, submit_button, textarea,
+        Field, container, flash_notice, hidden_input, link_button, page_actions, page_header,
+        page_shell, section, stack, submit_button, textarea,
     };
-    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Response as CoreResponse};
-    use ssw_html::{Markup, html};
+    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Response as CoreResponse, TextResponse};
+    use ssw_html::{Markup, html, page as html_page};
     use ssw_workers::{page_with_context, request_context, to_worker_response};
     use worker::{Context, Env, Request, Response, Result, Router, event};
+
+    const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
 
     #[derive(Debug, Clone, Copy, Default)]
     struct DemoState<'a> {
@@ -17,14 +19,17 @@ mod app {
     }
 
     fn layout(title: &str, content: Markup) -> Markup {
-        component_page(
-            title,
-            page_shell(container(html! {
+        html_page(title)
+            .body_class("app-shell")
+            .head(html! {
+                link rel="stylesheet" href="/theme.css";
+            })
+            .body(page_shell(container(html! {
                 main {
                     (content)
                 }
-            })),
-        )
+            })))
+            .render()
     }
 
     fn form_page(state: &DemoState<'_>, flashes: &[FlashMessage], csrf_token: &str) -> Markup {
@@ -91,6 +96,12 @@ mod app {
     #[event(fetch, respond_with_errors)]
     pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         Router::new()
+            .get_async("/theme.css", |_req, _ctx| async move {
+                to_worker_response(CoreResponse::Text(TextResponse::new(
+                    THEME_CSS,
+                    "text/css; charset=utf-8",
+                )))
+            })
             .get_async("/", |req, _ctx| async move {
                 let context = request_context(&req)?;
                 page_with_context(

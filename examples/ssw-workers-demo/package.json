@@ -1,0 +1,12 @@
+{
+  "name": "ssw-workers-demo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo install -q \"worker-build@^0.8\" --root .wrangler-tools && wrangler dev --local --port 8788",
+    "deploy": "cargo install -q \"worker-build@^0.8\" --root .wrangler-tools && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

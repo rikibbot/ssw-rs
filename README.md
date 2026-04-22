@@ -53,7 +53,7 @@ Currently implemented:
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
 - an initial `ssw-workers` adapter with response conversion, cookie-backed flash and CSRF request context, and page or redirect helpers for Cloudflare Workers
-- a wasm-checkable Worker example at `examples/ssw-workers-demo`
+- a locally runnable Worker example at `examples/ssw-workers-demo`, with `wrangler` workflow, themed HTML pages, POST/redirect/flash flow, and a Worker-served stylesheet route
 - a first `ssw-css` proof-of-concept in the intake style guide
 - a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
@@ -118,7 +118,17 @@ Check the Worker example with:
 cargo check -p ssw-workers-demo --target wasm32-unknown-unknown
 ```
 
-The Worker example is intentionally narrow. It proves request or response integration, flash, CSRF, and a simple GET or POST flow without introducing a broader asset or deployment toolchain yet.
+Run the Worker example locally with:
+
+```bash
+cd examples/ssw-workers-demo
+npm install
+npm run dev
+```
+
+Then open `http://127.0.0.1:8788/`.
+
+The Worker example is still intentionally narrow. It now proves request or response integration, flash, CSRF, a simple GET or POST flow, and a Worker-served stylesheet route without introducing a broader asset or deployment toolchain yet.
 
 Useful capture knobs:
 

@@ -1,0 +1,7 @@
+name = "ssw-workers-demo"
+main = "build/index.js"
+compatibility_date = "2025-11-15"
+workers_dev = true
+
+[build]
+command = "cargo install -q \"worker-build@^0.8\" --root .wrangler-tools && ./.wrangler-tools/bin/worker-build --release"

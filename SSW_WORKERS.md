@@ -9,12 +9,13 @@ The current implementation covers:
 - conversion from `ssw-core::Response` into `worker::Response`
 - page, fragment, and redirect helpers
 - cookie-backed flash and CSRF request context
-- a minimal Worker example with GET, POST, redirect, and flash flow
+- a minimal Worker example with GET, POST, redirect, flash flow, and a Worker-served stylesheet route
+- a local `wrangler dev` workflow that has been exercised against the example
 
 What it does not cover yet:
 
 - static asset serving
-- deployment or Wrangler workflow
+- deployed Worker verification
 - Cloudflare product bindings such as D1, KV, R2, or Durable Objects
 - a generalized backend abstraction beyond the current response and request seams
 
@@ -205,7 +206,7 @@ It only needs a minimal story:
 - serving or referencing static assets in a Worker-compatible way
 - ensuring `ssw-html` and `ssw-css` output can be linked or embedded cleanly
 
-If a Worker app wants to inline scoped CSS with `style_tag()` today, that should keep working unchanged.
+The current demo proves a very small asset path by serving the first-party theme CSS from a Worker route. That is useful, but it is not a full asset pipeline yet.
 
 ## Performance and size concerns
 
