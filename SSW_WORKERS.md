@@ -1,5 +1,23 @@
 # ssw-workers Design
 
+## Current status
+
+`ssw-workers` now exists as a minimal backend proof in the workspace.
+
+The current implementation covers:
+
+- conversion from `ssw-core::Response` into `worker::Response`
+- page, fragment, and redirect helpers
+- cookie-backed flash and CSRF request context
+- a minimal Worker example with GET, POST, redirect, and flash flow
+
+What it does not cover yet:
+
+- static asset serving
+- deployment or Wrangler workflow
+- Cloudflare product bindings such as D1, KV, R2, or Durable Objects
+- a generalized backend abstraction beyond the current response and request seams
+
 ## Purpose
 
 `ssw-workers` should be a narrow Cloudflare Workers adapter for `ssw-rs`.
@@ -206,20 +224,20 @@ This is another reason to keep `ssw-workers` narrowly scoped and to resist movin
 
 ## Recommended v0 milestone
 
-The first milestone should be intentionally small:
+The first milestone should be intentionally small.
 
-1. add `ssw-workers`
-2. convert `ssw-core::Response` into `worker::Response`
-3. build one Worker example with:
-   - list page
+This is now implemented:
+
+1. `ssw-workers` exists
+2. `ssw-core::Response` converts into `worker::Response`
+3. one Worker example proves:
+   - page render
    - form POST
    - redirect
    - flash notice
-4. note exactly which current Actix assumptions break
+   - CSRF verification
 
-If that milestone feels clean, then the backend is justified.
-
-If it reveals too many adapter leaks, fix the boundaries first instead of expanding the backend.
+The next step is not more surface area by default. It is to note exactly which current Actix assumptions still leak and only then decide whether any shared boundary should move.
 
 ## Open questions
 

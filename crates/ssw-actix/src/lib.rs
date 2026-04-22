@@ -3,25 +3,12 @@
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::http::StatusCode;
 use actix_web::{HttpRequest, HttpResponse, Responder};
-use ssw_core::{FlashLevel, FlashMessage, HtmlKind, RedirectKind, Render, Response};
+use ssw_core::{
+    FlashMessage, HtmlKind, RedirectKind, Render, Response, decode_flash_messages,
+    encode_flash_messages, is_valid_csrf_token, verify_csrf_token,
+};
 
-/// Cookie name used for redirect-carried flash messages.
-pub const FLASH_COOKIE_NAME: &str = "ssw-flash";
-
-/// Cookie name used for CSRF token storage.
-pub const CSRF_COOKIE_NAME: &str = "ssw-csrf";
-
-/// Default hidden form field name used for CSRF tokens.
-pub const CSRF_FORM_FIELD: &str = "csrf_token";
-
-/// Errors returned when a submitted CSRF token does not match the request token.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CsrfError {
-    /// The submitted form did not include the expected token field.
-    MissingFormToken,
-    /// The submitted token did not match the request token.
-    InvalidFormToken,
-}
+pub use ssw_core::{CSRF_COOKIE_NAME, CSRF_FORM_FIELD, CsrfError, FLASH_COOKIE_NAME};
 
 /// Request-scoped cookie-backed state for flash messages and CSRF tokens.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,7 +25,7 @@ impl RequestContext {
         let flash_cookie = request.cookie(FLASH_COOKIE_NAME);
         let flashes = flash_cookie
             .as_ref()
-            .and_then(|cookie| decode_flashes(cookie.value()))
+            .and_then(|cookie| decode_flash_messages(cookie.value()))
             .unwrap_or_default();
 
         let csrf_cookie = request.cookie(CSRF_COOKIE_NAME);
@@ -69,11 +56,7 @@ impl RequestContext {
 
     /// Verifies a submitted form token against the request token.
     pub fn verify_csrf(&self, form_token: Option<&str>) -> Result<(), CsrfError> {
-        match form_token {
-            None => Err(CsrfError::MissingFormToken),
-            Some(token) if token == self.csrf_token => Ok(()),
-            Some(_) => Err(CsrfError::InvalidFormToken),
-        }
+        verify_csrf_token(&self.csrf_token, form_token)
     }
 
     /// Applies pending cookie updates to a response.
@@ -182,7 +165,7 @@ fn status_for_redirect(kind: RedirectKind) -> StatusCode {
 }
 
 fn flash_cookie(flashes: &[FlashMessage]) -> Cookie<'static> {
-    Cookie::build(FLASH_COOKIE_NAME, encode_flashes(flashes))
+    Cookie::build(FLASH_COOKIE_NAME, encode_flash_messages(flashes))
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
@@ -207,46 +190,13 @@ fn removal_cookie(name: &str) -> Cookie<'static> {
     cookie
 }
 
-fn encode_flashes(flashes: &[FlashMessage]) -> String {
-    flashes
-        .iter()
-        .map(|flash| {
-            format!(
-                "{}~{}",
-                flash.level().as_str(),
-                hex_encode(flash.message().as_bytes())
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(".")
-}
-
-fn decode_flashes(value: &str) -> Option<Vec<FlashMessage>> {
-    if value.is_empty() {
-        return Some(Vec::new());
-    }
-
-    value.split('.').map(decode_flash).collect()
-}
-
-fn decode_flash(value: &str) -> Option<FlashMessage> {
-    let (level, message) = value.split_once('~')?;
-    let message = String::from_utf8(hex_decode(message)?).ok()?;
-
-    Some(FlashMessage::new(FlashLevel::parse(level)?, message))
-}
-
 fn generate_csrf_token() -> String {
     let mut bytes = [0_u8; 32];
     getrandom::fill(&mut bytes).expect("OS randomness is required for CSRF tokens");
-    hex_encode(&bytes)
+    encode_hex(&bytes)
 }
 
-fn is_valid_csrf_token(value: &str) -> bool {
-    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
-}
-
-fn hex_encode(bytes: &[u8]) -> String {
+fn encode_hex(bytes: &[u8]) -> String {
     let mut output = String::with_capacity(bytes.len() * 2);
 
     for byte in bytes {
@@ -255,31 +205,6 @@ fn hex_encode(bytes: &[u8]) -> String {
     }
 
     output
-}
-
-fn hex_decode(value: &str) -> Option<Vec<u8>> {
-    let bytes = value.as_bytes();
-    if bytes.len() % 2 != 0 {
-        return None;
-    }
-
-    let mut output = Vec::with_capacity(bytes.len() / 2);
-    for chunk in bytes.chunks_exact(2) {
-        let high = decode_hex_nibble(chunk[0])?;
-        let low = decode_hex_nibble(chunk[1])?;
-        output.push((high << 4) | low);
-    }
-
-    Some(output)
-}
-
-fn decode_hex_nibble(byte: u8) -> Option<u8> {
-    match byte {
-        b'0'..=b'9' => Some(byte - b'0'),
-        b'a'..=b'f' => Some(byte - b'a' + 10),
-        b'A'..=b'F' => Some(byte - b'A' + 10),
-        _ => None,
-    }
 }
 
 #[cfg(test)]

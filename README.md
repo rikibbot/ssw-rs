@@ -16,12 +16,13 @@ Plain strings passed into `ssw-html` document and component helpers are escaped 
 
 ## Current slice
 
-The current implementation targets Actix, with crate boundaries designed so additional backends can be added later.
+The current implementation is still Actix-first, but the repo now also includes an initial `ssw-workers` proof for Cloudflare Workers.
 
 Workspace crates:
 
 - `ssw-core`
 - `ssw-actix`
+- `ssw-workers`
 - `ssw-html`
 - `ssw-css`
 - `ssw-components`
@@ -51,6 +52,8 @@ Currently implemented:
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
+- an initial `ssw-workers` adapter with response conversion, cookie-backed flash and CSRF request context, and page or redirect helpers for Cloudflare Workers
+- a wasm-checkable Worker example at `examples/ssw-workers-demo`
 - a first `ssw-css` proof-of-concept in the intake style guide
 - a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, and CSRF verification
@@ -76,7 +79,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, and [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the proposed Cloudflare Workers backend.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, and [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope.
 
 Run the current example app with:
 
@@ -108,6 +111,14 @@ cargo run -p ssw-projects-demo
 ```
 
 The two examples now share page-level primitives instead of app-local link and metadata markup, which makes them a better pressure test for what should stay in `ssw-components`.
+
+Check the Worker example with:
+
+```bash
+cargo check -p ssw-workers-demo --target wasm32-unknown-unknown
+```
+
+The Worker example is intentionally narrow. It proves request or response integration, flash, CSRF, and a simple GET or POST flow without introducing a broader asset or deployment toolchain yet.
 
 Useful capture knobs:
 

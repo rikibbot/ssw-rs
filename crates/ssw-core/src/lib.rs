@@ -2,6 +2,15 @@
 
 use std::borrow::Cow;
 
+/// Cookie name used for redirect-carried flash messages.
+pub const FLASH_COOKIE_NAME: &str = "ssw-flash";
+
+/// Cookie name used for CSRF token storage.
+pub const CSRF_COOKIE_NAME: &str = "ssw-csrf";
+
+/// Default hidden form field name used for CSRF tokens.
+pub const CSRF_FORM_FIELD: &str = "csrf_token";
+
 /// Distinguishes full HTML documents from partial fragments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HtmlKind {
@@ -162,6 +171,15 @@ impl FlashLevel {
     }
 }
 
+/// Errors returned when a submitted CSRF token does not match the request token.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CsrfError {
+    /// The submitted form did not include the expected token field.
+    MissingFormToken,
+    /// The submitted token did not match the expected request token.
+    InvalidFormToken,
+}
+
 /// A transient user-facing message, typically carried across a redirect.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FlashMessage {
@@ -308,9 +326,93 @@ impl Response {
     }
 }
 
+/// Encodes flash messages into the current cookie transport format.
+pub fn encode_flash_messages(flashes: &[FlashMessage]) -> String {
+    flashes
+        .iter()
+        .map(|flash| {
+            format!(
+                "{}~{}",
+                flash.level().as_str(),
+                hex_encode(flash.message().as_bytes())
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(".")
+}
+
+/// Decodes flash messages from the current cookie transport format.
+pub fn decode_flash_messages(value: &str) -> Option<Vec<FlashMessage>> {
+    if value.is_empty() {
+        return Some(Vec::new());
+    }
+
+    value.split('.').map(decode_flash_message).collect()
+}
+
+/// Returns whether a token matches the current CSRF token format.
+pub fn is_valid_csrf_token(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+/// Verifies a submitted form token against the expected request token.
+pub fn verify_csrf_token(expected: &str, submitted: Option<&str>) -> Result<(), CsrfError> {
+    match submitted {
+        None => Err(CsrfError::MissingFormToken),
+        Some(token) if token == expected => Ok(()),
+        Some(_) => Err(CsrfError::InvalidFormToken),
+    }
+}
+
+fn decode_flash_message(value: &str) -> Option<FlashMessage> {
+    let (level, message) = value.split_once('~')?;
+    let message = String::from_utf8(hex_decode(message)?).ok()?;
+
+    Some(FlashMessage::new(FlashLevel::parse(level)?, message))
+}
+
+fn hex_encode(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(bytes.len() * 2);
+
+    for byte in bytes {
+        output.push(char::from(b"0123456789abcdef"[(byte >> 4) as usize]));
+        output.push(char::from(b"0123456789abcdef"[(byte & 0x0f) as usize]));
+    }
+
+    output
+}
+
+fn hex_decode(value: &str) -> Option<Vec<u8>> {
+    let bytes = value.as_bytes();
+    if bytes.len() % 2 != 0 {
+        return None;
+    }
+
+    let mut output = Vec::with_capacity(bytes.len() / 2);
+    for chunk in bytes.chunks_exact(2) {
+        let high = decode_hex_nibble(chunk[0])?;
+        let low = decode_hex_nibble(chunk[1])?;
+        output.push((high << 4) | low);
+    }
+
+    Some(output)
+}
+
+fn decode_hex_nibble(byte: u8) -> Option<u8> {
+    match byte {
+        b'0'..=b'9' => Some(byte - b'0'),
+        b'a'..=b'f' => Some(byte - b'a' + 10),
+        b'A'..=b'F' => Some(byte - b'A' + 10),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{FlashLevel, HtmlKind, HtmlResponse, Redirect, Render, Response};
+    use super::{
+        CsrfError, FlashLevel, FlashMessage, HtmlKind, HtmlResponse, Redirect, Render, Response,
+        decode_flash_messages, encode_flash_messages, is_valid_csrf_token, verify_csrf_token,
+    };
 
     struct Greeting<'a>(&'a str);
 
@@ -363,5 +465,33 @@ mod tests {
             }
             _ => panic!("expected redirect response"),
         }
+    }
+
+    #[test]
+    fn round_trips_flash_cookie_encoding() {
+        let flashes = vec![
+            FlashMessage::success("Saved"),
+            FlashMessage::warning("Needs review"),
+        ];
+
+        let encoded = encode_flash_messages(&flashes);
+
+        assert_eq!(decode_flash_messages(&encoded), Some(flashes));
+    }
+
+    #[test]
+    fn verifies_csrf_tokens() {
+        assert!(is_valid_csrf_token(
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ));
+        assert_eq!(
+            verify_csrf_token("expected", None),
+            Err(CsrfError::MissingFormToken)
+        );
+        assert_eq!(
+            verify_csrf_token("expected", Some("nope")),
+            Err(CsrfError::InvalidFormToken)
+        );
+        assert_eq!(verify_csrf_token("expected", Some("expected")), Ok(()));
     }
 }

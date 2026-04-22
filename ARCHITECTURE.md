@@ -80,7 +80,7 @@ Responsibilities:
 
 This crate is where framework-specific ergonomics live. It should feel native to Actix rather than pretending every backend has identical capabilities.
 
-### `ssw-workers` (proposed)
+### `ssw-workers`
 
 Responsibilities:
 
@@ -90,6 +90,13 @@ Responsibilities:
 - minimal rendering and redirect ergonomics that feel native to the Workers fetch model
 
 This crate should remain narrow. It should not try to hide the Cloudflare runtime model, and it should not pull Cloudflare product bindings into `ssw-core`.
+
+Current status:
+
+- a minimal adapter exists
+- `ssw-core::Response` now converts into `worker::Response`
+- cookie-backed flash and CSRF request context is proven on Workers
+- a small GET or POST example exists, but broader deployment ergonomics and asset handling are still intentionally out of scope
 
 ### `ssw-html`
 
