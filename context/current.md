@@ -40,6 +40,7 @@
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
 - The Worker demo now serves the first-party theme CSS from a Worker route, which gives the backend a very small but real asset path without introducing a general asset pipeline yet.
 - `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
+- The Worker demo now also exercises a fragment endpoint and a custom HTML 404 page, which confirms that fragments fit the current shared response model cleanly while 404 HTML still uses a Worker-native status path outside `ssw-core::Response`.
 
 ## Current Priorities
 
@@ -70,6 +71,7 @@
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
+- Whether HTML status variants like 404 pages should eventually become first-class in `ssw-core::Response`, or stay adapter-native so the core response model remains narrower.
 - How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
@@ -84,5 +86,6 @@
 - Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.
 - Use the locally runnable `ssw-workers` proof to decide what, if anything, should move out of adapter crates before the backend grows further.
 - Continue tightening the shared backend boundary only where both Actix and Workers already prove the same state or semantics, rather than abstracting ahead of real pressure.
+- Decide whether the current Worker-native 404 HTML path is acceptable for now, or whether the shared response model now has enough pressure to justify explicit HTML status support.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

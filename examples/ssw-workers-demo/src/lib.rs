@@ -4,9 +4,11 @@ mod app {
         Field, container, flash_notice, hidden_input, link_button, page_actions, page_header,
         page_shell, section, stack, submit_button, textarea,
     };
-    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Response as CoreResponse, TextResponse};
+    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Render, Response as CoreResponse, TextResponse};
     use ssw_html::{Markup, html, page as html_page};
-    use ssw_workers::{page_with_context, request_context, to_worker_response};
+    use ssw_workers::{
+        RequestContext, fragment, page_with_context, request_context, to_worker_response,
+    };
     use worker::{Context, Env, Request, Response, Result, Router, event};
 
     const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -16,6 +18,14 @@ mod app {
         note: &'a str,
         form_error: Option<&'a str>,
         note_error: Option<&'a str>,
+    }
+
+    fn html_with_status(
+        context: &RequestContext,
+        status: u16,
+        view: impl Render,
+    ) -> Result<Response> {
+        context.apply(Response::from_html(view.render())?.with_status(status))
     }
 
     fn layout(title: &str, content: Markup) -> Markup {
@@ -46,10 +56,13 @@ mod app {
                     "A minimal Workers adapter proof.",
                     html! {
                         p {
-                            "This example keeps the scope narrow: page rendering, POST, redirect, flash, and CSRF on the Workers fetch model."
+                            "This example keeps the scope narrow: page rendering, fragments, POST, redirect, flash, and CSRF on the Workers fetch model."
                         }
                     },
-                    Some(page_actions(link_button("/thanks", "Open the success page"))),
+                    Some(page_actions(html! {
+                        (link_button("/preview?note=Rendered%20at%20the%20edge", "Open the preview fragment"))
+                        (link_button("/thanks", "Open the success page"))
+                    })),
                 ))
                 (stack(html! {
                     @for flash in flashes {
@@ -68,6 +81,21 @@ mod app {
                 }))
             },
         )
+    }
+
+    fn preview_fragment(note: &str) -> Markup {
+        let body = if note.trim().is_empty() {
+            "Workers can return partial HTML without wrapping it in a full document."
+        } else {
+            note
+        };
+
+        html! {
+            div class="ssw-fragment-preview" {
+                strong { "Fragment preview" }
+                p { (body) }
+            }
+        }
     }
 
     fn thanks_page(flashes: &[FlashMessage]) -> Markup {
@@ -93,6 +121,36 @@ mod app {
         )
     }
 
+    fn not_found_page(path: &str) -> Markup {
+        layout(
+            "Not found",
+            html! {
+                (page_header(
+                    "Cloudflare Workers",
+                    "Page not found.",
+                    html! {
+                        p {
+                            "This route uses a Worker-native 404 status while still rendering a normal HTML document shell."
+                        }
+                    },
+                    Some(page_actions(link_button("/", "Back to the form"))),
+                ))
+                (section(html! {
+                    p {
+                        "The requested path was "
+                        code { (path) }
+                        "."
+                    }
+                    p {
+                        "This works today without changing "
+                        code { "ssw-core::Response" }
+                        ", but it does require a Worker-specific status path."
+                    }
+                }))
+            },
+        )
+    }
+
     #[event(fetch, respond_with_errors)]
     pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         Router::new()
@@ -112,6 +170,15 @@ mod app {
                         context.csrf_token(),
                     ),
                 )
+            })
+            .get_async("/preview", |req, _ctx| async move {
+                let note = req
+                    .url()?
+                    .query_pairs()
+                    .find_map(|(key, value)| (key == "note").then(|| value.into_owned()))
+                    .unwrap_or_default();
+
+                fragment(preview_fragment(&note))
             })
             .post_async("/", |mut req, _ctx| async move {
                 let context = request_context(&req)?;
@@ -161,6 +228,12 @@ mod app {
             .get_async("/thanks", |req, _ctx| async move {
                 let context = request_context(&req)?;
                 page_with_context(&context, thanks_page(context.flashes()))
+            })
+            .or_else_any_method_async("/*path", |req, ctx| async move {
+                let context = request_context(&req)?;
+                let path = format!("/{}", ctx.param("path").cloned().unwrap_or_default());
+
+                html_with_status(&context, 404, not_found_page(&path))
             })
             .run(req, env)
             .await
