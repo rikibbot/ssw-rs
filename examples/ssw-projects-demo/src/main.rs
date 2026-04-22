@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
-use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
+use ssw_actix::{
+    CSRF_FORM_FIELD, page_with_context, page_with_context_and_status, request_context,
+    to_http_response,
+};
 use ssw_components::{
     Field, MetaItem, NavItem, SelectOption, button_with_variant, card_header, container,
     email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
@@ -642,6 +645,43 @@ fn project_edit_page(
     )
 }
 
+fn project_not_found_page(slug: &str) -> Markup {
+    app_page(
+        "Project not found",
+        "projects",
+        Markup::new(),
+        html! {
+            (page_header(
+                "Project Studio",
+                "Project not found",
+                html! {
+                    p {
+                        "The requested project does not exist in this example dataset."
+                    }
+                },
+                Some(page_actions(html! {
+                    (link_button("/projects", "Back to projects"))
+                    (link_button("/projects/archive", "Open archive"))
+                })),
+            ))
+
+            (section(stack(html! {
+                (card_header("Missing project", html! {
+                    p { "A server-rendered app still needs deliberate error pages inside the normal shell." }
+                }))
+                p class="detail-copy" {
+                    "No project matched the slug "
+                    code { (slug) }
+                    "."
+                }
+                p class="detail-copy" {
+                    "This route now uses a real HTML 404 response instead of falling back to plain text."
+                }
+            })))
+        },
+    )
+}
+
 async fn stylesheet() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/css; charset=utf-8")
@@ -669,7 +709,7 @@ async fn archive() -> HttpResponse {
 async fn project_detail(request: HttpRequest, slug: web::Path<String>) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return to_http_response(Response::text_with_status(404, "project not found"));
+        return page_with_context_and_status(&context, 404, project_not_found_page(&slug));
     };
 
     page_with_context(&context, project_detail_page(project, context.flashes()))
@@ -678,7 +718,7 @@ async fn project_detail(request: HttpRequest, slug: web::Path<String>) -> HttpRe
 async fn project_edit_get(request: HttpRequest, slug: web::Path<String>) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return to_http_response(Response::text_with_status(404, "project not found"));
+        return page_with_context_and_status(&context, 404, project_not_found_page(&slug));
     };
 
     page_with_context(
@@ -699,7 +739,7 @@ async fn project_edit_post(
 ) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return to_http_response(Response::text_with_status(404, "project not found"));
+        return page_with_context_and_status(&context, 404, project_not_found_page(&slug));
     };
 
     if context
@@ -709,16 +749,18 @@ async fn project_edit_post(
         let mut state = edit_state_from_form(&form, project);
         state.summary_error = Some("Your form expired. Reload the page and try again.".to_owned());
 
-        return page_with_context(
+        return page_with_context_and_status(
             &context,
+            422,
             project_edit_page(project, &state, context.flashes(), context.csrf_token()),
         );
     }
 
     let state = validate_edit_form(&form, project);
     if state.has_errors() {
-        return page_with_context(
+        return page_with_context_and_status(
             &context,
+            422,
             project_edit_page(project, &state, context.flashes(), context.csrf_token()),
         );
     }

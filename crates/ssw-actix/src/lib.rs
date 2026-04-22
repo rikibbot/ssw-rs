@@ -97,14 +97,33 @@ pub fn render_html(kind: HtmlKind, view: impl Render) -> HttpResponse {
     to_http_response(Response::html_rendered(kind, view))
 }
 
+/// Renders a document or fragment view into an Actix response with an explicit status code.
+pub fn render_html_with_status(status: u16, kind: HtmlKind, view: impl Render) -> HttpResponse {
+    to_http_response(Response::html_rendered_with_status(status, kind, view))
+}
+
 /// Renders a full HTML document response.
 pub fn page(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Document, view)
 }
 
+/// Renders a full HTML document response with an explicit status code.
+pub fn page_with_status(status: u16, view: impl Render) -> HttpResponse {
+    render_html_with_status(status, HtmlKind::Document, view)
+}
+
 /// Renders a full HTML document response and applies request-scoped cookies.
 pub fn page_with_context(context: &RequestContext, view: impl Render) -> HttpResponse {
     context.apply(page(view))
+}
+
+/// Renders a full HTML document response with an explicit status and applies request-scoped cookies.
+pub fn page_with_context_and_status(
+    context: &RequestContext,
+    status: u16,
+    view: impl Render,
+) -> HttpResponse {
+    context.apply(page_with_status(status, view))
 }
 
 /// Renders an HTML fragment response.
@@ -212,7 +231,8 @@ mod tests {
 
     use super::{
         ActixResponse, CSRF_COOKIE_NAME, CSRF_FORM_FIELD, FLASH_COOKIE_NAME, fragment, page,
-        page_with_context, redirect, render_html, request_context, to_http_response,
+        page_with_context, page_with_context_and_status, page_with_status, redirect, render_html,
+        render_html_with_status, request_context, to_http_response,
     };
 
     #[actix_web::test]
@@ -249,6 +269,18 @@ mod tests {
         let body = to_bytes(response.into_body()).await.unwrap();
 
         assert_eq!(body, "Hello from Actix");
+    }
+
+    #[actix_web::test]
+    async fn renders_html_with_status_helpers() {
+        let fragment_response =
+            render_html_with_status(422, HtmlKind::Fragment, Markup::text("Problem"));
+        assert_eq!(fragment_response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let fragment_body = to_bytes(fragment_response.into_body()).await.unwrap();
+        assert_eq!(fragment_body, "Problem");
+
+        let page_response = page_with_status(404, Markup::text("<h1>missing</h1>"));
+        assert_eq!(page_response.status(), StatusCode::NOT_FOUND);
     }
 
     fn app_layout(title: &str, content: Markup) -> Markup {
@@ -452,8 +484,9 @@ mod tests {
             state.summary_error =
                 Some("Your form expired. Reload the page and try again.".to_owned());
 
-            return page_with_context(
+            return page_with_context_and_status(
                 &context,
+                422,
                 contact_page(&state, context.flashes(), context.csrf_token()),
             );
         }
@@ -461,8 +494,9 @@ mod tests {
         let state = validate_contact_form(&form);
 
         if state.has_errors() {
-            return page_with_context(
+            return page_with_context_and_status(
                 &context,
+                422,
                 contact_page(&state, context.flashes(), context.csrf_token()),
             );
         }
@@ -581,7 +615,10 @@ mod tests {
                 .to_request(),
         )
         .await;
-        assert_eq!(csrf_error_response.status(), StatusCode::OK);
+        assert_eq!(
+            csrf_error_response.status(),
+            StatusCode::UNPROCESSABLE_ENTITY
+        );
         let csrf_error_body = to_bytes(csrf_error_response.into_body()).await.unwrap();
         let csrf_error_body = std::str::from_utf8(&csrf_error_body).unwrap();
         assert!(csrf_error_body.contains("Your form expired. Reload the page and try again."));
@@ -602,7 +639,7 @@ mod tests {
                 .to_request(),
         )
         .await;
-        assert_eq!(invalid_response.status(), StatusCode::OK);
+        assert_eq!(invalid_response.status(), StatusCode::UNPROCESSABLE_ENTITY);
         let invalid_body = to_bytes(invalid_response.into_body()).await.unwrap();
         let invalid_body = std::str::from_utf8(&invalid_body).unwrap();
         assert!(invalid_body.contains("Please fix the highlighted fields."));

@@ -42,6 +42,7 @@
 - `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
 - `ssw-core` now also owns status-bearing HTML and text responses with 200 defaults, and both Actix and Workers now map those statuses through their native response types.
 - The Worker demo now exercises both a fragment endpoint and a shared-model HTML 404 page, which confirms that fragments and non-200 HTML now fit the current shared response model cleanly.
+- `ssw-actix` now also exposes status-aware HTML helpers, and the projects example now uses them for shell-preserving HTML 404 pages plus 422 invalid form redisplay.
 
 ## Current Priorities
 
@@ -72,6 +73,7 @@
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
+- Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.
 - How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
