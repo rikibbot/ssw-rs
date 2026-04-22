@@ -4,11 +4,11 @@ mod app {
         Field, container, flash_notice, hidden_input, link_button, page_actions, page_header,
         page_shell, section, stack, submit_button, textarea,
     };
-    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Render, Response as CoreResponse, TextResponse};
-    use ssw_html::{Markup, html, page as html_page};
-    use ssw_workers::{
-        RequestContext, fragment, page_with_context, request_context, to_worker_response,
+    use ssw_core::{
+        CSRF_FORM_FIELD, FlashMessage, HtmlKind, Response as CoreResponse, TextResponse,
     };
+    use ssw_html::{Markup, html, page as html_page};
+    use ssw_workers::{fragment, page_with_context, request_context, to_worker_response};
     use worker::{Context, Env, Request, Response, Result, Router, event};
 
     const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -18,14 +18,6 @@ mod app {
         note: &'a str,
         form_error: Option<&'a str>,
         note_error: Option<&'a str>,
-    }
-
-    fn html_with_status(
-        context: &RequestContext,
-        status: u16,
-        view: impl Render,
-    ) -> Result<Response> {
-        context.apply(Response::from_html(view.render())?.with_status(status))
     }
 
     fn layout(title: &str, content: Markup) -> Markup {
@@ -130,7 +122,7 @@ mod app {
                     "Page not found.",
                     html! {
                         p {
-                            "This route uses a Worker-native 404 status while still rendering a normal HTML document shell."
+                            "This route uses the shared response model to render a normal HTML document shell with a 404 status."
                         }
                     },
                     Some(page_actions(link_button("/", "Back to the form"))),
@@ -142,9 +134,9 @@ mod app {
                         "."
                     }
                     p {
-                        "This works today without changing "
+                        "This now works through "
                         code { "ssw-core::Response" }
-                        ", but it does require a Worker-specific status path."
+                        " rather than a Worker-specific fallback helper."
                     }
                 }))
             },
@@ -230,10 +222,16 @@ mod app {
                 page_with_context(&context, thanks_page(context.flashes()))
             })
             .or_else_any_method_async("/*path", |req, ctx| async move {
-                let context = request_context(&req)?;
                 let path = format!("/{}", ctx.param("path").cloned().unwrap_or_default());
+                let context = request_context(&req)?;
 
-                html_with_status(&context, 404, not_found_page(&path))
+                context.apply(to_worker_response(
+                    CoreResponse::html_rendered_with_status(
+                        404,
+                        HtmlKind::Document,
+                        not_found_page(&path),
+                    ),
+                )?)
             })
             .run(req, env)
             .await

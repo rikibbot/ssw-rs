@@ -120,10 +120,10 @@ pub fn redirect(location: impl Into<String>) -> HttpResponse {
 /// Converts an `ssw-core` response into an Actix `HttpResponse`.
 pub fn to_http_response(response: Response) -> HttpResponse {
     match response {
-        Response::Html(html) => HttpResponse::Ok()
+        Response::Html(html) => HttpResponse::build(status_code(html.status()))
             .content_type("text/html; charset=utf-8")
             .body(html.into_body()),
-        Response::Text(text) => HttpResponse::Ok()
+        Response::Text(text) => HttpResponse::build(status_code(text.status()))
             .content_type(text.content_type())
             .body(text.body().to_owned()),
         Response::Redirect(redirect) => {
@@ -140,6 +140,10 @@ pub fn to_http_response(response: Response) -> HttpResponse {
             response
         }
     }
+}
+
+fn status_code(status: u16) -> StatusCode {
+    StatusCode::from_u16(status).expect("ssw-core responses must use valid HTTP status codes")
 }
 
 fn status_for_redirect(kind: RedirectKind) -> StatusCode {
@@ -223,6 +227,20 @@ mod tests {
 
         let body = to_bytes(response.into_body()).await.unwrap();
         assert_eq!(body, "<h1>home</h1>");
+    }
+
+    #[actix_web::test]
+    async fn preserves_non_200_statuses_from_core_response() {
+        let response = to_http_response(Response::html_with_status(
+            404,
+            HtmlKind::Document,
+            "<h1>missing</h1>",
+        ));
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+        let body = to_bytes(response.into_body()).await.unwrap();
+        assert_eq!(body, "<h1>missing</h1>");
     }
 
     #[actix_web::test]

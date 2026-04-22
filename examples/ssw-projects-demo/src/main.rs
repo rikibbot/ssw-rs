@@ -669,9 +669,7 @@ async fn archive() -> HttpResponse {
 async fn project_detail(request: HttpRequest, slug: web::Path<String>) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return HttpResponse::NotFound()
-            .content_type("text/plain; charset=utf-8")
-            .body("project not found");
+        return to_http_response(Response::text_with_status(404, "project not found"));
     };
 
     page_with_context(&context, project_detail_page(project, context.flashes()))
@@ -680,9 +678,7 @@ async fn project_detail(request: HttpRequest, slug: web::Path<String>) -> HttpRe
 async fn project_edit_get(request: HttpRequest, slug: web::Path<String>) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return HttpResponse::NotFound()
-            .content_type("text/plain; charset=utf-8")
-            .body("project not found");
+        return to_http_response(Response::text_with_status(404, "project not found"));
     };
 
     page_with_context(
@@ -703,9 +699,7 @@ async fn project_edit_post(
 ) -> HttpResponse {
     let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
-        return HttpResponse::NotFound()
-            .content_type("text/plain; charset=utf-8")
-            .body("project not found");
+        return to_http_response(Response::text_with_status(404, "project not found"));
     };
 
     if context

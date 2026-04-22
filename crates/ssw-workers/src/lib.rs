@@ -129,9 +129,14 @@ mod wasm {
     /// Converts an `ssw-core` response into a Workers response.
     pub fn to_worker_response(response: Response) -> WorkerResult<WorkerResponse> {
         match response {
-            Response::Html(html) => WorkerResponse::from_html(html.into_body()),
+            Response::Html(html) => {
+                let mut response = WorkerResponse::from_html(html.body())?;
+                response = response.with_status(html.status());
+                Ok(response)
+            }
             Response::Text(text) => {
                 let mut response = WorkerResponse::ok(text.body().to_owned())?;
+                response = response.with_status(text.status());
                 response
                     .headers_mut()
                     .set("Content-Type", text.content_type())?;

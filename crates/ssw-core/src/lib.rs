@@ -48,6 +48,7 @@ impl Render for String {
 /// A rendered HTML response body plus its document or fragment kind.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HtmlResponse {
+    status: u16,
     kind: HtmlKind,
     body: String,
 }
@@ -55,7 +56,13 @@ pub struct HtmlResponse {
 impl HtmlResponse {
     /// Creates a new HTML response with the given kind and body.
     pub fn new(kind: HtmlKind, body: impl Into<String>) -> Self {
+        Self::with_status(200, kind, body)
+    }
+
+    /// Creates a new HTML response with an explicit status code.
+    pub fn with_status(status: u16, kind: HtmlKind, body: impl Into<String>) -> Self {
         Self {
+            status,
             kind,
             body: body.into(),
         }
@@ -74,6 +81,16 @@ impl HtmlResponse {
     /// Renders a value and stores the resulting HTML body.
     pub fn from_rendered(kind: HtmlKind, value: impl Render) -> Self {
         Self::new(kind, value.render())
+    }
+
+    /// Renders a value and stores the resulting HTML body with an explicit status code.
+    pub fn from_rendered_with_status(status: u16, kind: HtmlKind, value: impl Render) -> Self {
+        Self::with_status(status, kind, value.render())
+    }
+
+    /// Returns the HTTP status code.
+    pub fn status(&self) -> u16 {
+        self.status
     }
 
     /// Returns whether this response is a document or fragment.
@@ -95,6 +112,7 @@ impl HtmlResponse {
 /// A plain text response body plus an explicit content type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TextResponse {
+    status: u16,
     body: String,
     content_type: Cow<'static, str>,
 }
@@ -102,7 +120,17 @@ pub struct TextResponse {
 impl TextResponse {
     /// Creates a new text response with an explicit content type.
     pub fn new(body: impl Into<String>, content_type: impl Into<Cow<'static, str>>) -> Self {
+        Self::with_status(200, body, content_type)
+    }
+
+    /// Creates a new text response with an explicit status code and content type.
+    pub fn with_status(
+        status: u16,
+        body: impl Into<String>,
+        content_type: impl Into<Cow<'static, str>>,
+    ) -> Self {
         Self {
+            status,
             body: body.into(),
             content_type: content_type.into(),
         }
@@ -111,6 +139,16 @@ impl TextResponse {
     /// Creates a UTF-8 plain text response.
     pub fn plain(body: impl Into<String>) -> Self {
         Self::new(body, "text/plain; charset=utf-8")
+    }
+
+    /// Creates a UTF-8 plain text response with an explicit status code.
+    pub fn plain_with_status(status: u16, body: impl Into<String>) -> Self {
+        Self::with_status(status, body, "text/plain; charset=utf-8")
+    }
+
+    /// Returns the HTTP status code.
+    pub fn status(&self) -> u16 {
+        self.status
     }
 
     /// Returns the body content.
@@ -364,14 +402,29 @@ impl Response {
         Self::Html(HtmlResponse::new(kind, body))
     }
 
+    /// Creates an HTML response with an explicit status code.
+    pub fn html_with_status(status: u16, kind: HtmlKind, body: impl Into<String>) -> Self {
+        Self::Html(HtmlResponse::with_status(status, kind, body))
+    }
+
     /// Renders a value into an HTML response.
     pub fn html_rendered(kind: HtmlKind, value: impl Render) -> Self {
         Self::Html(HtmlResponse::from_rendered(kind, value))
     }
 
+    /// Renders a value into an HTML response with an explicit status code.
+    pub fn html_rendered_with_status(status: u16, kind: HtmlKind, value: impl Render) -> Self {
+        Self::Html(HtmlResponse::from_rendered_with_status(status, kind, value))
+    }
+
     /// Creates a UTF-8 plain text response.
     pub fn text(body: impl Into<String>) -> Self {
         Self::Text(TextResponse::plain(body))
+    }
+
+    /// Creates a UTF-8 plain text response with an explicit status code.
+    pub fn text_with_status(status: u16, body: impl Into<String>) -> Self {
+        Self::Text(TextResponse::plain_with_status(status, body))
     }
 
     /// Creates a `303 See Other` redirect response.
@@ -470,8 +523,8 @@ fn decode_hex_nibble(byte: u8) -> Option<u8> {
 mod tests {
     use super::{
         CsrfError, FlashLevel, FlashMessage, HtmlKind, HtmlResponse, Redirect, Render,
-        RequestState, Response, decode_flash_messages, encode_flash_messages, is_valid_csrf_token,
-        verify_csrf_token,
+        RequestState, Response, TextResponse, decode_flash_messages, encode_flash_messages,
+        is_valid_csrf_token, verify_csrf_token,
     };
 
     struct Greeting<'a>(&'a str);
@@ -497,8 +550,30 @@ mod tests {
         let response = Response::html_rendered(HtmlKind::Document, Greeting("world"));
 
         match response {
-            Response::Html(html) => assert_eq!(html.body(), "Hello, world!"),
+            Response::Html(html) => {
+                assert_eq!(html.body(), "Hello, world!");
+                assert_eq!(html.status(), 200);
+            }
             _ => panic!("expected html response"),
+        }
+    }
+
+    #[test]
+    fn supports_non_200_html_and_text_statuses() {
+        let html = HtmlResponse::with_status(404, HtmlKind::Document, "<h1>Missing</h1>");
+        let text = TextResponse::plain_with_status(422, "Invalid");
+
+        assert_eq!(html.status(), 404);
+        assert_eq!(text.status(), 422);
+
+        match Response::html_with_status(404, HtmlKind::Fragment, "missing") {
+            Response::Html(html) => assert_eq!(html.status(), 404),
+            _ => panic!("expected html response"),
+        }
+
+        match Response::text_with_status(422, "invalid") {
+            Response::Text(text) => assert_eq!(text.status(), 422),
+            _ => panic!("expected text response"),
         }
     }
 
