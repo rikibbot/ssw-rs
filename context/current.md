@@ -39,6 +39,7 @@
 - The repo now has a minimal `ssw-workers` adapter, plus an `SSW_WORKERS.md` design note that keeps the backend scoped narrowly around Cloudflare Workers request/response integration rather than broad backend abstraction.
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
 - The Worker demo now serves the first-party theme CSS from a Worker route, which gives the backend a very small but real asset path without introducing a general asset pipeline yet.
+- `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
 
 ## Current Priorities
 
@@ -65,7 +66,7 @@
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
 - Whether remote and local font helpers should eventually sit behind a broader asset pipeline with build-time fetching and self-hosting.
 - Whether flash transport should stay cookie-backed and unsigned, or move behind a more explicit application secret/session abstraction.
-- Whether the current cookie-backed CSRF hook should stay adapter-specific or eventually grow a backend-agnostic core shape now that both Actix and Workers exist.
+- Whether the current shared `RequestState` boundary is enough, or whether any more of the request-context model should move into `ssw-core` without forcing a lowest-common-denominator backend abstraction.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
@@ -82,5 +83,6 @@
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
 - Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.
 - Use the locally runnable `ssw-workers` proof to decide what, if anything, should move out of adapter crates before the backend grows further.
+- Continue tightening the shared backend boundary only where both Actix and Workers already prove the same state or semantics, rather than abstracting ahead of real pressure.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

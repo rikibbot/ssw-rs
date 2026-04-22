@@ -180,6 +180,65 @@ pub enum CsrfError {
     InvalidFormToken,
 }
 
+/// Backend-neutral request-scoped state for flash messages and CSRF tokens.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequestState {
+    flashes: Vec<FlashMessage>,
+    csrf_token: String,
+    clear_flash: bool,
+    set_csrf_cookie: bool,
+}
+
+impl RequestState {
+    /// Creates request state from incoming flash and CSRF cookie values.
+    pub fn from_cookie_values(
+        flash_cookie: Option<&str>,
+        csrf_cookie: Option<&str>,
+        generate_csrf_token: impl FnOnce() -> String,
+    ) -> Self {
+        let flashes = flash_cookie
+            .and_then(decode_flash_messages)
+            .unwrap_or_default();
+
+        let (csrf_token, set_csrf_cookie) = match csrf_cookie {
+            Some(token) if is_valid_csrf_token(token) => (token.to_owned(), false),
+            _ => (generate_csrf_token(), true),
+        };
+
+        Self {
+            flashes,
+            csrf_token,
+            clear_flash: flash_cookie.is_some(),
+            set_csrf_cookie,
+        }
+    }
+
+    /// Returns the flash messages attached to the current request.
+    pub fn flashes(&self) -> &[FlashMessage] {
+        &self.flashes
+    }
+
+    /// Returns the CSRF token for the current request.
+    pub fn csrf_token(&self) -> &str {
+        &self.csrf_token
+    }
+
+    /// Returns whether the flash cookie should be cleared on the response.
+    pub fn should_clear_flash(&self) -> bool {
+        self.clear_flash
+    }
+
+    /// Returns whether a fresh CSRF cookie should be attached to the response.
+    pub fn should_set_csrf_cookie(&self) -> bool {
+        self.set_csrf_cookie
+    }
+
+    /// Verifies a submitted form token against the request token.
+    pub fn verify_csrf(&self, form_token: Option<&str>) -> Result<(), CsrfError> {
+        verify_csrf_token(&self.csrf_token, form_token)
+    }
+}
+
 /// A transient user-facing message, typically carried across a redirect.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FlashMessage {
@@ -410,8 +469,9 @@ fn decode_hex_nibble(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        CsrfError, FlashLevel, FlashMessage, HtmlKind, HtmlResponse, Redirect, Render, Response,
-        decode_flash_messages, encode_flash_messages, is_valid_csrf_token, verify_csrf_token,
+        CsrfError, FlashLevel, FlashMessage, HtmlKind, HtmlResponse, Redirect, Render,
+        RequestState, Response, decode_flash_messages, encode_flash_messages, is_valid_csrf_token,
+        verify_csrf_token,
     };
 
     struct Greeting<'a>(&'a str);
@@ -493,5 +553,32 @@ mod tests {
             Err(CsrfError::InvalidFormToken)
         );
         assert_eq!(verify_csrf_token("expected", Some("expected")), Ok(()));
+    }
+
+    #[test]
+    fn builds_request_state_from_cookie_values() {
+        let flashes = vec![FlashMessage::success("Saved")];
+        let csrf = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_owned();
+        let state = RequestState::from_cookie_values(
+            Some(&encode_flash_messages(&flashes)),
+            Some(&csrf),
+            || "unused".to_owned(),
+        );
+
+        assert_eq!(state.flashes(), flashes);
+        assert_eq!(state.csrf_token(), csrf);
+        assert!(state.should_clear_flash());
+        assert!(!state.should_set_csrf_cookie());
+        assert_eq!(state.verify_csrf(Some(&csrf)), Ok(()));
+    }
+
+    #[test]
+    fn requests_fresh_csrf_cookie_when_missing_or_invalid() {
+        let state = RequestState::from_cookie_values(None, Some("bad"), || "fresh".to_owned());
+
+        assert!(state.flashes().is_empty());
+        assert_eq!(state.csrf_token(), "fresh");
+        assert!(!state.should_clear_flash());
+        assert!(state.should_set_csrf_cookie());
     }
 }

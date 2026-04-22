@@ -30,8 +30,7 @@ mod wasm {
     use worker::{Request, Response as WorkerResponse, Result as WorkerResult};
 
     use ssw_core::{
-        FlashMessage, HtmlKind, RedirectKind, Render, Response, decode_flash_messages,
-        encode_flash_messages, is_valid_csrf_token, verify_csrf_token,
+        FlashMessage, HtmlKind, RedirectKind, Render, RequestState, Response, encode_flash_messages,
     };
 
     use super::{
@@ -42,62 +41,51 @@ mod wasm {
     /// Request-scoped cookie-backed state for flash messages and CSRF tokens.
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct RequestContext {
-        flashes: Vec<FlashMessage>,
-        csrf_token: String,
-        clear_flash: bool,
-        set_csrf_cookie: bool,
+        state: RequestState,
     }
 
     impl RequestContext {
         /// Builds a request context from incoming Worker request headers.
         pub fn from_request(request: &Request) -> WorkerResult<Self> {
             let flash_cookie = cookie_value(request, FLASH_COOKIE_NAME)?;
-            let flashes = flash_cookie
-                .as_deref()
-                .and_then(decode_flash_messages)
-                .unwrap_or_default();
-
             let csrf_cookie = cookie_value(request, CSRF_COOKIE_NAME)?;
-            let (csrf_token, set_csrf_cookie) = match csrf_cookie {
-                Some(token) if is_valid_csrf_token(&token) => (token, false),
-                _ => (generate_csrf_token(), true),
-            };
 
             Ok(Self {
-                flashes,
-                csrf_token,
-                clear_flash: flash_cookie.is_some(),
-                set_csrf_cookie,
+                state: RequestState::from_cookie_values(
+                    flash_cookie.as_deref(),
+                    csrf_cookie.as_deref(),
+                    generate_csrf_token,
+                ),
             })
         }
 
         /// Returns the flash messages attached to the current request.
         pub fn flashes(&self) -> &[FlashMessage] {
-            &self.flashes
+            self.state.flashes()
         }
 
         /// Returns the CSRF token for the current request.
         pub fn csrf_token(&self) -> &str {
-            &self.csrf_token
+            self.state.csrf_token()
         }
 
         /// Verifies a submitted form token against the request token.
         pub fn verify_csrf(&self, form_token: Option<&str>) -> Result<(), CsrfError> {
-            verify_csrf_token(&self.csrf_token, form_token)
+            self.state.verify_csrf(form_token)
         }
 
         /// Applies pending cookie updates to a Worker response.
         pub fn apply(&self, mut response: WorkerResponse) -> WorkerResult<WorkerResponse> {
-            if self.clear_flash {
+            if self.state.should_clear_flash() {
                 response
                     .headers_mut()
                     .append("Set-Cookie", &removal_cookie_header(FLASH_COOKIE_NAME))?;
             }
 
-            if self.set_csrf_cookie {
+            if self.state.should_set_csrf_cookie() {
                 response.headers_mut().append(
                     "Set-Cookie",
-                    &cookie_header(CSRF_COOKIE_NAME, &self.csrf_token),
+                    &cookie_header(CSRF_COOKIE_NAME, self.state.csrf_token()),
                 )?;
             }
 
