@@ -76,7 +76,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, and [`SSW_CSS.md`](./SSW_CSS.md) for the proposed scoped CSS design.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, and [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the proposed Cloudflare Workers backend.
 
 Run the current example app with:
 
