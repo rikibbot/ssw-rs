@@ -13,8 +13,8 @@ pub use field::{
 pub use layout::{container, section, stack};
 pub use notice::{ValidationItem, alert, flash_notice, validation_summary};
 pub use page::{
-    MetaItem, NavItem, card_header, empty_state, meta_list, page, page_actions, page_header,
-    page_shell, top_nav,
+    MetaItem, NavItem, card_header, empty_state, meta_list, page_actions, page_header, page_shell,
+    top_nav,
 };
 
 #[cfg(test)]

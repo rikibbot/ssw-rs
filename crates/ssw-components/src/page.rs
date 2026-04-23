@@ -1,4 +1,4 @@
-use ssw_html::{Markup, html, page as html_page};
+use ssw_html::{Markup, html};
 
 /// A navigation item for a simple top-level app navigation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,11 +62,6 @@ impl<'a> NavItem<'a> {
     pub fn is_current(&self) -> bool {
         self.current
     }
-}
-
-/// Renders a full page using the `ssw-html` document builder.
-pub fn page(title: impl AsRef<str>, body: impl Into<Markup>) -> Markup {
-    html_page(title.as_ref()).body(body).render()
 }
 
 /// Renders a simple top navigation bar with a brand link and current-page state.

@@ -259,7 +259,3 @@ mod app {
             .await
     }
 }
-
-#[cfg(not(target_arch = "wasm32"))]
-/// Non-wasm stub so the example crate still builds during host-side workspace checks.
-pub fn host_build_stub() {}
