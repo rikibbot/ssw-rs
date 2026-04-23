@@ -36,6 +36,7 @@ Currently implemented:
 
 - `ssw-html::html!` with Maud-like syntax
 - document and fragment rendering
+- first-class asset head helpers in `ssw-html::assets` for stylesheets, scripts, preloads, and preconnects
 - first-class remote and local font head helpers in `ssw-html::fonts`
 - an experimental `ssw-css::css!` macro for deterministic scoped component-local CSS
 - `.class` shorthand and composed `class=(...)` values
@@ -62,11 +63,14 @@ Currently implemented:
 ## Example
 
 ```rust
-use ssw_html::{html, page};
+use ssw_html::{assets, html, page};
 use ssw_html::fonts;
 
 let page = page("Dashboard")
     .body_class("app-shell")
+    .head(assets::stylesheet(
+        assets::Asset::new("/assets/app.css").version("1"),
+    ))
     .head(fonts::local_font("Inter", "/static/fonts/Inter.var.woff2")
         .weight_range(100, 900)
         .preload())
@@ -129,7 +133,7 @@ npm run dev
 
 Then open `http://127.0.0.1:8788/`.
 
-The Worker example is still intentionally narrow. It now proves request or response integration, flash, CSRF, a simple GET or POST flow, and a Worker-served stylesheet route without introducing a broader asset or deployment toolchain yet.
+The Worker example is still intentionally narrow. It now proves request or response integration, flash, CSRF, a simple GET or POST flow, and a Worker-served stylesheet route using the same head-asset helper layer as the Actix demos, without introducing a broader asset or deployment toolchain yet.
 
 Useful capture knobs:
 

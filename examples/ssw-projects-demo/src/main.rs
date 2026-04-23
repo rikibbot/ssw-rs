@@ -11,9 +11,10 @@ use ssw_components::{
 };
 use ssw_core::{FlashMessage, Response};
 use ssw_css::{StyleSheet, css};
-use ssw_html::{Markup, fonts, html, page as html_page};
+use ssw_html::{Markup, assets, fonts, html, page as html_page};
 
 const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
+const APP_STYLESHEET_PATH: &str = "/assets/app.css";
 const APP_CSS: &str = r#"
 body {
   margin: 0;
@@ -395,9 +396,9 @@ fn project_card(styles: &StyleSheet, project: Project) -> Markup {
 fn app_page(title: &str, nav_current: &str, head: Markup, body: Markup) -> Markup {
     html_page(title)
         .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
-        .head(html! {
-            link rel="stylesheet" href="/app.css";
-        })
+        .head(assets::stylesheet(
+            assets::Asset::new(APP_STYLESHEET_PATH).version(env!("CARGO_PKG_VERSION")),
+        ))
         .head(head)
         .body(html! {
             (container(page_shell(html! {
@@ -785,7 +786,7 @@ async fn main() -> std::io::Result<()> {
             .route("/projects/{slug}", web::get().to(project_detail))
             .route("/projects/{slug}/edit", web::get().to(project_edit_get))
             .route("/projects/{slug}/edit", web::post().to(project_edit_post))
-            .route("/app.css", web::get().to(stylesheet))
+            .route(APP_STYLESHEET_PATH, web::get().to(stylesheet))
     })
     .bind(address)?
     .run()

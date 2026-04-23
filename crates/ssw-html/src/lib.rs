@@ -1,7 +1,7 @@
 //! HTML authoring primitives for `ssw-rs`.
 //!
 //! This crate exposes the public HTML surface of the framework:
-//! [`Markup`], [`Document`], convenience page builders, and the [`html!`] macro.
+//! [`Markup`], [`Document`], asset helpers, convenience page builders, and the [`html!`] macro.
 
 extern crate self as ssw_html;
 
@@ -10,6 +10,320 @@ use std::fmt::{Display, Write};
 use ssw_core::{HtmlKind, HtmlResponse, Render};
 
 pub use ssw_html_macros::html;
+
+/// Asset reference and `<head>` helpers for HTML documents.
+pub mod assets {
+    use super::{Markup, html};
+
+    /// The supported `crossorigin` values for asset helpers.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum CrossOrigin {
+        /// Sends a CORS request without credentials.
+        Anonymous,
+        /// Sends a CORS request with credentials.
+        UseCredentials,
+    }
+
+    impl CrossOrigin {
+        fn as_str(self) -> &'static str {
+            match self {
+                Self::Anonymous => "anonymous",
+                Self::UseCredentials => "use-credentials",
+            }
+        }
+    }
+
+    /// A small asset reference with optional query-string versioning.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Asset {
+        path: String,
+        version: Option<String>,
+    }
+
+    impl Asset {
+        /// Creates an asset reference for a path or URL.
+        pub fn new(path: impl Into<String>) -> Self {
+            Self {
+                path: path.into(),
+                version: None,
+            }
+        }
+
+        /// Appends a `v=` query parameter to the asset URL.
+        pub fn version(mut self, version: impl Into<String>) -> Self {
+            self.version = Some(version.into());
+            self
+        }
+
+        /// Returns the unversioned asset path.
+        pub fn path(&self) -> &str {
+            &self.path
+        }
+
+        /// Returns the rendered asset URL, including query-string versioning.
+        pub fn url(&self) -> String {
+            match &self.version {
+                Some(version) if self.path.contains('?') => format!("{}&v={version}", self.path),
+                Some(version) => format!("{}?v={version}", self.path),
+                None => self.path.clone(),
+            }
+        }
+    }
+
+    impl From<&str> for Asset {
+        fn from(path: &str) -> Self {
+            Self::new(path)
+        }
+    }
+
+    impl From<String> for Asset {
+        fn from(path: String) -> Self {
+            Self::new(path)
+        }
+    }
+
+    impl From<&String> for Asset {
+        fn from(path: &String) -> Self {
+            Self::new(path.clone())
+        }
+    }
+
+    /// A helper for rendering stylesheet `<link>` tags.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Stylesheet {
+        asset: Asset,
+        media: Option<String>,
+    }
+
+    impl Stylesheet {
+        /// Creates a stylesheet helper for an asset reference.
+        pub fn new(asset: impl Into<Asset>) -> Self {
+            Self {
+                asset: asset.into(),
+                media: None,
+            }
+        }
+
+        /// Sets the stylesheet media query.
+        pub fn media(mut self, media: impl Into<String>) -> Self {
+            self.media = Some(media.into());
+            self
+        }
+
+        /// Renders the stylesheet `<link>` tag.
+        pub fn render(&self) -> Markup {
+            let href = self.asset.url();
+            let media = self.media.as_deref();
+
+            html! {
+                link rel="stylesheet" href=(href) media=(media);
+            }
+        }
+    }
+
+    impl From<Stylesheet> for Markup {
+        fn from(stylesheet: Stylesheet) -> Self {
+            stylesheet.render()
+        }
+    }
+
+    impl From<&Stylesheet> for Markup {
+        fn from(stylesheet: &Stylesheet) -> Self {
+            stylesheet.render()
+        }
+    }
+
+    /// A helper for rendering script tags.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Script {
+        asset: Asset,
+        module: bool,
+        defer: bool,
+        cross_origin: Option<CrossOrigin>,
+    }
+
+    impl Script {
+        /// Creates a script helper for an asset reference.
+        pub fn new(asset: impl Into<Asset>) -> Self {
+            Self {
+                asset: asset.into(),
+                module: false,
+                defer: false,
+                cross_origin: None,
+            }
+        }
+
+        /// Uses `type="module"` for the script.
+        pub fn module(mut self) -> Self {
+            self.module = true;
+            self
+        }
+
+        /// Emits the `defer` attribute.
+        pub fn defer(mut self) -> Self {
+            self.defer = true;
+            self
+        }
+
+        /// Adds a `crossorigin` attribute.
+        pub fn cross_origin(mut self, cross_origin: CrossOrigin) -> Self {
+            self.cross_origin = Some(cross_origin);
+            self
+        }
+
+        /// Renders the script tag.
+        pub fn render(&self) -> Markup {
+            let src = self.asset.url();
+            let script_type = self.module.then_some("module");
+            let cross_origin = self.cross_origin.map(CrossOrigin::as_str);
+
+            html! {
+                script
+                    src=(src)
+                    type=(script_type)
+                    defer=(self.defer)
+                    crossorigin=(cross_origin) {}
+            }
+        }
+    }
+
+    impl From<Script> for Markup {
+        fn from(script: Script) -> Self {
+            script.render()
+        }
+    }
+
+    impl From<&Script> for Markup {
+        fn from(script: &Script) -> Self {
+            script.render()
+        }
+    }
+
+    /// A helper for rendering preload tags.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Preload {
+        asset: Asset,
+        destination: String,
+        mime_type: Option<String>,
+        cross_origin: Option<CrossOrigin>,
+    }
+
+    impl Preload {
+        /// Creates a preload helper for an asset reference and destination.
+        pub fn new(asset: impl Into<Asset>, destination: impl Into<String>) -> Self {
+            Self {
+                asset: asset.into(),
+                destination: destination.into(),
+                mime_type: None,
+                cross_origin: None,
+            }
+        }
+
+        /// Sets the MIME type for the preload tag.
+        pub fn mime_type(mut self, mime_type: impl Into<String>) -> Self {
+            self.mime_type = Some(mime_type.into());
+            self
+        }
+
+        /// Adds a `crossorigin` attribute.
+        pub fn cross_origin(mut self, cross_origin: CrossOrigin) -> Self {
+            self.cross_origin = Some(cross_origin);
+            self
+        }
+
+        /// Renders the preload tag.
+        pub fn render(&self) -> Markup {
+            let href = self.asset.url();
+            let mime_type = self.mime_type.as_deref();
+            let cross_origin = self.cross_origin.map(CrossOrigin::as_str);
+
+            html! {
+                link
+                    rel="preload"
+                    href=(href)
+                    as=(self.destination.as_str())
+                    type=(mime_type)
+                    crossorigin=(cross_origin);
+            }
+        }
+    }
+
+    impl From<Preload> for Markup {
+        fn from(preload: Preload) -> Self {
+            preload.render()
+        }
+    }
+
+    impl From<&Preload> for Markup {
+        fn from(preload: &Preload) -> Self {
+            preload.render()
+        }
+    }
+
+    /// A helper for rendering preconnect tags.
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Preconnect {
+        href: String,
+        cross_origin: Option<CrossOrigin>,
+    }
+
+    impl Preconnect {
+        /// Creates a preconnect helper for a URL.
+        pub fn new(href: impl Into<String>) -> Self {
+            Self {
+                href: href.into(),
+                cross_origin: None,
+            }
+        }
+
+        /// Adds a `crossorigin` attribute.
+        pub fn cross_origin(mut self, cross_origin: CrossOrigin) -> Self {
+            self.cross_origin = Some(cross_origin);
+            self
+        }
+
+        /// Renders the preconnect tag.
+        pub fn render(&self) -> Markup {
+            let cross_origin = self.cross_origin.map(CrossOrigin::as_str);
+
+            html! {
+                link rel="preconnect" href=(self.href.as_str()) crossorigin=(cross_origin);
+            }
+        }
+    }
+
+    impl From<Preconnect> for Markup {
+        fn from(preconnect: Preconnect) -> Self {
+            preconnect.render()
+        }
+    }
+
+    impl From<&Preconnect> for Markup {
+        fn from(preconnect: &Preconnect) -> Self {
+            preconnect.render()
+        }
+    }
+
+    /// Creates a stylesheet helper for an asset reference.
+    pub fn stylesheet(asset: impl Into<Asset>) -> Stylesheet {
+        Stylesheet::new(asset)
+    }
+
+    /// Creates a script helper for an asset reference.
+    pub fn script(asset: impl Into<Asset>) -> Script {
+        Script::new(asset)
+    }
+
+    /// Creates a preload helper for an asset reference and destination.
+    pub fn preload(asset: impl Into<Asset>, destination: impl Into<String>) -> Preload {
+        Preload::new(asset, destination)
+    }
+
+    /// Creates a preconnect helper for a URL.
+    pub fn preconnect(href: impl Into<String>) -> Preconnect {
+        Preconnect::new(href)
+    }
+}
 
 /// Font loading helpers for document `<head>` markup.
 pub mod fonts {
@@ -917,7 +1231,7 @@ fn escape_into(output: &mut String, value: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{Markup, document, fonts, fragment, html, page};
+    use super::{Markup, assets, document, fonts, fragment, html, page};
 
     #[test]
     fn escapes_text_content() {
@@ -1127,6 +1441,57 @@ mod tests {
         assert_eq!(
             markup.as_str(),
             "<button aria-expanded=\"false\">Toggle</button>"
+        );
+    }
+
+    #[test]
+    fn renders_versioned_stylesheet_asset() {
+        let markup =
+            assets::stylesheet(assets::Asset::new("/assets/app.css").version("123")).render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<link rel=\"stylesheet\" href=\"/assets/app.css?v=123\">"
+        );
+    }
+
+    #[test]
+    fn appends_version_to_existing_asset_query() {
+        let asset = assets::Asset::new("/assets/app.css?theme=default").version("123");
+
+        assert_eq!(asset.url(), "/assets/app.css?theme=default&v=123");
+    }
+
+    #[test]
+    fn renders_module_script_with_defer() {
+        let markup = assets::script("/assets/app.js").module().defer().render();
+
+        assert_eq!(
+            markup.as_str(),
+            "<script src=\"/assets/app.js\" type=\"module\" defer></script>"
+        );
+    }
+
+    #[test]
+    fn renders_preload_and_preconnect_assets() {
+        let preload = assets::preload(
+            assets::Asset::new("/assets/inter.woff2").version("42"),
+            "font",
+        )
+        .mime_type("font/woff2")
+        .cross_origin(assets::CrossOrigin::Anonymous)
+        .render();
+        let preconnect = assets::preconnect("https://cdn.example.com")
+            .cross_origin(assets::CrossOrigin::UseCredentials)
+            .render();
+
+        assert_eq!(
+            preload.as_str(),
+            "<link rel=\"preload\" href=\"/assets/inter.woff2?v=42\" as=\"font\" type=\"font/woff2\" crossorigin=\"anonymous\">"
+        );
+        assert_eq!(
+            preconnect.as_str(),
+            "<link rel=\"preconnect\" href=\"https://cdn.example.com\" crossorigin=\"use-credentials\">"
         );
     }
 

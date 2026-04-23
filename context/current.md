@@ -10,6 +10,7 @@
 - `ssw-html` now supports empty tags, `#id` and `.class` shorthand, optional attribute omission via `Option<T>`, and a small `Document` builder for page layouts.
 - `ssw-html` now supports class composition between `.class` shorthand and explicit `class=(...)` values.
 - `ssw-html` now renders expression-based boolean HTML attributes with presence/absence semantics instead of `="true"` or `="false"` strings.
+- `ssw-html` now also exposes an `assets` helper module with typed asset references plus stylesheet, script, preload, and preconnect helpers for document head markup.
 - `ssw-html` now exposes a small `fonts` helper module for both Google Fonts links and local `@font-face` plus preload markup.
 - `ssw-html` has now been exercised through an end-to-end Actix test flow for a full page, a fragment, and redirects.
 - `ssw-html` and `ssw-actix` now have an end-to-end POST form flow with invalid redisplay and success redirect coverage.
@@ -39,6 +40,7 @@
 - The repo now has a minimal `ssw-workers` adapter, plus an `SSW_WORKERS.md` design note that keeps the backend scoped narrowly around Cloudflare Workers request/response integration rather than broad backend abstraction.
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
 - The Worker demo now serves the first-party theme CSS from a Worker route, which gives the backend a very small but real asset path without introducing a general asset pipeline yet.
+- The Actix and Worker demos now both use the same `ssw-html::assets` head helper layer plus versioned asset URLs, while keeping asset serving adapter-local instead of pushing static-file concerns into core.
 - `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
 - `ssw-core` now also owns status-bearing HTML and text responses with 200 defaults, and both Actix and Workers now map those statuses through their native response types.
 - The Worker demo now exercises both a fragment endpoint and a shared-model HTML 404 page, which confirms that fragments and non-200 HTML now fit the current shared response model cleanly.
@@ -69,6 +71,7 @@
 - Whether `ssw-html` should continue evolving its own macro parser or eventually absorb code from a Maud-derived implementation.
 - How `#id` shorthand and explicit `id=...` attributes should compose, if at all.
 - Whether remote and local font helpers should eventually sit behind a broader asset pipeline with build-time fetching and self-hosting.
+- Whether the new `ssw-html::assets` helper layer is enough, or whether example-app pressure now justifies a small adapter-local asset serving module in `ssw-actix` and `ssw-workers`.
 - Whether flash transport should stay cookie-backed and unsigned, or move behind a more explicit application secret/session abstraction.
 - Whether the current shared `RequestState` boundary is enough, or whether any more of the request-context model should move into `ssw-core` without forcing a lowest-common-denominator backend abstraction.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
@@ -86,6 +89,7 @@
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
 - Pressure the new Actix form helper layer through more app-shaped flows before deciding whether any of it deserves to move beyond `ssw-actix`.
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
+- Use the new `ssw-html::assets` layer to decide whether the next asset step is a small serving helper or a more explicit example-level asset manifest pattern.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
 - Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.

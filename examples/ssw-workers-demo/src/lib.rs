@@ -7,11 +7,12 @@ mod app {
     use ssw_core::{
         CSRF_FORM_FIELD, FlashMessage, HtmlKind, Response as CoreResponse, TextResponse,
     };
-    use ssw_html::{Markup, html, page as html_page};
+    use ssw_html::{Markup, assets, html, page as html_page};
     use ssw_workers::{fragment, page_with_context, request_context, to_worker_response};
     use worker::{Context, Env, Request, Response, Result, Router, event};
 
     const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
+    const THEME_STYLESHEET_PATH: &str = "/assets/theme.css";
 
     #[derive(Debug, Clone, Copy, Default)]
     struct DemoState<'a> {
@@ -23,9 +24,9 @@ mod app {
     fn layout(title: &str, content: Markup) -> Markup {
         html_page(title)
             .body_class("app-shell")
-            .head(html! {
-                link rel="stylesheet" href="/theme.css";
-            })
+            .head(assets::stylesheet(
+                assets::Asset::new(THEME_STYLESHEET_PATH).version(env!("CARGO_PKG_VERSION")),
+            ))
             .body(page_shell(container(html! {
                 main {
                     (content)
@@ -146,7 +147,7 @@ mod app {
     #[event(fetch, respond_with_errors)]
     pub async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         Router::new()
-            .get_async("/theme.css", |_req, _ctx| async move {
+            .get_async(THEME_STYLESHEET_PATH, |_req, _ctx| async move {
                 to_worker_response(CoreResponse::Text(TextResponse::new(
                     THEME_CSS,
                     "text/css; charset=utf-8",
