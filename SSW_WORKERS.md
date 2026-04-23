@@ -113,6 +113,78 @@ The following should remain adapter-local or app-local:
 
 These are useful runtime features, but they are not part of the stable cross-backend core.
 
+## Persistence boundary
+
+`ssw` should not own your database layer.
+
+That includes Cloudflare-native products such as D1. The framework should make it easy to render HTML from a Worker, but the app should still own:
+
+- `Env` bindings
+- query execution
+- repository or service functions
+- row-to-domain mapping
+
+This is the intended shape. The snippet is illustrative; the exact D1 row-mapping API is app-owned and may vary:
+
+```rust
+use ssw_components::{card_header, section};
+use ssw_html::{Markup, html};
+use ssw_workers::page_with_context;
+use worker::{D1Database, Env, Request, Result};
+
+struct Project {
+    title: String,
+    status: String,
+}
+
+fn projects_page(projects: &[Project]) -> Markup {
+    html! {
+        (section(html! {
+            (card_header("Projects", html! {
+                p { "Loaded from app-owned persistence code." }
+            }))
+            ul {
+                @for project in projects {
+                    li {
+                        strong { (&project.title) }
+                        " "
+                        span { (&project.status) }
+                    }
+                }
+            }
+        }))
+    }
+}
+
+async fn load_projects(db: D1Database) -> Result<Vec<Project>> {
+    let query = db
+        .prepare("select title, status from projects order by title")
+        .all()
+        .await?;
+
+    // Map D1 rows into app-owned domain types here.
+    // This stays outside `ssw-workers` on purpose.
+    let _ = query;
+    Ok(Vec::new())
+}
+
+async fn projects_route(req: Request, env: Env) -> Result<worker::Response> {
+    let context = ssw_workers::request_context(&req)?;
+    let db = env.d1("DB")?;
+    let projects = load_projects(db).await?;
+
+    page_with_context(&context, projects_page(&projects))
+}
+```
+
+The important part is not the exact query API. The important part is the boundary:
+
+- `ssw-workers` handles request context and HTML response ergonomics
+- your app owns D1 bindings and queries
+- `ssw-core` stays persistence-agnostic
+
+If repeated demand shows up later, the most I would consider is a separate companion crate or cookbook examples. D1 should not become part of the main framework surface.
+
 ## Recommended scope for v0
 
 Start with the smallest slice that proves the backend is real.

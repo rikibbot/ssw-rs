@@ -18,6 +18,7 @@ Each one exists to pressure a different part of `ssw-rs`:
   - Cloudflare Workers adapter proof
   - GET, POST, redirect, flash, CSRF, validation summary, fragment rendering, and HTML 404 flow
   - explicit asset route under the Workers runtime
+  - keeps persistence and platform bindings such as D1 app-owned on purpose
 
 ## Running
 

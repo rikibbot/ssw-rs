@@ -138,6 +138,8 @@ Then open `http://127.0.0.1:8788/`.
 
 The Worker example is still intentionally narrow. It now proves request or response integration, flash, CSRF, a simple GET or POST flow, and a Worker-served stylesheet route using the same head-asset helper layer as the Actix demos, without introducing a broader asset or deployment toolchain yet.
 
+Database and platform bindings such as D1 are intentionally app-owned rather than part of the `ssw` framework surface. See [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the intended boundary and a small D1-shaped example.
+
 Useful capture knobs:
 
 ```bash

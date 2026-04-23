@@ -43,6 +43,7 @@
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
 - `ssw-workers` now also exposes status-aware page helpers plus a small Worker-first form helper slice (`FormData`, `submitted_form(...)`, `FormSubmission::verify_csrf()`, and `unprocessable_page(...)`), and the Worker demo now uses that path instead of manual request parsing and CSRF wiring in its POST handler.
 - The Worker demo now serves the first-party theme CSS from a Worker route, which gives the backend a very small but real asset path without introducing a general asset pipeline yet.
+- The Workers docs now make the persistence boundary explicit: platform bindings such as D1 are app-owned, not part of the `ssw` framework surface, and `SSW_WORKERS.md` now includes a small illustrative D1-shaped route example to make that boundary concrete.
 - The Actix and Worker demos now both use the same `ssw-html::assets` head helper layer plus versioned asset URLs, while keeping asset serving adapter-local instead of pushing static-file concerns into core.
 - `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
 - `ssw-core` now also owns status-bearing HTML and text responses with 200 defaults, and both Actix and Workers now map those statuses through their native response types.
