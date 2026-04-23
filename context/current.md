@@ -48,6 +48,8 @@
 - The Worker demo now exercises both a fragment endpoint and a shared-model HTML 404 page, which confirms that fragments and non-200 HTML now fit the current shared response model cleanly.
 - `ssw-actix` now also exposes status-aware HTML helpers, and the projects example now uses them for shell-preserving HTML 404 pages plus 422 invalid form redisplay.
 - `ssw-actix` now also exposes a small Actix-first form helper layer (`FormData`, `submitted_form(...)`, `FormSubmission::verify_csrf()`, and `unprocessable_page(...)`), and both Actix example apps now use it instead of repeating raw form-map and CSRF plumbing in every POST handler.
+- The large end-to-end Actix integration coverage now lives under `crates/ssw-actix/tests/http_flow.rs` instead of inside `ssw-actix/src/lib.rs`, which keeps the production module focused on runtime behavior rather than test scaffolding.
+- Several component and example rendering paths have now had a small readability pass: optional sections such as validation summaries or action rows are assembled before the `html!` block instead of relying on repeated `is_some()` and `unwrap()` branches inside templates.
 
 ## Current Priorities
 
@@ -79,6 +81,7 @@
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the current Actix-first form helper slice is the right stopping point, or whether validation summaries and more field-state patterns should be extracted further without hiding request flow.
 - Whether the new validation-summary component is enough of a stopping point for form feedback, or whether the next pressure still points at a slightly richer field-state helper layer in `ssw-actix`.
+- Whether the current end-to-end integration coverage belongs only in crate-local integration tests now, or whether any of the larger example-app assertions should move into higher-level workspace smoke tests later.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.

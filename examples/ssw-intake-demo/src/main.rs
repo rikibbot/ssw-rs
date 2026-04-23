@@ -214,6 +214,11 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
         .required(true);
     let track_options = track_options();
     let validation_items = intake_validation_items(state);
+    let summary_notice = state
+        .summary_error
+        .as_deref()
+        .map(|error| validation_summary(error, &validation_items))
+        .unwrap_or_default();
 
     app_page(
         "ssw-rs Intake Demo",
@@ -255,12 +260,7 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                             (flash_notice(flash))
                         }
 
-                        @if state.summary_error.is_some() {
-                            (validation_summary(
-                                state.summary_error.as_deref().unwrap(),
-                                &validation_items,
-                            ))
-                        }
+                        (summary_notice)
 
                         (card_header("Start a project", html! {
                             p {

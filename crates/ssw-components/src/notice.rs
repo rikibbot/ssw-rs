@@ -69,7 +69,20 @@ impl<'a> ValidationItem<'a> {
 
 /// Renders a validation summary notice with optional linked field errors.
 pub fn validation_summary(summary: impl AsRef<str>, items: &[ValidationItem<'_>]) -> Markup {
-    let flash = FlashMessage::error(summary.as_ref());
+    let summary = summary.as_ref();
+    let items_markup = if items.is_empty() {
+        Markup::new()
+    } else {
+        html! {
+            ul class="ssw-validation-summary__list" {
+                @for item in items {
+                    li class="ssw-validation-summary__item" {
+                        (validation_item(item))
+                    }
+                }
+            }
+        }
+    };
 
     html! {
         div
@@ -77,26 +90,24 @@ pub fn validation_summary(summary: impl AsRef<str>, items: &[ValidationItem<'_>]
             data_level="error"
             role=(notice_role(FlashLevel::Error)) {
             p class="ssw-notice__message" {
-                (flash.message())
+                (summary)
             }
-            @if !items.is_empty() {
-                ul class="ssw-validation-summary__list" {
-                    @for item in items {
-                        li class="ssw-validation-summary__item" {
-                            @if item.href().is_some() {
-                                a class="ssw-validation-summary__link" href=(item.href().unwrap()) {
-                                    (item.message())
-                                }
-                            }
-                            @if item.href().is_none() {
-                                span class="ssw-validation-summary__text" {
-                                    (item.message())
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            (items_markup)
         }
+    }
+}
+
+fn validation_item(item: &ValidationItem<'_>) -> Markup {
+    match item.href() {
+        Some(href) => html! {
+            a class="ssw-validation-summary__link" href=(href) {
+                (item.message())
+            }
+        },
+        None => html! {
+            span class="ssw-validation-summary__text" {
+                (item.message())
+            }
+        },
     }
 }

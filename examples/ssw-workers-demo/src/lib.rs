@@ -29,7 +29,7 @@ mod app {
         note_error: Option<&'a str>,
     }
 
-    fn validation_summary_items(state: &DemoState<'_>) -> Vec<ValidationItem<'_>> {
+    fn validation_summary_items<'a>(state: &'a DemoState<'a>) -> Vec<ValidationItem<'a>> {
         let mut items = Vec::new();
 
         if let Some(error) = state.note_error {
@@ -59,6 +59,10 @@ mod app {
             .error(state.note_error)
             .required(true);
         let validation_items = validation_summary_items(state);
+        let summary_notice = state
+            .form_error
+            .map(|error| validation_summary(error, &validation_items))
+            .unwrap_or_default();
 
         layout(
             "ssw-workers demo",
@@ -80,9 +84,7 @@ mod app {
                     @for flash in flashes {
                         (flash_notice(flash))
                     }
-                    @if state.form_error.is_some() {
-                        (validation_summary(state.form_error.unwrap(), &validation_items))
-                    }
+                    (summary_notice)
                     (section(html! {
                         form method="post" action="/" {
                             (hidden_input(CSRF_FORM_FIELD, csrf_token))
@@ -259,4 +261,5 @@ mod app {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+/// Non-wasm stub so the example crate still builds during host-side workspace checks.
 pub fn host_build_stub() {}

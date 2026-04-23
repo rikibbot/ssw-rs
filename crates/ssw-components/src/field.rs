@@ -119,19 +119,20 @@ impl<'a> Field<'a> {
 
 /// Renders a labeled field wrapper around a form control.
 pub fn field(field: &Field<'_>, control: impl Into<Markup>) -> Markup {
-    let error_id = field.error_id();
-    let error = field.error_message();
-    let invalid = field.data_invalid();
+    let error_markup = match (field.error_id(), field.error_message()) {
+        (Some(error_id), Some(error)) => html! {
+            p id=(error_id) class="ssw-field__error" {
+                (error)
+            }
+        },
+        _ => Markup::new(),
+    };
 
     html! {
-        div class="ssw-field" data_invalid=(invalid) {
+        div class="ssw-field" data_invalid=(field.data_invalid()) {
             label class="ssw-field__label" for=(field.id()) { (field.label()) }
             (control.into())
-            @if error.is_some() {
-                p id=(error_id.as_deref().unwrap()) class="ssw-field__error" {
-                    (error.unwrap())
-                }
-            }
+            (error_markup)
         }
     }
 }

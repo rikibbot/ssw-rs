@@ -600,6 +600,11 @@ fn project_edit_page(
     let status_options = status_options();
     let track_options = track_options();
     let validation_items = edit_validation_items(state);
+    let summary_notice = state
+        .summary_error
+        .as_deref()
+        .map(|error| validation_summary(error, &validation_items))
+        .unwrap_or_default();
 
     app_page(
         "Edit project",
@@ -625,12 +630,7 @@ fn project_edit_page(
                         (flash_notice(flash))
                     }
 
-                    @if state.summary_error.is_some() {
-                        (validation_summary(
-                            state.summary_error.as_deref().unwrap(),
-                            &validation_items,
-                        ))
-                    }
+                    (summary_notice)
 
                     (card_header("Edit project", html! {
                         p { "Successful submissions still redirect with a flash; invalid ones stay on the same page with preserved values." }

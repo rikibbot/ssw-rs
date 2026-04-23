@@ -113,6 +113,15 @@ pub fn page_header(
     body: impl Into<Markup>,
     actions: Option<Markup>,
 ) -> Markup {
+    let actions_markup = match actions {
+        Some(actions) => html! {
+            div class="ssw-page-header__actions" {
+                (actions)
+            }
+        },
+        None => Markup::new(),
+    };
+
     html! {
         header class="ssw-page-header" {
             p class="ssw-page-header__eyebrow" { (eyebrow.as_ref()) }
@@ -120,11 +129,7 @@ pub fn page_header(
             div class="ssw-page-header__body" {
                 (body.into())
             }
-            @if actions.is_some() {
-                div class="ssw-page-header__actions" {
-                    (actions.unwrap())
-                }
-            }
+            (actions_markup)
         }
     }
 }
@@ -156,6 +161,15 @@ pub fn empty_state(
     body: impl Into<Markup>,
     actions: Option<Markup>,
 ) -> Markup {
+    let actions_markup = match actions {
+        Some(actions) => html! {
+            div class="ssw-empty-state__actions" {
+                (actions)
+            }
+        },
+        None => Markup::new(),
+    };
+
     html! {
         section class="ssw-empty-state" {
             div class="ssw-empty-state__body" {
@@ -164,11 +178,7 @@ pub fn empty_state(
                     (body.into())
                 }
             }
-            @if actions.is_some() {
-                div class="ssw-empty-state__actions" {
-                    (actions.unwrap())
-                }
-            }
+            (actions_markup)
         }
     }
 }
