@@ -13,11 +13,11 @@ use ssw_actix::{
     submitted_form, to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    BadgeVariant, BreadcrumbItem, Field, MetaItem, NavItem, PaginationItem, SelectOption,
+    BadgeVariant, BreadcrumbItem, Field, MetaItem, NavItem, PaginationItem, SelectOption, StatItem,
     ValidationItem, badge_with_variant, breadcrumbs, button_with_variant, card_header, container,
     email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
-    page_header, page_shell, pagination, section, select, stack, submit_button, text_input,
-    textarea, top_nav, validation_summary,
+    page_header, page_shell, pagination, section, select, stack, stat_list, submit_button,
+    text_input, textarea, top_nav, validation_summary,
 };
 use ssw_core::{FlashMessage, Response};
 use ssw_css::{StyleSheet, css};
@@ -175,13 +175,12 @@ fn overview_meta_items() -> [MetaItem<'static>; 3] {
     ]
 }
 
-fn project_meta_items(project: Project) -> [MetaItem<'static>; 5] {
-    [
-        MetaItem::new("Status", project.status),
-        MetaItem::new("Track", project.track),
-        MetaItem::new("Owner", project.owner),
-        MetaItem::new("Due", project.due),
-        MetaItem::new("Contact", project.contact_email),
+fn project_stat_items(project: Project) -> Vec<StatItem<'static>> {
+    vec![
+        StatItem::new("Status", status_badge(project.status)),
+        StatItem::new("Track", project.track),
+        StatItem::new("Owner", project.owner).detail(project.contact_email),
+        StatItem::new("Due", project.due),
     ]
 }
 
@@ -545,7 +544,8 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
                     (card_header("Project metadata", html! {
                         p { "This is intentionally boring data, because the layout should still feel deliberate." }
                     }))
-                    (meta_list(&project_meta_items(project)))
+                    (stat_list(&project_stat_items(project)))
+                    (meta_list(&[MetaItem::new("Contact", project.contact_email)]))
                 })))
             }
         },

@@ -1,4 +1,4 @@
-use ssw_html::{Markup, html};
+use ssw_html::{html, Markup};
 
 /// Renders a constrained layout container.
 pub fn container(content: impl Into<Markup>) -> Markup {

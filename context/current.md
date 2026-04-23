@@ -37,6 +37,7 @@
 - `ssw-components` now also includes `link_button`, `MetaItem`, and `meta_list`, and both example apps now use those shared page-level helpers instead of app-local link and metadata markup.
 - `ssw-components` now also includes `validation_summary` and `ValidationItem`, and the current examples now use that shared component for summary-level invalid-form feedback instead of hand-assembling summary notices route by route.
 - `ssw-components` now also includes `badge`, `breadcrumbs`, `data_table`, and `pagination`, and the intake style guide plus projects demo now exercise them as part of the normal visual-review loop.
+- `ssw-components` now also includes `stat_list` and `StatItem`, and the projects detail page plus intake style guide now use that denser metadata presentation alongside the existing `meta_list` rows.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.

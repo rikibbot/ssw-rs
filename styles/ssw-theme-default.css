@@ -52,6 +52,7 @@
 .ssw-empty-state,
 .ssw-breadcrumbs,
 .ssw-pagination,
+.ssw-stat-list,
 .ssw-table {
   box-sizing: border-box;
   font: inherit;
@@ -595,6 +596,50 @@
   line-height: 1.6;
 }
 
+.ssw-stat-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.ssw-stat-list__item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--ssw-color-border);
+  border-radius: var(--ssw-radius-md);
+  background: color-mix(in srgb, var(--ssw-color-surface) 92%, white);
+}
+
+.ssw-stat-list__label {
+  margin: 0;
+  color: var(--ssw-color-text-muted);
+  font-family: var(--ssw-font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.ssw-stat-list__value {
+  margin: 0;
+  color: var(--ssw-color-text);
+  font-family: var(--ssw-font-body);
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.ssw-stat-list__detail {
+  color: #52525b;
+  font-family: var(--ssw-font-body);
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
 .ssw-table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -690,4 +735,10 @@
   border-color: var(--ssw-color-accent);
   background: var(--ssw-color-accent);
   color: var(--ssw-color-accent-foreground);
+}
+
+@media (min-width: 42rem) {
+  .ssw-stat-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

@@ -8,12 +8,12 @@ Each one exists to pressure a different part of `ssw-rs`:
   - Actix-first form flow
   - flash and CSRF hooks
   - field helpers, validation summary, and invalid redisplay
-  - style-guide previews for badges, breadcrumbs, data table, and pagination
+  - style-guide previews for badges, breadcrumbs, stat list, data table, and pagination
   - `/style-guide` for visual review of the current primitives
 - `ssw-projects-demo`
   - larger page shell
   - list, detail, archive, and edit routes
-  - top navigation, breadcrumbs, badges, pagination, empty states, metadata, validation summary, and 404 or 422 HTML responses
+  - top navigation, breadcrumbs, badges, stat list, pagination, empty states, metadata, validation summary, and 404 or 422 HTML responses
   - scoped CSS proof point in repeated card and badge UI
 - `ssw-workers-demo`
   - Cloudflare Workers adapter proof

@@ -52,7 +52,7 @@ Currently implemented:
 - first page-shell primitives in `ssw-components`, including `page_shell`, `page_header`, `page_actions`, and `card_header`
 - first app-navigation and empty-state primitives in `ssw-components`, including `top_nav` and `empty_state`
 - shared page-link and metadata primitives in `ssw-components`, including `link_button`, `MetaItem`, and `meta_list`
-- shared badge, breadcrumb, table, and pagination primitives in `ssw-components`
+- shared badge, breadcrumb, stat-list, table, and pagination primitives in `ssw-components`
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
@@ -117,7 +117,7 @@ Run the second example app with:
 cargo run -p ssw-projects-demo
 ```
 
-The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, tabular data, and pagination directly. That makes the examples a better pressure test for what should stay in `ssw-components`.
+The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, stat lists, tabular data, and pagination directly. That makes the examples a better pressure test for what should stay in `ssw-components`.
 
 The examples are part of the framework story, not just demos. Each one is intended to pressure a different slice of the API before that slice becomes more abstract.
 

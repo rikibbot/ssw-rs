@@ -1,4 +1,4 @@
-use ssw_html::{Markup, html};
+use ssw_html::{html, Markup};
 
 /// The supported visual variants for button components.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

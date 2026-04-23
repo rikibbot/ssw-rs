@@ -12,11 +12,11 @@ use ssw_actix::{
     to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    BadgeVariant, BreadcrumbItem, ButtonVariant, Field, PaginationItem, SelectOption, TableCell,
-    TableRow, ValidationItem, alert, badge, badge_with_variant, breadcrumbs, button,
+    BadgeVariant, BreadcrumbItem, ButtonVariant, Field, PaginationItem, SelectOption, StatItem,
+    TableCell, TableRow, ValidationItem, alert, badge, badge_with_variant, breadcrumbs, button,
     button_with_variant, card_header, container, data_table, email_input, flash_notice,
     hidden_input, link_button, page_actions, page_header, page_shell, pagination, section, select,
-    stack, submit_button, text_input, textarea, validation_summary,
+    stack, stat_list, submit_button, text_input, textarea, validation_summary,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_css::css;
@@ -328,6 +328,15 @@ fn style_guide_page() -> Markup {
             TableCell::new("June 11"),
         ]),
     ];
+    let stat_items = [
+        StatItem::new(
+            "Status",
+            badge_with_variant("Active", BadgeVariant::Success),
+        ),
+        StatItem::new("Owner", "Mina").detail("mina@northstar.example"),
+        StatItem::new("Track", "Launch"),
+        StatItem::new("Due", "May 28"),
+    ];
 
     app_page(
         "Component style guide",
@@ -398,6 +407,7 @@ fn style_guide_page() -> Markup {
                         p { "Data-heavy routes still need honest, accessible primitives without jumping straight to client-side grids." }
                     }))
                     (data_table(&["Project", "Status", "Due"], &table_rows))
+                    (stat_list(&stat_items))
                 })))
             }
 

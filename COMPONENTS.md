@@ -183,6 +183,7 @@ Build these first:
 
 - button
 - badge
+- stat list
 - input
 - textarea
 - select
@@ -264,7 +265,7 @@ That means:
 8. Extract repeated page-level metadata and link-action patterns before adding broader app-shell surface area.
    status: initial `link_button`, `MetaItem`, and `meta_list` helpers now replace app-local link and metadata markup across the examples.
 9. Add the next SSR-native primitives only where the examples prove they belong in the base component layer.
-   status: `badge`, `breadcrumbs`, `data_table`, and `pagination` now exist and are exercised through the intake style guide and projects demo.
+   status: `badge`, `breadcrumbs`, `stat_list`, `data_table`, and `pagination` now exist and are exercised through the intake style guide and projects demo.
    note: a dedicated `card` primitive is still intentionally deferred because `section` plus `card_header` covers the current need without adding another overlapping surface abstraction.
 10. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
    status: first example app now exists at `examples/ssw-intake-demo`, and it currently applies `styles/ssw-theme-default.css`.

@@ -1,4 +1,4 @@
-use ssw_html::{Markup, html};
+use ssw_html::{html, Markup};
 
 /// The supported semantic variants for badge components.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,6 +71,46 @@ impl TableRow {
     }
 }
 
+/// A single stat item for compact metadata grids or dashboard summaries.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StatItem<'a> {
+    label: &'a str,
+    value: Markup,
+    detail: Option<Markup>,
+}
+
+impl<'a> StatItem<'a> {
+    /// Creates a stat item with a short label and visible value.
+    pub fn new(label: &'a str, value: impl Into<Markup>) -> Self {
+        Self {
+            label,
+            value: value.into(),
+            detail: None,
+        }
+    }
+
+    /// Adds optional supporting detail below the main value.
+    pub fn detail(mut self, detail: impl Into<Markup>) -> Self {
+        self.detail = Some(detail.into());
+        self
+    }
+
+    /// Returns the visible stat label.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+
+    /// Returns the primary stat value.
+    pub fn value(&self) -> &Markup {
+        &self.value
+    }
+
+    /// Returns the optional supporting detail.
+    pub fn detail_markup(&self) -> Option<&Markup> {
+        self.detail.as_ref()
+    }
+}
+
 /// Renders a badge with the default neutral variant.
 pub fn badge(content: impl Into<Markup>) -> Markup {
     badge_with_variant(content, BadgeVariant::Neutral)
@@ -121,6 +161,29 @@ pub fn data_table(columns: &[&str], rows: &[TableRow]) -> Markup {
                                     }
                                 })
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders a compact grid of stat items.
+pub fn stat_list(items: &[StatItem<'_>]) -> Markup {
+    html! {
+        dl class="ssw-stat-list" {
+            @for item in items {
+                div class="ssw-stat-list__item" {
+                    dt class="ssw-stat-list__label" {
+                        (item.label())
+                    }
+                    dd class="ssw-stat-list__value" {
+                        (item.value().clone())
+                    }
+                    @if let Some(detail) = item.detail_markup() {
+                        div class="ssw-stat-list__detail" {
+                            (detail.clone())
                         }
                     }
                 }
