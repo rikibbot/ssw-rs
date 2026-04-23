@@ -13,9 +13,10 @@ use ssw_actix::{
     submitted_form, to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    Field, MetaItem, NavItem, SelectOption, button_with_variant, card_header, container,
-    email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
-    page_header, page_shell, section, select, stack, submit_button, text_input, textarea, top_nav,
+    Field, MetaItem, NavItem, SelectOption, ValidationItem, button_with_variant, card_header,
+    container, email_input, empty_state, flash_notice, hidden_input, link_button, meta_list,
+    page_actions, page_header, page_shell, section, select, stack, submit_button, text_input,
+    textarea, top_nav, validation_summary,
 };
 use ssw_core::{FlashMessage, Response};
 use ssw_css::{StyleSheet, css};
@@ -288,6 +289,32 @@ fn validate_edit_form(form: &FormData, project: Project) -> EditFormState {
     }
 
     state
+}
+
+fn edit_validation_items<'a>(state: &'a EditFormState) -> Vec<ValidationItem<'a>> {
+    let mut items = Vec::new();
+
+    if let Some(error) = state.title.error.as_deref() {
+        items.push(ValidationItem::link("#title", error));
+    }
+
+    if let Some(error) = state.owner_email.error.as_deref() {
+        items.push(ValidationItem::link("#owner-email", error));
+    }
+
+    if let Some(error) = state.track.error.as_deref() {
+        items.push(ValidationItem::link("#track", error));
+    }
+
+    if let Some(error) = state.status.error.as_deref() {
+        items.push(ValidationItem::link("#status", error));
+    }
+
+    if let Some(error) = state.summary.error.as_deref() {
+        items.push(ValidationItem::link("#summary", error));
+    }
+
+    items
 }
 
 fn project_ui_styles() -> StyleSheet {
@@ -572,6 +599,7 @@ fn project_edit_page(
         .required(true);
     let status_options = status_options();
     let track_options = track_options();
+    let validation_items = edit_validation_items(state);
 
     app_page(
         "Edit project",
@@ -598,9 +626,10 @@ fn project_edit_page(
                     }
 
                     @if state.summary_error.is_some() {
-                        (flash_notice(&FlashMessage::error(
+                        (validation_summary(
                             state.summary_error.as_deref().unwrap(),
-                        )))
+                            &validation_items,
+                        ))
                     }
 
                     (card_header("Edit project", html! {

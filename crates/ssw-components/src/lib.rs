@@ -11,7 +11,7 @@ pub use field::{
     Field, SelectOption, email_input, field, hidden_input, select, text_input, textarea,
 };
 pub use layout::{container, section, stack};
-pub use notice::{alert, flash_notice};
+pub use notice::{ValidationItem, alert, flash_notice, validation_summary};
 pub use page::{
     MetaItem, NavItem, card_header, empty_state, meta_list, page, page_actions, page_header,
     page_shell, top_nav,
@@ -23,10 +23,10 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, MetaItem, NavItem, SelectOption, alert, button, button_with_variant,
-        card_header, container, email_input, empty_state, flash_notice, hidden_input, link_button,
-        meta_list, page_actions, page_header, page_shell, section, select, stack, submit_button,
-        text_input, textarea, top_nav,
+        ButtonVariant, Field, MetaItem, NavItem, SelectOption, ValidationItem, alert, button,
+        button_with_variant, card_header, container, email_input, empty_state, flash_notice,
+        hidden_input, link_button, meta_list, page_actions, page_header, page_shell, section,
+        select, stack, submit_button, text_input, textarea, top_nav, validation_summary,
     };
 
     #[test]
@@ -108,6 +108,48 @@ mod tests {
                 .as_str()
                 .contains("data-level=\"error\" role=\"alert\"")
         );
+    }
+
+    #[test]
+    fn validation_summary_renders_message_and_linked_items() {
+        let items = [
+            ValidationItem::link("#name", "Name is required."),
+            ValidationItem::link("#email", "Email must look valid."),
+        ];
+        let markup = validation_summary("Please fix the highlighted fields.", &items);
+
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-notice ssw-notice--error ssw-validation-summary\"")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("Please fix the highlighted fields.")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<ul class=\"ssw-validation-summary__list\">")
+        );
+        assert!(markup.as_str().contains(
+            "<a class=\"ssw-validation-summary__link\" href=\"#name\">Name is required.</a>"
+        ));
+        assert!(markup.as_str().contains(
+            "<a class=\"ssw-validation-summary__link\" href=\"#email\">Email must look valid.</a>"
+        ));
+    }
+
+    #[test]
+    fn validation_summary_supports_unlinked_items() {
+        let items = [ValidationItem::new(
+            "Your form expired. Reload the page and try again.",
+        )];
+        let markup = validation_summary("Submission failed.", &items);
+
+        assert!(markup.as_str().contains("Submission failed."));
+        assert!(markup.as_str().contains("<span class=\"ssw-validation-summary__text\">Your form expired. Reload the page and try again.</span>"));
     }
 
     #[test]

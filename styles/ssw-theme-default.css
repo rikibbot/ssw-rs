@@ -299,6 +299,40 @@
   line-height: 1.55;
 }
 
+.ssw-validation-summary {
+  display: grid;
+  gap: var(--ssw-space-3);
+}
+
+.ssw-validation-summary__list {
+  display: grid;
+  gap: var(--ssw-space-2);
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ssw-validation-summary__item {
+  color: var(--ssw-color-danger);
+}
+
+.ssw-validation-summary__link,
+.ssw-validation-summary__text {
+  color: inherit;
+  font-family: var(--ssw-font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.ssw-validation-summary__link {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.ssw-validation-summary__link:hover {
+  color: color-mix(in srgb, var(--ssw-color-danger) 85%, black);
+}
+
 .ssw-field {
   display: grid;
   gap: var(--ssw-field-gap);

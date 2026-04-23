@@ -42,6 +42,7 @@ Currently implemented:
 - `.class` shorthand and composed `class=(...)` values
 - optional attribute omission and HTML boolean-attribute semantics
 - reusable form-field helpers in `ssw-components`
+- reusable validation summary helpers in `ssw-components`
 - redirect-carried flash messages in `ssw-core` and cookie-backed flash handling in `ssw-actix`
 - cookie-backed CSRF hooks in `ssw-actix` with hidden form field helpers in `ssw-components`
 - an Actix-first form helper layer in `ssw-actix`, including `FormData`, `submitted_form(...)`, and `unprocessable_page(...)`
@@ -58,7 +59,7 @@ Currently implemented:
 - a locally runnable Worker example at `examples/ssw-workers-demo`, with `wrangler` workflow, themed HTML pages, POST/redirect/flash flow, and a Worker-served stylesheet route
 - a first `ssw-css` proof-of-concept in the intake style guide
 - a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
-- an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, flash messages, CSRF verification, and 422 invalid redisplay helpers
+- an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, linked validation summaries, flash messages, CSRF verification, and 422 invalid redisplay helpers
 
 ## Example
 

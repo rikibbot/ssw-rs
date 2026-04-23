@@ -9,8 +9,8 @@
 #[cfg(target_arch = "wasm32")]
 mod app {
     use ssw_components::{
-        Field, container, flash_notice, hidden_input, link_button, page_actions, page_header,
-        page_shell, section, stack, submit_button, textarea,
+        Field, ValidationItem, container, flash_notice, hidden_input, link_button, page_actions,
+        page_header, page_shell, section, stack, submit_button, textarea, validation_summary,
     };
     use ssw_core::{
         CSRF_FORM_FIELD, FlashMessage, HtmlKind, Response as CoreResponse, TextResponse,
@@ -27,6 +27,16 @@ mod app {
         note: &'a str,
         form_error: Option<&'a str>,
         note_error: Option<&'a str>,
+    }
+
+    fn validation_summary_items(state: &DemoState<'_>) -> Vec<ValidationItem<'_>> {
+        let mut items = Vec::new();
+
+        if let Some(error) = state.note_error {
+            items.push(ValidationItem::link("#note", error));
+        }
+
+        items
     }
 
     fn layout(title: &str, content: Markup) -> Markup {
@@ -48,6 +58,7 @@ mod app {
             .value(state.note)
             .error(state.note_error)
             .required(true);
+        let validation_items = validation_summary_items(state);
 
         layout(
             "ssw-workers demo",
@@ -70,7 +81,7 @@ mod app {
                         (flash_notice(flash))
                     }
                     @if state.form_error.is_some() {
-                        (flash_notice(&FlashMessage::error(state.form_error.unwrap())))
+                        (validation_summary(state.form_error.unwrap(), &validation_items))
                     }
                     (section(html! {
                         form method="post" action="/" {
@@ -212,7 +223,7 @@ mod app {
                         form_page(
                             &DemoState {
                                 note: &note,
-                                form_error: None,
+                                form_error: Some("Please fix the highlighted fields."),
                                 note_error: Some("Add a short note before submitting."),
                             },
                             context.flashes(),

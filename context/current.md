@@ -35,6 +35,7 @@
 - `ssw-components` now also includes the first reusable app-shell primitives (`page_shell`, `page_header`, `page_actions`, `card_header`), and the intake demo now uses them instead of app-local hero and card-heading markup.
 - `ssw-components` now also includes a simple `top_nav` and `empty_state`, and a second example app now exists at `examples/ssw-projects-demo` to pressure list/detail/edit flows against the current shell, nav, empty-state, flash, and form primitives.
 - `ssw-components` now also includes `link_button`, `MetaItem`, and `meta_list`, and both example apps now use those shared page-level helpers instead of app-local link and metadata markup.
+- `ssw-components` now also includes `validation_summary` and `ValidationItem`, and the current examples now use that shared component for summary-level invalid-form feedback instead of hand-assembling summary notices route by route.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.
@@ -77,6 +78,7 @@
 - Whether the current shared `RequestState` boundary is enough, or whether any more of the request-context model should move into `ssw-core` without forcing a lowest-common-denominator backend abstraction.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
 - Whether the current Actix-first form helper slice is the right stopping point, or whether validation summaries and more field-state patterns should be extracted further without hiding request flow.
+- Whether the new validation-summary component is enough of a stopping point for form feedback, or whether the next pressure still points at a slightly richer field-state helper layer in `ssw-actix`.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.

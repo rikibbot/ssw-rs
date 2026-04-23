@@ -12,9 +12,10 @@ use ssw_actix::{
     to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header, container,
-    email_input, flash_notice, hidden_input, link_button, page_actions, page_header, page_shell,
-    section, select, stack, submit_button, text_input, textarea,
+    ButtonVariant, Field, SelectOption, ValidationItem, alert, button, button_with_variant,
+    card_header, container, email_input, flash_notice, hidden_input, link_button, page_actions,
+    page_header, page_shell, section, select, stack, submit_button, text_input, textarea,
+    validation_summary,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_css::css;
@@ -156,6 +157,28 @@ fn track_options() -> [SelectOption<'static>; 4] {
     ]
 }
 
+fn intake_validation_items<'a>(state: &'a IntakeFormState) -> Vec<ValidationItem<'a>> {
+    let mut items = Vec::new();
+
+    if let Some(error) = state.name.error.as_deref() {
+        items.push(ValidationItem::link("#name", error));
+    }
+
+    if let Some(error) = state.email.error.as_deref() {
+        items.push(ValidationItem::link("#email", error));
+    }
+
+    if let Some(error) = state.track.error.as_deref() {
+        items.push(ValidationItem::link("#track", error));
+    }
+
+    if let Some(error) = state.message.error.as_deref() {
+        items.push(ValidationItem::link("#message", error));
+    }
+
+    items
+}
+
 fn app_page(title: &str, content: Markup) -> Markup {
     html_page(title)
         .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
@@ -190,6 +213,7 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
         .error(state.message.error.as_deref())
         .required(true);
     let track_options = track_options();
+    let validation_items = intake_validation_items(state);
 
     app_page(
         "ssw-rs Intake Demo",
@@ -232,9 +256,10 @@ fn intake_page(state: &IntakeFormState, flashes: &[FlashMessage], csrf_token: &s
                         }
 
                         @if state.summary_error.is_some() {
-                            (flash_notice(&FlashMessage::error(
+                            (validation_summary(
                                 state.summary_error.as_deref().unwrap(),
-                            )))
+                                &validation_items,
+                            ))
                         }
 
                         (card_header("Start a project", html! {
@@ -299,6 +324,13 @@ fn style_guide_page() -> Markup {
                         (alert("Informational notice"))
                         (flash_notice(&FlashMessage::success("Successful flash message")))
                         (flash_notice(&FlashMessage::error("Error flash message")))
+                        (validation_summary(
+                            "Please fix the highlighted fields.",
+                            &[
+                                ValidationItem::link("#preview-name", "Name is required."),
+                                ValidationItem::link("#preview-track", "A selection is required."),
+                            ],
+                        ))
                     }
                     div class="demo-inline" {
                         (button("Primary button"))

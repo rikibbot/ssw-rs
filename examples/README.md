@@ -7,16 +7,16 @@ Each one exists to pressure a different part of `ssw-rs`:
 - `ssw-intake-demo`
   - Actix-first form flow
   - flash and CSRF hooks
-  - field helpers and invalid redisplay
+  - field helpers, validation summary, and invalid redisplay
   - `/style-guide` for visual review of the current primitives
 - `ssw-projects-demo`
   - larger page shell
   - list, detail, archive, and edit routes
-  - top navigation, empty states, metadata, and 404 or 422 HTML responses
+  - top navigation, empty states, metadata, validation summary, and 404 or 422 HTML responses
   - scoped CSS proof point in repeated card and badge UI
 - `ssw-workers-demo`
   - Cloudflare Workers adapter proof
-  - GET, POST, redirect, flash, CSRF, fragment rendering, and HTML 404 flow
+  - GET, POST, redirect, flash, CSRF, validation summary, fragment rendering, and HTML 404 flow
   - explicit asset route under the Workers runtime
 
 ## Running
