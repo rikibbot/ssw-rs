@@ -1,3 +1,11 @@
+//! Example Actix app for the narrow intake-flow slice.
+//!
+//! This binary exists to pressure:
+//! - form helpers and invalid redisplay
+//! - flash and CSRF hooks
+//! - page-shell and field primitives
+//! - the `/style-guide` visual review route
+
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{
     CSRF_FORM_FIELD, FormData, page_with_context, request_context, submitted_form,

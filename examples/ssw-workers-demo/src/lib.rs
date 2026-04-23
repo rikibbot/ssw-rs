@@ -1,3 +1,11 @@
+//! Example Cloudflare Workers app for the minimal `ssw-workers` adapter slice.
+//!
+//! This module exists to pressure:
+//! - response conversion under the Workers runtime
+//! - request-context, flash, and CSRF hooks
+//! - fragment rendering and HTML 404 pages
+//! - explicit asset routes under a non-Actix backend
+
 #[cfg(target_arch = "wasm32")]
 mod app {
     use ssw_components::{

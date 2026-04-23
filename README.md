@@ -84,7 +84,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, and [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope, and [`examples/README.md`](./examples/README.md) for the example apps and route maps.
 
 Run the current example app with:
 
@@ -115,7 +115,9 @@ Run the second example app with:
 cargo run -p ssw-projects-demo
 ```
 
-The two examples now share page-level primitives instead of app-local link and metadata markup, which makes them a better pressure test for what should stay in `ssw-components`.
+The two Actix examples now share page-level primitives instead of app-local link and metadata markup, which makes them a better pressure test for what should stay in `ssw-components`.
+
+The examples are part of the framework story, not just demos. Each one is intended to pressure a different slice of the API before that slice becomes more abstract.
 
 Check the Worker example with:
 

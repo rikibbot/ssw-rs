@@ -25,6 +25,7 @@
 - `ssw-components` now includes a native `select` helper with stable classes and selected-option handling driven by the current field value.
 - A workspace example app now exists at `examples/ssw-intake-demo`, exercising the current component, flash, CSRF, layout, and stylesheet stack in a real binary.
 - The example app now includes a dedicated `/style-guide` route so visual review of the current primitives does not depend on the intake flow alone.
+- The repo now has `examples/README.md`, which documents the purpose, route map, and run commands for each example instead of leaving that context implicit in the source.
 - The repo now includes `scripts/capture-intake-demo.sh` so visual review can produce repeatable screenshots for `/` and `/style-guide`.
 - The optional default theme and example shell have now had an initial screenshot-driven polish pass, improving card surfaces, control states, and page rhythm without growing the component API.
 - The optional default theme has now had a second screenshot-driven pass toward a more restrained `shadcn/ui`-like direction, with denser spacing, lighter shadows, flatter surfaces, and quieter page chrome.
@@ -90,6 +91,7 @@
 - Pressure the new Actix form helper layer through more app-shaped flows before deciding whether any of it deserves to move beyond `ssw-actix`.
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
 - Use the new `ssw-html::assets` layer to decide whether the next asset step is a small serving helper or a more explicit example-level asset manifest pattern.
+- Keep improving the examples as teaching artifacts, not just regression targets, so route intent and API pressure stay obvious to new readers.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
 - Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.

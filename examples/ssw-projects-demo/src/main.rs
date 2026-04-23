@@ -1,3 +1,11 @@
+//! Example Actix app for a more app-shaped SSR flow.
+//!
+//! This binary exists to pressure:
+//! - page shell and navigation primitives
+//! - list, detail, archive, and edit routes
+//! - HTML 404 and 422 responses inside the normal shell
+//! - scoped CSS on repeated UI without moving that styling into `ssw-components`
+
 use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{
