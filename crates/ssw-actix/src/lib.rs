@@ -1,5 +1,7 @@
 //! Actix integration for `ssw-rs`.
 
+mod form;
+
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::http::StatusCode;
 use actix_web::{HttpRequest, HttpResponse, Responder};
@@ -7,6 +9,7 @@ use ssw_core::{
     FlashMessage, HtmlKind, RedirectKind, Render, RequestState, Response, encode_flash_messages,
 };
 
+pub use form::{FormData, FormSubmission, InvalidForm, VerifiedForm, submitted_form};
 pub use ssw_core::{CSRF_COOKIE_NAME, CSRF_FORM_FIELD, CsrfError, FLASH_COOKIE_NAME};
 
 /// Request-scoped cookie-backed state for flash messages and CSRF tokens.
@@ -126,6 +129,11 @@ pub fn page_with_context_and_status(
     context.apply(page_with_status(status, view))
 }
 
+/// Renders a full HTML document with `422 Unprocessable Entity` and applies request-scoped cookies.
+pub fn unprocessable_page(context: &RequestContext, view: impl Render) -> HttpResponse {
+    page_with_context_and_status(context, 422, view)
+}
+
 /// Renders an HTML fragment response.
 pub fn fragment(view: impl Render) -> HttpResponse {
     render_html(HtmlKind::Fragment, view)
@@ -232,7 +240,7 @@ mod tests {
     use super::{
         ActixResponse, CSRF_COOKIE_NAME, CSRF_FORM_FIELD, FLASH_COOKIE_NAME, fragment, page,
         page_with_context, page_with_context_and_status, page_with_status, redirect, render_html,
-        render_html_with_status, request_context, to_http_response,
+        render_html_with_status, request_context, to_http_response, unprocessable_page,
     };
 
     #[actix_web::test]
@@ -281,6 +289,15 @@ mod tests {
 
         let page_response = page_with_status(404, Markup::text("<h1>missing</h1>"));
         assert_eq!(page_response.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[actix_web::test]
+    async fn renders_unprocessable_page_helper() {
+        let request = test::TestRequest::default().to_http_request();
+        let context = request_context(&request);
+        let response = unprocessable_page(&context, Markup::text("<h1>Invalid</h1>"));
+
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     }
 
     fn app_layout(title: &str, content: Markup) -> Markup {

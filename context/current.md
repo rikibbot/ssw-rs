@@ -43,6 +43,7 @@
 - `ssw-core` now also owns status-bearing HTML and text responses with 200 defaults, and both Actix and Workers now map those statuses through their native response types.
 - The Worker demo now exercises both a fragment endpoint and a shared-model HTML 404 page, which confirms that fragments and non-200 HTML now fit the current shared response model cleanly.
 - `ssw-actix` now also exposes status-aware HTML helpers, and the projects example now uses them for shell-preserving HTML 404 pages plus 422 invalid form redisplay.
+- `ssw-actix` now also exposes a small Actix-first form helper layer (`FormData`, `submitted_form(...)`, `FormSubmission::verify_csrf()`, and `unprocessable_page(...)`), and both Actix example apps now use it instead of repeating raw form-map and CSRF plumbing in every POST handler.
 
 ## Current Priorities
 
@@ -71,6 +72,7 @@
 - Whether flash transport should stay cookie-backed and unsigned, or move behind a more explicit application secret/session abstraction.
 - Whether the current shared `RequestState` boundary is enough, or whether any more of the request-context model should move into `ssw-core` without forcing a lowest-common-denominator backend abstraction.
 - What the next mutation-oriented step should be after flash and CSRF hooks, such as a larger form abstraction or richer request context primitives.
+- Whether the current Actix-first form helper slice is the right stopping point, or whether validation summaries and more field-state patterns should be extracted further without hiding request flow.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.
@@ -82,6 +84,7 @@
 
 - Expand `ssw-html` with more real-world ergonomics, such as id composition rules, reusable layout helpers, and clearer fragment helpers.
 - Revisit the mutation layer now that flash messages and CSRF hooks exist, especially around whether any of that API should move into `ssw-core`.
+- Pressure the new Actix form helper layer through more app-shaped flows before deciding whether any of it deserves to move beyond `ssw-actix`.
 - Pressure the new example app and `/style-guide` route until they reveal what should change in component APIs, request context, and asset ergonomics.
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.

@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
 use ssw_actix::{
-    CSRF_FORM_FIELD, page_with_context, page_with_context_and_status, request_context,
-    to_http_response,
+    CSRF_FORM_FIELD, FormData, page_with_context, page_with_context_and_status, request_context,
+    submitted_form, to_http_response, unprocessable_page,
 };
 use ssw_components::{
     Field, MetaItem, NavItem, SelectOption, button_with_variant, card_header, container,
@@ -220,48 +218,33 @@ fn project_edit_state(project: Project) -> EditFormState {
     }
 }
 
-fn edit_state_from_form(form: &HashMap<String, String>, project: Project) -> EditFormState {
+fn edit_state_from_form(form: &FormData, project: Project) -> EditFormState {
     EditFormState {
         title: EditField {
-            value: form
-                .get("title")
-                .cloned()
-                .unwrap_or_else(|| project.title.to_owned()),
+            value: form.value_or("title", project.title),
             error: None,
         },
         owner_email: EditField {
-            value: form
-                .get("owner_email")
-                .cloned()
-                .unwrap_or_else(|| project.contact_email.to_owned()),
+            value: form.value_or("owner_email", project.contact_email),
             error: None,
         },
         track: EditField {
-            value: form
-                .get("track")
-                .cloned()
-                .unwrap_or_else(|| project.track.to_owned()),
+            value: form.value_or("track", project.track),
             error: None,
         },
         status: EditField {
-            value: form
-                .get("status")
-                .cloned()
-                .unwrap_or_else(|| project.status.to_owned()),
+            value: form.value_or("status", project.status),
             error: None,
         },
         summary: EditField {
-            value: form
-                .get("summary")
-                .cloned()
-                .unwrap_or_else(|| project.summary.to_owned()),
+            value: form.value_or("summary", project.summary),
             error: None,
         },
         summary_error: None,
     }
 }
 
-fn validate_edit_form(form: &HashMap<String, String>, project: Project) -> EditFormState {
+fn validate_edit_form(form: &FormData, project: Project) -> EditFormState {
     let mut state = edit_state_from_form(form, project);
 
     if state.title.value.trim().is_empty() {
@@ -735,33 +718,44 @@ async fn project_edit_get(request: HttpRequest, slug: web::Path<String>) -> Http
 async fn project_edit_post(
     request: HttpRequest,
     slug: web::Path<String>,
-    form: web::Form<HashMap<String, String>>,
+    form: web::Form<std::collections::HashMap<String, String>>,
 ) -> HttpResponse {
-    let context = request_context(&request);
     let Some(project) = project_by_slug(&slug) else {
+        let context = request_context(&request);
         return page_with_context_and_status(&context, 404, project_not_found_page(&slug));
     };
 
-    if context
-        .verify_csrf(form.get(CSRF_FORM_FIELD).map(String::as_str))
-        .is_err()
-    {
-        let mut state = edit_state_from_form(&form, project);
-        state.summary_error = Some("Your form expired. Reload the page and try again.".to_owned());
+    let submission = submitted_form(&request, form);
 
-        return page_with_context_and_status(
-            &context,
-            422,
-            project_edit_page(project, &state, context.flashes(), context.csrf_token()),
-        );
-    }
+    let verified = match submission.verify_csrf() {
+        Ok(verified) => verified,
+        Err(invalid) => {
+            let mut state = edit_state_from_form(invalid.data(), project);
+            state.summary_error =
+                Some("Your form expired. Reload the page and try again.".to_owned());
 
-    let state = validate_edit_form(&form, project);
+            return unprocessable_page(
+                invalid.context(),
+                project_edit_page(
+                    project,
+                    &state,
+                    invalid.context().flashes(),
+                    invalid.context().csrf_token(),
+                ),
+            );
+        }
+    };
+
+    let state = validate_edit_form(verified.data(), project);
     if state.has_errors() {
-        return page_with_context_and_status(
-            &context,
-            422,
-            project_edit_page(project, &state, context.flashes(), context.csrf_token()),
+        return unprocessable_page(
+            verified.context(),
+            project_edit_page(
+                project,
+                &state,
+                verified.context().flashes(),
+                verified.context().csrf_token(),
+            ),
         );
     }
 

@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
-use ssw_actix::{CSRF_FORM_FIELD, page_with_context, request_context, to_http_response};
+use ssw_actix::{
+    CSRF_FORM_FIELD, FormData, page_with_context, request_context, submitted_form,
+    to_http_response, unprocessable_page,
+};
 use ssw_components::{
     ButtonVariant, Field, SelectOption, alert, button, button_with_variant, card_header, container,
     email_input, flash_notice, hidden_input, link_button, page_actions, page_header, page_shell,
@@ -83,29 +84,29 @@ impl IntakeFormState {
     }
 }
 
-fn intake_state_from(form: &HashMap<String, String>) -> IntakeFormState {
+fn intake_state_from(form: &FormData) -> IntakeFormState {
     IntakeFormState {
         name: IntakeField {
-            value: form.get("name").cloned().unwrap_or_default(),
+            value: form.value("name"),
             error: None,
         },
         email: IntakeField {
-            value: form.get("email").cloned().unwrap_or_default(),
+            value: form.value("email"),
             error: None,
         },
         track: IntakeField {
-            value: form.get("track").cloned().unwrap_or_default(),
+            value: form.value("track"),
             error: None,
         },
         message: IntakeField {
-            value: form.get("message").cloned().unwrap_or_default(),
+            value: form.value("message"),
             error: None,
         },
         summary_error: None,
     }
 }
 
-fn validate_intake(form: &HashMap<String, String>) -> IntakeFormState {
+fn validate_intake(form: &FormData) -> IntakeFormState {
     let mut state = intake_state_from(form);
 
     if state.name.value.trim().is_empty() {
@@ -427,28 +428,37 @@ async fn intake_get(request: HttpRequest) -> HttpResponse {
 
 async fn intake_post(
     request: HttpRequest,
-    form: web::Form<HashMap<String, String>>,
+    form: web::Form<std::collections::HashMap<String, String>>,
 ) -> HttpResponse {
-    let context = request_context(&request);
+    let submission = submitted_form(&request, form);
 
-    if context
-        .verify_csrf(form.get(CSRF_FORM_FIELD).map(String::as_str))
-        .is_err()
-    {
-        let mut state = intake_state_from(&form);
-        state.summary_error = Some("Your form expired. Reload the page and try again.".to_owned());
+    let verified = match submission.verify_csrf() {
+        Ok(verified) => verified,
+        Err(invalid) => {
+            let mut state = intake_state_from(invalid.data());
+            state.summary_error =
+                Some("Your form expired. Reload the page and try again.".to_owned());
 
-        return page_with_context(
-            &context,
-            intake_page(&state, context.flashes(), context.csrf_token()),
-        );
-    }
+            return unprocessable_page(
+                invalid.context(),
+                intake_page(
+                    &state,
+                    invalid.context().flashes(),
+                    invalid.context().csrf_token(),
+                ),
+            );
+        }
+    };
 
-    let state = validate_intake(&form);
+    let state = validate_intake(verified.data());
     if state.has_errors() {
-        return page_with_context(
-            &context,
-            intake_page(&state, context.flashes(), context.csrf_token()),
+        return unprocessable_page(
+            verified.context(),
+            intake_page(
+                &state,
+                verified.context().flashes(),
+                verified.context().csrf_token(),
+            ),
         );
     }
 
