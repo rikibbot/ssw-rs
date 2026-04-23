@@ -38,6 +38,7 @@
 - `ssw-components` now also includes `validation_summary` and `ValidationItem`, and the current examples now use that shared component for summary-level invalid-form feedback instead of hand-assembling summary notices route by route.
 - `ssw-components` now also includes `badge`, `breadcrumbs`, `data_table`, and `pagination`, and the intake style guide plus projects demo now exercise them as part of the normal visual-review loop.
 - `ssw-components` now also includes `stat_list` and `StatItem`, and the projects detail page plus intake style guide now use that denser metadata presentation alongside the existing `meta_list` rows.
+- The repo now includes `CUSTOM_COMPONENTS.md`, and the projects demo now has an app-owned `src/components.rs` module that demonstrates the intended user composition model on top of `ssw-components` and optional local `ssw-css`.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.
@@ -71,6 +72,7 @@
 - Keep current flash and CSRF support positioned as hooks, not a complete session or secret-management layer yet.
 - Treat styling conventions, slot names, and state attributes in `ssw-components` as a real API surface before expanding the component catalog.
 - Keep adding SSR-native primitives only when the examples prove the abstraction is real; avoid overlapping surface helpers such as a dedicated `card` until `section` plus `card_header` stops being enough.
+- Keep optimizing for app-owned component composition, not just framework-owned catalog growth; product-specific UI should stay outside `ssw-components` until multiple examples prove a stable primitive.
 - Keep any future `ssw-css` work narrow enough that plain CSS remains a first-class path and the primitive component layer does not depend on scoped-style tooling.
 - Keep `ssw-workers` adapter-first, so Cloudflare runtime details do not leak into `ssw-core` while the backend remains a narrow proof.
 
@@ -91,6 +93,7 @@
 - Whether there are any other public helpers in `ssw-components` or the examples that are merely thin aliases over `ssw-html` or adapter-local behavior and should be removed before the public surface grows further.
 - Whether the Worker helper slice is now at the right stopping point, or whether the next real pressure point is a tiny request-body or query helper rather than more form abstraction.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
+- Which current app-owned components in `examples/ssw-projects-demo/src/components.rs` still feel appropriately local, and whether any of them later earn promotion into `ssw-components`.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.
 - How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.
@@ -112,4 +115,5 @@
 - Continue tightening the shared backend boundary only where both Actix and Workers already prove the same state or semantics, rather than abstracting ahead of real pressure.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.
 - Continue using the intake style guide and projects demo as the component gate before adding broader `shadcn`-style surface area.
+- Use the new app-owned projects-demo components as the reference path for user composition before adding more framework-owned primitives.
 - Revisit the `ssw-core` rendering boundary once `ssw-html` and Actix usage put more pressure on it.

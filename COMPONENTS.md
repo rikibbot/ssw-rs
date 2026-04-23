@@ -227,6 +227,20 @@ Avoid:
 - generic configuration objects that hide the output structure
 - component APIs that invent new concepts when HTML already has one
 
+## App-owned components
+
+The framework should optimize for user-owned composition, not just framework-owned catalog growth.
+
+That means:
+
+- app-specific components should usually be plain Rust functions returning `Markup`
+- those functions should compose `ssw-components` primitives directly
+- `ssw-css` should remain optional and local when a custom component needs scoped styles
+
+If a component only exists in one app flow, it should usually stay app-owned until multiple examples prove that it belongs in the framework.
+
+See [`CUSTOM_COMPONENTS.md`](./CUSTOM_COMPONENTS.md) for the intended authoring model and [`examples/ssw-projects-demo/src/components.rs`](./examples/ssw-projects-demo/src/components.rs) for the current proof point in this repo.
+
 ## Default theme expectations
 
 The first-party default theme should feel intentional and polished, but it must remain optional.

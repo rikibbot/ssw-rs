@@ -4,23 +4,26 @@
 //! - page shell and navigation primitives
 //! - list, detail, archive, and edit routes
 //! - HTML 404 and 422 responses inside the normal shell
-//! - scoped CSS on repeated UI without moving that styling into `ssw-components`
+//! - app-owned components composed from `ssw-components`
+//! - local `ssw-css` styling without moving product UI into framework crates
+
+mod components;
 
 use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
+use components::{project_card, project_card_styles, project_metadata_panel, project_status_badge};
 use ssw_actix::{
     CSRF_FORM_FIELD, FormData, page_with_context, page_with_context_and_status, request_context,
     submitted_form, to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    BadgeVariant, BreadcrumbItem, Field, MetaItem, NavItem, PaginationItem, SelectOption, StatItem,
-    ValidationItem, badge_with_variant, breadcrumbs, button_with_variant, card_header, container,
-    email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
-    page_header, page_shell, pagination, section, select, stack, stat_list, submit_button,
-    text_input, textarea, top_nav, validation_summary,
+    BreadcrumbItem, Field, MetaItem, NavItem, PaginationItem, SelectOption, StatItem,
+    ValidationItem, breadcrumbs, button_with_variant, card_header, container, email_input,
+    empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions, page_header,
+    page_shell, pagination, section, select, stack, submit_button, text_input, textarea, top_nav,
+    validation_summary,
 };
 use ssw_core::{FlashMessage, Response};
-use ssw_css::{StyleSheet, css};
 use ssw_html::{Markup, assets, fonts, html, page as html_page};
 
 const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -177,7 +180,7 @@ fn overview_meta_items() -> [MetaItem<'static>; 3] {
 
 fn project_stat_items(project: Project) -> Vec<StatItem<'static>> {
     vec![
-        StatItem::new("Status", status_badge(project.status)),
+        StatItem::new("Status", project_status_badge(project.status)),
         StatItem::new("Track", project.track),
         StatItem::new("Owner", project.owner).detail(project.contact_email),
         StatItem::new("Due", project.due),
@@ -327,84 +330,6 @@ fn edit_validation_items<'a>(state: &'a EditFormState) -> Vec<ValidationItem<'a>
     items
 }
 
-fn project_ui_styles() -> StyleSheet {
-    css! {
-        ".card" {
-            display: grid;
-            gap: 0.65 rem;
-            padding: 1 rem;
-            border: 1 px solid var(--ssw-color-border);
-            border-radius: var(--ssw-radius-md);
-            background: color-mix(in srgb, var(--ssw-color-surface) 84%, white);
-            text-decoration: none;
-            transition: border-color 160 ms ease, background-color 160 ms ease, transform 160 ms ease;
-        }
-
-        ".card:hover" {
-            border-color: var(--ssw-color-border-strong);
-            background: var(--ssw-color-surface);
-            transform: translateY(-1 px);
-        }
-
-        ".card-head" {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.65 rem;
-        }
-
-        ".eyebrow" {
-            margin: 0;
-            color: var(--ssw-color-text-muted);
-            font-size: 0.75 rem;
-            font-weight: 600;
-            letter-spacing: 0.08 em;
-            text-transform: uppercase;
-        }
-
-        ".title" {
-            margin: 0;
-            color: var(--ssw-color-text);
-            font-size: 1.05 rem;
-            font-weight: 600;
-            line-height: 1.15;
-            letter-spacing: -0.02 em;
-        }
-
-        ".summary" {
-            margin: 0;
-            color: #52525b;
-            font-size: 0.95 rem;
-            line-height: 1.6;
-        }
-
-    }
-}
-
-fn status_badge(status: &str) -> Markup {
-    let variant = match status {
-        "active" => BadgeVariant::Success,
-        "review" => BadgeVariant::Info,
-        _ => BadgeVariant::Neutral,
-    };
-
-    badge_with_variant(status, variant)
-}
-
-fn project_card(styles: &StyleSheet, project: Project) -> Markup {
-    html! {
-        a class=(styles.class("card")) href=(format!("/projects/{}", project.slug)) {
-            div class=(styles.class("card-head")) {
-                p class=(styles.class("eyebrow")) { (project.client) }
-                (status_badge(project.status))
-            }
-            h2 class=(styles.class("title")) { (project.title) }
-            p class=(styles.class("summary")) { (project.summary) }
-        }
-    }
-}
-
 fn app_page(title: &str, nav_current: &str, head: Markup, body: Markup) -> Markup {
     html_page(title)
         .head(fonts::google_font("Inter").weights(&[400, 500, 600, 700]))
@@ -422,7 +347,7 @@ fn app_page(title: &str, nav_current: &str, head: Markup, body: Markup) -> Marku
 }
 
 fn projects_page(flashes: &[FlashMessage]) -> Markup {
-    let styles = project_ui_styles();
+    let styles = project_card_styles();
 
     app_page(
         "Projects",
@@ -452,7 +377,14 @@ fn projects_page(flashes: &[FlashMessage]) -> Markup {
                     }))
                     div class="projects-list" {
                         @for project in PROJECTS {
-                            (project_card(&styles, project))
+                            (project_card(
+                                &styles,
+                                format!("/projects/{}", project.slug),
+                                project.client,
+                                project.title,
+                                project.summary,
+                                project.status,
+                            ))
                         }
                     }
                     (pagination(&projects_pagination_items()))
@@ -517,7 +449,7 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
                 project.client,
                 project.title,
                 html! {
-                    (status_badge(project.status))
+                    (project_status_badge(project.status))
                     p { (project.summary) }
                 },
                 Some(page_actions(html! {
@@ -541,11 +473,10 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
                 })))
 
                 (section(stack(html! {
-                    (card_header("Project metadata", html! {
-                        p { "This is intentionally boring data, because the layout should still feel deliberate." }
-                    }))
-                    (stat_list(&project_stat_items(project)))
-                    (meta_list(&[MetaItem::new("Contact", project.contact_email)]))
+                    (project_metadata_panel(
+                        &project_stat_items(project),
+                        &[MetaItem::new("Contact", project.contact_email)],
+                    ))
                 })))
             }
         },

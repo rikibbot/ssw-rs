@@ -86,7 +86,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope, and [`examples/README.md`](./examples/README.md) for the example apps and route maps.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`CUSTOM_COMPONENTS.md`](./CUSTOM_COMPONENTS.md) for the intended app-owned composition model, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope, and [`examples/README.md`](./examples/README.md) for the example apps and route maps.
 
 Run the current example app with:
 
@@ -117,7 +117,7 @@ Run the second example app with:
 cargo run -p ssw-projects-demo
 ```
 
-The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, stat lists, tabular data, and pagination directly. That makes the examples a better pressure test for what should stay in `ssw-components`.
+The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, stat lists, tabular data, and pagination directly. The projects demo now also includes an app-owned `components.rs` module to show the intended composition model on top of `ssw-components` and `ssw-css`.
 
 The examples are part of the framework story, not just demos. Each one is intended to pressure a different slice of the API before that slice becomes more abstract.
 

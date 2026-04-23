@@ -14,6 +14,7 @@ Each one exists to pressure a different part of `ssw-rs`:
   - larger page shell
   - list, detail, archive, and edit routes
   - top navigation, breadcrumbs, badges, stat list, pagination, empty states, metadata, validation summary, and 404 or 422 HTML responses
+  - app-owned component proof point in `src/components.rs`
   - scoped CSS proof point in repeated card and badge UI
 - `ssw-workers-demo`
   - Cloudflare Workers adapter proof
