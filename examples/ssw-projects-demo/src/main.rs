@@ -13,9 +13,10 @@ use ssw_actix::{
     submitted_form, to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    Field, MetaItem, NavItem, SelectOption, ValidationItem, button_with_variant, card_header,
-    container, email_input, empty_state, flash_notice, hidden_input, link_button, meta_list,
-    page_actions, page_header, page_shell, section, select, stack, submit_button, text_input,
+    BadgeVariant, BreadcrumbItem, Field, MetaItem, NavItem, PaginationItem, SelectOption,
+    ValidationItem, badge_with_variant, breadcrumbs, button_with_variant, card_header, container,
+    email_input, empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions,
+    page_header, page_shell, pagination, section, select, stack, submit_button, text_input,
     textarea, top_nav, validation_summary,
 };
 use ssw_core::{FlashMessage, Response};
@@ -181,6 +182,16 @@ fn project_meta_items(project: Project) -> [MetaItem<'static>; 5] {
         MetaItem::new("Owner", project.owner),
         MetaItem::new("Due", project.due),
         MetaItem::new("Contact", project.contact_email),
+    ]
+}
+
+fn projects_pagination_items() -> [PaginationItem<'static>; 5] {
+    [
+        PaginationItem::link("/projects?page=1", "Previous"),
+        PaginationItem::current("1"),
+        PaginationItem::link("/projects?page=2", "2"),
+        PaginationItem::link("/projects?page=3", "3"),
+        PaginationItem::link("/projects?page=2", "Next"),
     ]
 }
 
@@ -369,50 +380,17 @@ fn project_ui_styles() -> StyleSheet {
             line-height: 1.6;
         }
 
-        ".status-badge" {
-            display: inline-flex;
-            align-items: center;
-            min-height: 1.6 rem;
-            padding: 0.1 rem 0.55 rem;
-            border-radius: 999 px;
-            font-size: 0.75 rem;
-            font-weight: 600;
-            line-height: 1;
-            letter-spacing: 0.02 em;
-            text-transform: capitalize;
-            background: color-mix(in srgb, var(--ssw-color-surface-subtle) 85%, white);
-            color: var(--ssw-color-text-muted);
-        }
-
-        ".status-active" {
-            background: color-mix(in srgb, #dcfce7 82%, white);
-            color: #166534;
-        }
-
-        ".status-review" {
-            background: color-mix(in srgb, #dbeafe 82%, white);
-            color: #1d4ed8;
-        }
-
-        ".status-queued" {
-            background: color-mix(in srgb, #ede9fe 82%, white);
-            color: #6d28d9;
-        }
     }
 }
 
-fn status_badge(styles: &StyleSheet, status: &str) -> Markup {
+fn status_badge(status: &str) -> Markup {
     let variant = match status {
-        "active" => "status-active",
-        "review" => "status-review",
-        _ => "status-queued",
+        "active" => BadgeVariant::Success,
+        "review" => BadgeVariant::Info,
+        _ => BadgeVariant::Neutral,
     };
 
-    html! {
-        span class=(styles.classes(["status-badge", variant])) {
-            (status)
-        }
-    }
+    badge_with_variant(status, variant)
 }
 
 fn project_card(styles: &StyleSheet, project: Project) -> Markup {
@@ -420,7 +398,7 @@ fn project_card(styles: &StyleSheet, project: Project) -> Markup {
         a class=(styles.class("card")) href=(format!("/projects/{}", project.slug)) {
             div class=(styles.class("card-head")) {
                 p class=(styles.class("eyebrow")) { (project.client) }
-                (status_badge(styles, project.status))
+                (status_badge(project.status))
             }
             h2 class=(styles.class("title")) { (project.title) }
             p class=(styles.class("summary")) { (project.summary) }
@@ -478,6 +456,7 @@ fn projects_page(flashes: &[FlashMessage]) -> Markup {
                             (project_card(&styles, project))
                         }
                     }
+                    (pagination(&projects_pagination_items()))
                 })))
 
                 (section(stack(html! {
@@ -526,18 +505,20 @@ fn archive_page() -> Markup {
 }
 
 fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
-    let styles = project_ui_styles();
-
     app_page(
         project.title,
         "projects",
-        styles.style_tag(),
+        Markup::new(),
         html! {
+            (breadcrumbs(&[
+                BreadcrumbItem::link("/projects", "Projects"),
+                BreadcrumbItem::current(project.title),
+            ]))
             (page_header(
                 project.client,
                 project.title,
                 html! {
-                    (status_badge(&styles, project.status))
+                    (status_badge(project.status))
                     p { (project.summary) }
                 },
                 Some(page_actions(html! {
@@ -577,6 +558,7 @@ fn project_edit_page(
     flashes: &[FlashMessage],
     csrf_token: &str,
 ) -> Markup {
+    let project_href = format!("/projects/{}", project.slug);
     let title = Field::new("title", "title", "Project title")
         .value(state.title.value.as_str())
         .error(state.title.error.as_deref())
@@ -611,6 +593,11 @@ fn project_edit_page(
         "projects",
         Markup::new(),
         html! {
+            (breadcrumbs(&[
+                BreadcrumbItem::link("/projects", "Projects"),
+                BreadcrumbItem::link(project_href.as_str(), project.title),
+                BreadcrumbItem::current("Edit brief"),
+            ]))
             (page_header(
                 project.client,
                 "Edit project brief",
@@ -672,6 +659,10 @@ fn project_not_found_page(slug: &str) -> Markup {
         "projects",
         Markup::new(),
         html! {
+            (breadcrumbs(&[
+                BreadcrumbItem::link("/projects", "Projects"),
+                BreadcrumbItem::current("Missing project"),
+            ]))
             (page_header(
                 "Project Studio",
                 "Project not found",

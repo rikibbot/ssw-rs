@@ -1,20 +1,22 @@
 //! Optional UI components built on top of `ssw-html`.
 
 mod button;
+mod data;
 mod field;
 mod layout;
 mod notice;
 mod page;
 
 pub use button::{ButtonVariant, button, button_with_variant, link_button, submit_button};
+pub use data::{BadgeVariant, TableCell, TableRow, badge, badge_with_variant, data_table};
 pub use field::{
     Field, SelectOption, email_input, field, hidden_input, select, text_input, textarea,
 };
 pub use layout::{container, section, stack};
 pub use notice::{ValidationItem, alert, flash_notice, validation_summary};
 pub use page::{
-    MetaItem, NavItem, card_header, empty_state, meta_list, page_actions, page_header, page_shell,
-    top_nav,
+    BreadcrumbItem, MetaItem, NavItem, PaginationItem, breadcrumbs, card_header, empty_state,
+    meta_list, page_actions, page_header, page_shell, pagination, top_nav,
 };
 
 #[cfg(test)]
@@ -23,10 +25,12 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        ButtonVariant, Field, MetaItem, NavItem, SelectOption, ValidationItem, alert, button,
-        button_with_variant, card_header, container, email_input, empty_state, flash_notice,
-        hidden_input, link_button, meta_list, page_actions, page_header, page_shell, section,
-        select, stack, submit_button, text_input, textarea, top_nav, validation_summary,
+        BadgeVariant, BreadcrumbItem, ButtonVariant, Field, MetaItem, NavItem, PaginationItem,
+        SelectOption, TableCell, TableRow, ValidationItem, alert, badge, badge_with_variant,
+        breadcrumbs, button, button_with_variant, card_header, container, data_table, email_input,
+        empty_state, flash_notice, hidden_input, link_button, meta_list, page_actions, page_header,
+        page_shell, pagination, section, select, stack, submit_button, text_input, textarea,
+        top_nav, validation_summary,
     };
 
     #[test]
@@ -312,6 +316,25 @@ mod tests {
     }
 
     #[test]
+    fn breadcrumbs_render_links_and_current_page_state() {
+        let items = [
+            BreadcrumbItem::link("/projects", "Projects"),
+            BreadcrumbItem::current("Northstar launch sprint"),
+        ];
+        let markup = breadcrumbs(&items);
+
+        assert!(markup.as_str().contains("class=\"ssw-breadcrumbs\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("<a class=\"ssw-breadcrumbs__link\" href=\"/projects\">Projects</a>")
+        );
+        assert!(markup.as_str().contains(
+            "<span class=\"ssw-breadcrumbs__current\" aria-current=\"page\">Northstar launch sprint</span>"
+        ));
+    }
+
+    #[test]
     fn empty_state_renders_optional_actions() {
         let markup = empty_state(
             "No projects",
@@ -351,6 +374,76 @@ mod tests {
             markup
                 .as_str()
                 .contains("<dt class=\"ssw-meta-list__label\">Owner</dt><dd class=\"ssw-meta-list__value\">Mina</dd>")
+        );
+    }
+
+    #[test]
+    fn badge_renders_variant_hook_and_escapes_plain_text() {
+        let markup = badge_with_variant("<active>", BadgeVariant::Success);
+
+        assert!(
+            markup.as_str().contains(
+                "<span class=\"ssw-badge\" data-variant=\"success\">&lt;active&gt;</span>"
+            )
+        );
+    }
+
+    #[test]
+    fn badge_defaults_to_neutral_variant() {
+        let markup = badge("Queued");
+
+        assert!(
+            markup
+                .as_str()
+                .contains("<span class=\"ssw-badge\" data-variant=\"neutral\">Queued</span>")
+        );
+    }
+
+    #[test]
+    fn data_table_renders_column_headers_and_row_headers() {
+        let rows = [TableRow::new(vec![
+            TableCell::row_header("Northstar"),
+            TableCell::new("Active"),
+            TableCell::new("May 28"),
+        ])];
+        let markup = data_table(&["Project", "Status", "Due"], &rows);
+
+        assert!(markup.as_str().contains("class=\"ssw-table-wrapper\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("<th class=\"ssw-table__heading\" scope=\"col\">Project</th>")
+        );
+        assert!(markup.as_str().contains(
+            "<th class=\"ssw-table__cell ssw-table__cell--row-header\" scope=\"row\">Northstar</th>"
+        ));
+        assert!(
+            markup
+                .as_str()
+                .contains("<td class=\"ssw-table__cell\">Active</td>")
+        );
+    }
+
+    #[test]
+    fn pagination_renders_links_and_current_page_state() {
+        let items = [
+            PaginationItem::link("/projects?page=1", "Previous"),
+            PaginationItem::current("1"),
+            PaginationItem::link("/projects?page=2", "2"),
+            PaginationItem::link("/projects?page=2", "Next"),
+        ];
+        let markup = pagination(&items);
+
+        assert!(markup.as_str().contains("class=\"ssw-pagination\""));
+        assert!(
+            markup.as_str().contains(
+                "<a class=\"ssw-pagination__link\" href=\"/projects?page=1\">Previous</a>"
+            )
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<span class=\"ssw-pagination__current\" aria-current=\"page\">1</span>")
         );
     }
 }

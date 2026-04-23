@@ -182,16 +182,20 @@ This means the first wave should focus on components with strong native HTML fou
 Build these first:
 
 - button
+- badge
 - input
 - textarea
 - select
 - field wrapper
 - alert or notice
+- breadcrumbs
 - container
 - section
 - stack
 - top navigation
 - empty state
+- pagination
+- table
 - page header and action row
 
 Delay these until the enhancement story is clearer:
@@ -259,7 +263,10 @@ That means:
    status: initial `top_nav` and `empty_state` helpers added while building the projects demo.
 8. Extract repeated page-level metadata and link-action patterns before adding broader app-shell surface area.
    status: initial `link_button`, `MetaItem`, and `meta_list` helpers now replace app-local link and metadata markup across the examples.
-9. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
+9. Add the next SSR-native primitives only where the examples prove they belong in the base component layer.
+   status: `badge`, `breadcrumbs`, `data_table`, and `pagination` now exist and are exercised through the intake style guide and projects demo.
+   note: a dedicated `card` primitive is still intentionally deferred because `section` plus `card_header` covers the current need without adding another overlapping surface abstraction.
+10. Re-evaluate whether a separate theme crate should be created immediately or after an example app proves the CSS shape.
    status: first example app now exists at `examples/ssw-intake-demo`, and it currently applies `styles/ssw-theme-default.css`.
    note: the example also exposes a `/style-guide` route to make visual review of the current primitives and theme cheap.
 

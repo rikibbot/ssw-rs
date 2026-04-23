@@ -12,10 +12,11 @@ use ssw_actix::{
     to_http_response, unprocessable_page,
 };
 use ssw_components::{
-    ButtonVariant, Field, SelectOption, ValidationItem, alert, button, button_with_variant,
-    card_header, container, email_input, flash_notice, hidden_input, link_button, page_actions,
-    page_header, page_shell, section, select, stack, submit_button, text_input, textarea,
-    validation_summary,
+    BadgeVariant, BreadcrumbItem, ButtonVariant, Field, PaginationItem, SelectOption, TableCell,
+    TableRow, ValidationItem, alert, badge, badge_with_variant, breadcrumbs, button,
+    button_with_variant, card_header, container, data_table, email_input, flash_notice,
+    hidden_input, link_button, page_actions, page_header, page_shell, pagination, section, select,
+    stack, submit_button, text_input, textarea, validation_summary,
 };
 use ssw_core::{FlashMessage, HtmlKind, Response};
 use ssw_css::css;
@@ -298,6 +299,35 @@ fn style_guide_page() -> Markup {
         .required(true);
     let options = track_options();
     let scoped_preview = scoped_css_preview();
+    let breadcrumb_items = [
+        BreadcrumbItem::link("/projects", "Projects"),
+        BreadcrumbItem::link("/projects/northstar", "Northstar"),
+        BreadcrumbItem::current("Edit brief"),
+    ];
+    let pagination_items = [
+        PaginationItem::link("/style-guide?page=1", "Previous"),
+        PaginationItem::current("1"),
+        PaginationItem::link("/style-guide?page=2", "2"),
+        PaginationItem::link("/style-guide?page=3", "3"),
+        PaginationItem::link("/style-guide?page=2", "Next"),
+    ];
+    let table_rows = [
+        TableRow::new(vec![
+            TableCell::row_header("Northstar"),
+            TableCell::new(badge_with_variant("Active", BadgeVariant::Success)),
+            TableCell::new("May 28"),
+        ]),
+        TableRow::new(vec![
+            TableCell::row_header("Acme"),
+            TableCell::new(badge_with_variant("In review", BadgeVariant::Info)),
+            TableCell::new("June 4"),
+        ]),
+        TableRow::new(vec![
+            TableCell::row_header("Orbit"),
+            TableCell::new(badge("Queued")),
+            TableCell::new("June 11"),
+        ]),
+    ];
 
     app_page(
         "Component style guide",
@@ -345,6 +375,29 @@ fn style_guide_page() -> Markup {
                     (text_input(&valid_name))
                     (select(&invalid_track, &options))
                     (textarea(&preview_message, 4))
+                })))
+            }
+
+            div class="demo-grid" {
+                (section(stack(html! {
+                    (card_header("Navigation and state", html! {
+                        p { "Breadcrumbs, badges, and pagination should stay readable and stable with or without app-specific CSS." }
+                    }))
+                    (breadcrumbs(&breadcrumb_items))
+                    div class="demo-inline" {
+                        (badge("Queued"))
+                        (badge_with_variant("In review", BadgeVariant::Info))
+                        (badge_with_variant("Shipped", BadgeVariant::Success))
+                        (badge_with_variant("Blocked", BadgeVariant::Danger))
+                    }
+                    (pagination(&pagination_items))
+                })))
+
+                (section(stack(html! {
+                    (card_header("Tabular data", html! {
+                        p { "Data-heavy routes still need honest, accessible primitives without jumping straight to client-side grids." }
+                    }))
+                    (data_table(&["Project", "Status", "Due"], &table_rows))
                 })))
             }
 

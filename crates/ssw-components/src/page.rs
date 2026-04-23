@@ -15,6 +15,22 @@ pub struct MetaItem<'a> {
     value: &'a str,
 }
 
+/// A single breadcrumb item for hierarchical page context.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BreadcrumbItem<'a> {
+    href: Option<&'a str>,
+    label: &'a str,
+    current: bool,
+}
+
+/// A single pagination item for numbered page navigation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PaginationItem<'a> {
+    href: Option<&'a str>,
+    label: &'a str,
+    current: bool,
+}
+
 impl<'a> MetaItem<'a> {
     /// Creates a metadata row with a label and plain-text value.
     pub fn new(label: &'a str, value: &'a str) -> Self {
@@ -29,6 +45,41 @@ impl<'a> MetaItem<'a> {
     /// Returns the row value.
     pub fn value(&self) -> &str {
         self.value
+    }
+}
+
+impl<'a> BreadcrumbItem<'a> {
+    /// Creates a linked breadcrumb item.
+    pub fn link(href: &'a str, label: &'a str) -> Self {
+        Self {
+            href: Some(href),
+            label,
+            current: false,
+        }
+    }
+
+    /// Creates the current breadcrumb item.
+    pub fn current(label: &'a str) -> Self {
+        Self {
+            href: None,
+            label,
+            current: true,
+        }
+    }
+
+    /// Returns the breadcrumb target, when present.
+    pub fn href(&self) -> Option<&str> {
+        self.href
+    }
+
+    /// Returns the visible label.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+
+    /// Returns whether the breadcrumb item is the current page.
+    pub fn is_current(&self) -> bool {
+        self.current
     }
 }
 
@@ -64,6 +115,41 @@ impl<'a> NavItem<'a> {
     }
 }
 
+impl<'a> PaginationItem<'a> {
+    /// Creates a linked pagination item.
+    pub fn link(href: &'a str, label: &'a str) -> Self {
+        Self {
+            href: Some(href),
+            label,
+            current: false,
+        }
+    }
+
+    /// Creates the current pagination item.
+    pub fn current(label: &'a str) -> Self {
+        Self {
+            href: None,
+            label,
+            current: true,
+        }
+    }
+
+    /// Returns the pagination target, when present.
+    pub fn href(&self) -> Option<&str> {
+        self.href
+    }
+
+    /// Returns the visible label.
+    pub fn label(&self) -> &str {
+        self.label
+    }
+
+    /// Returns whether the item represents the current page.
+    pub fn is_current(&self) -> bool {
+        self.current
+    }
+}
+
 /// Renders a simple top navigation bar with a brand link and current-page state.
 pub fn top_nav(
     brand_href: impl AsRef<str>,
@@ -85,6 +171,35 @@ pub fn top_nav(
                             aria_current=(item.is_current().then_some("page")) {
                             (item.label())
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders breadcrumb navigation for the current page context.
+pub fn breadcrumbs(items: &[BreadcrumbItem<'_>]) -> Markup {
+    html! {
+        nav class="ssw-breadcrumbs" aria_label="Breadcrumb" {
+            ol class="ssw-breadcrumbs__list" {
+                @for item in items {
+                    li class="ssw-breadcrumbs__item" {
+                        ({
+                            if item.is_current() {
+                                html! {
+                                    span class="ssw-breadcrumbs__current" aria_current="page" {
+                                        (item.label())
+                                    }
+                                }
+                            } else {
+                                html! {
+                                    a class="ssw-breadcrumbs__link" href=(item.href().unwrap_or("#")) {
+                                        (item.label())
+                                    }
+                                }
+                            }
+                        })
                     }
                 }
             }
@@ -186,6 +301,35 @@ pub fn meta_list(items: &[MetaItem<'_>]) -> Markup {
                 div class="ssw-meta-list__row" {
                     dt class="ssw-meta-list__label" { (item.label()) }
                     dd class="ssw-meta-list__value" { (item.value()) }
+                }
+            }
+        }
+    }
+}
+
+/// Renders a simple pagination navigation row.
+pub fn pagination(items: &[PaginationItem<'_>]) -> Markup {
+    html! {
+        nav class="ssw-pagination" aria_label="Pagination" {
+            ol class="ssw-pagination__list" {
+                @for item in items {
+                    li class="ssw-pagination__item" {
+                        ({
+                            if item.is_current() {
+                                html! {
+                                    span class="ssw-pagination__current" aria_current="page" {
+                                        (item.label())
+                                    }
+                                }
+                            } else {
+                                html! {
+                                    a class="ssw-pagination__link" href=(item.href().unwrap_or("#")) {
+                                        (item.label())
+                                    }
+                                }
+                            }
+                        })
+                    }
                 }
             }
         }
