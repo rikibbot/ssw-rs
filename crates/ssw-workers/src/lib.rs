@@ -27,15 +27,17 @@ mod wasm {
     use js_sys::global;
     use wasm_bindgen::JsCast;
     use web_sys::WorkerGlobalScope;
-    use worker::{Request, Response as WorkerResponse, Result as WorkerResult};
+    use worker::{
+        FormData as WorkerFormData, Request, Response as WorkerResponse, Result as WorkerResult,
+    };
 
     use ssw_core::{
         FlashMessage, HtmlKind, RedirectKind, Render, RequestState, Response, encode_flash_messages,
     };
 
     use super::{
-        CSRF_COOKIE_NAME, CsrfError, FLASH_COOKIE_NAME, cookie_header, parse_cookie_value,
-        removal_cookie_header,
+        CSRF_COOKIE_NAME, CSRF_FORM_FIELD, CsrfError, FLASH_COOKIE_NAME, cookie_header,
+        parse_cookie_value, removal_cookie_header,
     };
 
     /// Request-scoped cookie-backed state for flash messages and CSRF tokens.
@@ -103,9 +105,23 @@ mod wasm {
         to_worker_response(Response::html_rendered(kind, view))
     }
 
+    /// Renders a document or fragment view into a Worker response with an explicit status code.
+    pub fn render_html_with_status(
+        status: u16,
+        kind: HtmlKind,
+        view: impl Render,
+    ) -> WorkerResult<WorkerResponse> {
+        to_worker_response(Response::html_rendered_with_status(status, kind, view))
+    }
+
     /// Renders a full HTML document response.
     pub fn page(view: impl Render) -> WorkerResult<WorkerResponse> {
         render_html(HtmlKind::Document, view)
+    }
+
+    /// Renders a full HTML document response with an explicit status code.
+    pub fn page_with_status(status: u16, view: impl Render) -> WorkerResult<WorkerResponse> {
+        render_html_with_status(status, HtmlKind::Document, view)
     }
 
     /// Renders a full HTML document response and applies request-scoped cookies.
@@ -116,9 +132,149 @@ mod wasm {
         context.apply(page(view)?)
     }
 
+    /// Renders a full HTML document response with an explicit status and applies request-scoped cookies.
+    pub fn page_with_context_and_status(
+        context: &RequestContext,
+        status: u16,
+        view: impl Render,
+    ) -> WorkerResult<WorkerResponse> {
+        context.apply(page_with_status(status, view)?)
+    }
+
+    /// Renders a full HTML document with `422 Unprocessable Entity` and applies request-scoped cookies.
+    pub fn unprocessable_page(
+        context: &RequestContext,
+        view: impl Render,
+    ) -> WorkerResult<WorkerResponse> {
+        page_with_context_and_status(context, 422, view)
+    }
+
     /// Renders an HTML fragment response.
     pub fn fragment(view: impl Render) -> WorkerResult<WorkerResponse> {
         render_html(HtmlKind::Fragment, view)
+    }
+
+    /// Request form data with small helpers for common server-side access patterns.
+    pub struct FormData {
+        inner: WorkerFormData,
+    }
+
+    impl FormData {
+        /// Builds form data from a Worker `FormData` value.
+        pub fn new(inner: WorkerFormData) -> Self {
+            Self { inner }
+        }
+
+        /// Extracts submitted form data from a Worker request.
+        pub async fn from_request(request: &mut Request) -> WorkerResult<Self> {
+            Ok(Self::new(request.form_data().await?))
+        }
+
+        /// Returns the submitted value for a text field.
+        pub fn get(&self, name: &str) -> Option<String> {
+            self.inner.get_field(name)
+        }
+
+        /// Returns a field value or the empty string when the field is missing.
+        pub fn value(&self, name: &str) -> String {
+            self.get(name).unwrap_or_default()
+        }
+
+        /// Returns a field value or a provided default when the field is missing.
+        pub fn value_or(&self, name: &str, default: &str) -> String {
+            self.get(name).unwrap_or_else(|| default.to_owned())
+        }
+    }
+
+    /// A submitted Worker form paired with the current request context.
+    pub struct FormSubmission {
+        context: RequestContext,
+        data: FormData,
+    }
+
+    impl FormSubmission {
+        /// Builds a submitted form from a Worker request.
+        pub async fn from_request(request: &mut Request) -> WorkerResult<Self> {
+            Ok(Self {
+                context: request_context(request)?,
+                data: FormData::from_request(request).await?,
+            })
+        }
+
+        /// Returns the submitted data.
+        pub fn data(&self) -> &FormData {
+            &self.data
+        }
+
+        /// Returns the request context associated with the submission.
+        pub fn context(&self) -> &RequestContext {
+            &self.context
+        }
+
+        /// Verifies the submitted CSRF token and returns a verified form on success.
+        pub fn verify_csrf(self) -> Result<VerifiedForm, InvalidForm> {
+            match self
+                .context
+                .verify_csrf(self.data.get(CSRF_FORM_FIELD).as_deref())
+            {
+                Ok(()) => Ok(VerifiedForm {
+                    context: self.context,
+                    data: self.data,
+                }),
+                Err(error) => Err(InvalidForm {
+                    context: self.context,
+                    data: self.data,
+                    error,
+                }),
+            }
+        }
+    }
+
+    /// A verified submitted Worker form.
+    pub struct VerifiedForm {
+        context: RequestContext,
+        data: FormData,
+    }
+
+    impl VerifiedForm {
+        /// Returns the submitted data.
+        pub fn data(&self) -> &FormData {
+            &self.data
+        }
+
+        /// Returns the request context associated with the submission.
+        pub fn context(&self) -> &RequestContext {
+            &self.context
+        }
+    }
+
+    /// A submitted Worker form that failed request-level validation.
+    pub struct InvalidForm {
+        context: RequestContext,
+        data: FormData,
+        error: CsrfError,
+    }
+
+    impl InvalidForm {
+        /// Returns the submitted data.
+        pub fn data(&self) -> &FormData {
+            &self.data
+        }
+
+        /// Returns the request context associated with the submission.
+        pub fn context(&self) -> &RequestContext {
+            &self.context
+        }
+
+        /// Returns the request-level validation error.
+        pub fn error(&self) -> &CsrfError {
+            &self.error
+        }
+    }
+
+    /// Builds a submitted form from a Worker request.
+    pub async fn submitted_form(request: &mut Request) -> WorkerResult<FormSubmission> {
+        FormSubmission::from_request(request).await
     }
 
     /// Creates a `303 See Other` redirect response.

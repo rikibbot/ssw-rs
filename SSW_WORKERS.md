@@ -7,8 +7,9 @@
 The current implementation covers:
 
 - conversion from `ssw-core::Response` into `worker::Response`
-- page, fragment, and redirect helpers
+- page, fragment, redirect, and status-aware page helpers
 - cookie-backed flash and CSRF request context
+- a small Worker-first form helper flow with `submitted_form(...)`, `FormData`, and CSRF verification
 - a minimal Worker example with GET, POST, redirect, flash flow, and a Worker-served stylesheet route
 - a local `wrangler dev` workflow that has been exercised against the example
 

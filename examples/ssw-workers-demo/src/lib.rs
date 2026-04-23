@@ -12,11 +12,12 @@ mod app {
         Field, ValidationItem, container, flash_notice, hidden_input, link_button, page_actions,
         page_header, page_shell, section, stack, submit_button, textarea, validation_summary,
     };
-    use ssw_core::{
-        CSRF_FORM_FIELD, FlashMessage, HtmlKind, Response as CoreResponse, TextResponse,
-    };
+    use ssw_core::{CSRF_FORM_FIELD, FlashMessage, Response as CoreResponse, TextResponse};
     use ssw_html::{Markup, assets, html, page as html_page};
-    use ssw_workers::{fragment, page_with_context, request_context, to_worker_response};
+    use ssw_workers::{
+        fragment, page_with_context, page_with_context_and_status, request_context, submitted_form,
+        to_worker_response, unprocessable_page,
+    };
     use worker::{Context, Env, Request, Response, Result, Router, event};
 
     const THEME_CSS: &str = include_str!("../../../styles/ssw-theme-default.css");
@@ -195,49 +196,49 @@ mod app {
                 fragment(preview_fragment(&note))
             })
             .post_async("/", |mut req, _ctx| async move {
-                let context = request_context(&req)?;
-                let form = req.form_data().await?;
-                let note = form.get_field("note").unwrap_or_default();
+                match submitted_form(&mut req).await?.verify_csrf() {
+                    Err(invalid) => {
+                        let note = invalid.data().value("note");
 
-                if context
-                    .verify_csrf(form.get_field(CSRF_FORM_FIELD).as_deref())
-                    .is_err()
-                {
-                    return page_with_context(
-                        &context,
-                        form_page(
-                            &DemoState {
-                                note: &note,
-                                form_error: Some(
-                                    "Your form expired. Reload the page and try again.",
+                        unprocessable_page(
+                            invalid.context(),
+                            form_page(
+                                &DemoState {
+                                    note: &note,
+                                    form_error: Some(
+                                        "Your form expired. Reload the page and try again.",
+                                    ),
+                                    note_error: None,
+                                },
+                                invalid.context().flashes(),
+                                invalid.context().csrf_token(),
+                            ),
+                        )
+                    }
+                    Ok(verified) => {
+                        let note = verified.data().value("note");
+
+                        if note.trim().is_empty() {
+                            return unprocessable_page(
+                                verified.context(),
+                                form_page(
+                                    &DemoState {
+                                        note: &note,
+                                        form_error: Some("Please fix the highlighted fields."),
+                                        note_error: Some("Add a short note before submitting."),
+                                    },
+                                    verified.context().flashes(),
+                                    verified.context().csrf_token(),
                                 ),
-                                note_error: None,
-                            },
-                            context.flashes(),
-                            context.csrf_token(),
-                        ),
-                    );
-                }
+                            );
+                        }
 
-                if note.trim().is_empty() {
-                    return page_with_context(
-                        &context,
-                        form_page(
-                            &DemoState {
-                                note: &note,
-                                form_error: Some("Please fix the highlighted fields."),
-                                note_error: Some("Add a short note before submitting."),
-                            },
-                            context.flashes(),
-                            context.csrf_token(),
-                        ),
-                    );
+                        to_worker_response(CoreResponse::redirect_with_flash(
+                            "/thanks",
+                            FlashMessage::success("Saved from the Workers adapter."),
+                        ))
+                    }
                 }
-
-                to_worker_response(CoreResponse::redirect_with_flash(
-                    "/thanks",
-                    FlashMessage::success("Saved from the Workers adapter."),
-                ))
             })
             .get_async("/thanks", |req, _ctx| async move {
                 let context = request_context(&req)?;
@@ -247,13 +248,7 @@ mod app {
                 let path = format!("/{}", ctx.param("path").cloned().unwrap_or_default());
                 let context = request_context(&req)?;
 
-                context.apply(to_worker_response(
-                    CoreResponse::html_rendered_with_status(
-                        404,
-                        HtmlKind::Document,
-                        not_found_page(&path),
-                    ),
-                )?)
+                page_with_context_and_status(&context, 404, not_found_page(&path))
             })
             .run(req, env)
             .await

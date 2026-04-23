@@ -41,6 +41,7 @@
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.
 - The repo now has a minimal `ssw-workers` adapter, plus an `SSW_WORKERS.md` design note that keeps the backend scoped narrowly around Cloudflare Workers request/response integration rather than broad backend abstraction.
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
+- `ssw-workers` now also exposes status-aware page helpers plus a small Worker-first form helper slice (`FormData`, `submitted_form(...)`, `FormSubmission::verify_csrf()`, and `unprocessable_page(...)`), and the Worker demo now uses that path instead of manual request parsing and CSRF wiring in its POST handler.
 - The Worker demo now serves the first-party theme CSS from a Worker route, which gives the backend a very small but real asset path without introducing a general asset pipeline yet.
 - The Actix and Worker demos now both use the same `ssw-html::assets` head helper layer plus versioned asset URLs, while keeping asset serving adapter-local instead of pushing static-file concerns into core.
 - `ssw-core` now owns a backend-neutral `RequestState` for flash and CSRF request state, while Actix and Workers keep only cookie parsing, token generation, and response cookie application.
@@ -84,6 +85,7 @@
 - Whether the new validation-summary component is enough of a stopping point for form feedback, or whether the next pressure still points at a slightly richer field-state helper layer in `ssw-actix`.
 - Whether the current end-to-end integration coverage belongs only in crate-local integration tests now, or whether any of the larger example-app assertions should move into higher-level workspace smoke tests later.
 - Whether there are any other public helpers in `ssw-components` or the examples that are merely thin aliases over `ssw-html` or adapter-local behavior and should be removed before the public surface grows further.
+- Whether the Worker helper slice is now at the right stopping point, or whether the next real pressure point is a tiny request-body or query helper rather than more form abstraction.
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.

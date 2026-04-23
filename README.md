@@ -55,7 +55,7 @@ Currently implemented:
 - a native `select` helper in `ssw-components`
 - a workspace example app at `examples/ssw-intake-demo`
 - a second workspace example app at `examples/ssw-projects-demo`
-- an initial `ssw-workers` adapter with response conversion, cookie-backed flash and CSRF request context, and page or redirect helpers for Cloudflare Workers
+- an initial `ssw-workers` adapter with response conversion, cookie-backed flash and CSRF request context, status-aware page helpers, and a small Worker-first form helper flow
 - a locally runnable Worker example at `examples/ssw-workers-demo`, with `wrangler` workflow, themed HTML pages, POST/redirect/flash flow, and a Worker-served stylesheet route
 - a first `ssw-css` proof-of-concept in the intake style guide
 - a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
