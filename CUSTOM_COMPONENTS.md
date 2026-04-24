@@ -78,5 +78,6 @@ That module shows the intended split:
 - `project_card` is app-owned and styled locally with `ssw-css`
 - `project_status_badge` is app-owned composition over `badge_with_variant`
 - `project_metadata_panel` is app-owned composition over `section`, `card_header`, `stat_list`, and `meta_list`
+- `project_story_panel` is an app-owned narrative panel used by detail, edit, and 404 routes, with local `ssw-css` copy and form-adjacent styles
 
 That is the standard `ssw-rs` should optimize for: strong primitives, easy composition, and optional local styling without framework magic.

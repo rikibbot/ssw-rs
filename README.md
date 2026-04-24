@@ -117,7 +117,7 @@ Run the second example app with:
 cargo run -p ssw-projects-demo
 ```
 
-The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, stat lists, tabular data, and pagination directly. The projects demo now also includes an app-owned `components.rs` module to show the intended composition model on top of `ssw-components` and `ssw-css`.
+The two Actix examples now share page-level primitives instead of app-local link and metadata markup, and the current style guide now previews badges, breadcrumbs, stat lists, tabular data, and pagination directly. The projects demo now also includes an app-owned `components.rs` module to show the intended composition model on top of `ssw-components` and `ssw-css`, including both repeated project cards and page-specific narrative panels.
 
 The examples are part of the framework story, not just demos. Each one is intended to pressure a different slice of the API before that slice becomes more abstract.
 

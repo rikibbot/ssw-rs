@@ -15,7 +15,7 @@ Current state: an initial experimental prototype now exists in `crates/ssw-css`.
 It is currently proven in two places:
 
 - a small isolated block in the intake style guide
-- app-owned project-card and status-badge UI in the projects demo, via `examples/ssw-projects-demo/src/components.rs`
+- app-owned project-card, status-badge, and narrative-panel UI in the projects demo, via `examples/ssw-projects-demo/src/components.rs`
 
 The goal is not to replace CSS. The goal is to make component-local styling more ergonomic while still emitting plain, predictable CSS for the browser.
 

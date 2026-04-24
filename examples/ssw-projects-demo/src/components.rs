@@ -6,14 +6,14 @@
 //! - `ssw-css` is optional and local to the component that needs it
 
 use ssw_components::{
-    BadgeVariant, MetaItem, StatItem, badge_with_variant, card_header, meta_list, section, stack,
-    stat_list,
+    BadgeVariant, MetaItem, StatItem, badge_with_variant, card_header, meta_list, page_actions,
+    section, stack, stat_list,
 };
 use ssw_css::{StyleSheet, css};
 use ssw_html::{Markup, html};
 
-/// Returns the local stylesheet used by the app-owned project-card component.
-pub fn project_card_styles() -> StyleSheet {
+/// Returns the local stylesheet used by the projects demo app-owned components.
+pub fn project_styles() -> StyleSheet {
     css! {
         ".card" {
             display: grid;
@@ -64,6 +64,23 @@ pub fn project_card_styles() -> StyleSheet {
             font-size: 0.95 rem;
             line-height: 1.6;
         }
+
+        ".copy-group" {
+            display: grid;
+            gap: 0.9 rem;
+        }
+
+        ".copy" {
+            margin: 0;
+            color: #52525b;
+            font-size: 0.95 rem;
+            line-height: 1.6;
+        }
+
+        ".form" {
+            display: grid;
+            gap: 0.9 rem;
+        }
     }
 }
 
@@ -113,5 +130,26 @@ pub fn project_metadata_panel(stats: &[StatItem<'_>], details: &[MetaItem<'_>]) 
         }))
         (stat_list(stats))
         (details_markup)
+    }))
+}
+
+/// Renders an app-owned narrative panel for project detail and edit routes.
+pub fn project_story_panel(
+    styles: &StyleSheet,
+    title: &str,
+    intro: impl Into<Markup>,
+    paragraphs: &[&str],
+    actions: Option<Markup>,
+) -> Markup {
+    let actions_markup = actions.map(page_actions).unwrap_or_default();
+
+    section(stack(html! {
+        (card_header(title, intro.into()))
+        div class=(styles.class("copy-group")) {
+            @for paragraph in paragraphs {
+                p class=(styles.class("copy")) { (paragraph) }
+            }
+        }
+        (actions_markup)
     }))
 }

@@ -11,7 +11,9 @@ mod components;
 
 use actix_web::http::header;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, web};
-use components::{project_card, project_card_styles, project_metadata_panel, project_status_badge};
+use components::{
+    project_card, project_metadata_panel, project_status_badge, project_story_panel, project_styles,
+};
 use ssw_actix::{
     CSRF_FORM_FIELD, FormData, page_with_context, page_with_context_and_status, request_context,
     submitted_form, to_http_response, unprocessable_page,
@@ -59,17 +61,11 @@ a {
   text-transform: uppercase;
 }
 
-.ssw-meta-list__value,
-.detail-copy {
+.ssw-meta-list__value {
   margin: 0;
   color: #52525b;
   font-size: 0.95rem;
   line-height: 1.6;
-}
-
-.project-form {
-  display: grid;
-  gap: 0.9rem;
 }
 
 @media (min-width: 64rem) {
@@ -347,7 +343,7 @@ fn app_page(title: &str, nav_current: &str, head: Markup, body: Markup) -> Marku
 }
 
 fn projects_page(flashes: &[FlashMessage]) -> Markup {
-    let styles = project_card_styles();
+    let styles = project_styles();
 
     app_page(
         "Projects",
@@ -436,10 +432,12 @@ fn archive_page() -> Markup {
 }
 
 fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
+    let styles = project_styles();
+
     app_page(
         project.title,
         "projects",
-        Markup::new(),
+        styles.style_tag(),
         html! {
             (breadcrumbs(&[
                 BreadcrumbItem::link("/projects", "Projects"),
@@ -459,18 +457,23 @@ fn project_detail_page(project: Project, flashes: &[FlashMessage]) -> Markup {
             ))
 
             div class="projects-grid" {
-                (section(stack(html! {
+                (stack(html! {
                     @for flash in flashes {
                         (flash_notice(flash))
                     }
-                    (card_header("Project brief", html! {
-                        p { "A detail page lets us pressure richer page composition than the intake form alone." }
-                    }))
-                    p class="detail-copy" { (project.summary) }
-                    p class="detail-copy" {
-                        "The page is static by design. What matters here is that the shell, nav, actions, and surrounding content still read like a real app."
-                    }
-                })))
+                    (project_story_panel(
+                        &styles,
+                        "Project brief",
+                        html! {
+                            p { "A detail page lets us pressure richer page composition than the intake form alone." }
+                        },
+                        &[
+                            project.summary,
+                            "The page is static by design. What matters here is that the shell, nav, actions, and surrounding content still read like a real app.",
+                        ],
+                        None,
+                    ))
+                }))
 
                 (section(stack(html! {
                     (project_metadata_panel(
@@ -489,6 +492,7 @@ fn project_edit_page(
     flashes: &[FlashMessage],
     csrf_token: &str,
 ) -> Markup {
+    let styles = project_styles();
     let project_href = format!("/projects/{}", project.slug);
     let title = Field::new("title", "title", "Project title")
         .value(state.title.value.as_str())
@@ -522,7 +526,7 @@ fn project_edit_page(
     app_page(
         "Edit project",
         "projects",
-        Markup::new(),
+        styles.style_tag(),
         html! {
             (breadcrumbs(&[
                 BreadcrumbItem::link("/projects", "Projects"),
@@ -554,7 +558,7 @@ fn project_edit_page(
                         p { "Successful submissions still redirect with a flash; invalid ones stay on the same page with preserved values." }
                     }))
 
-                    form class="project-form" method="post" action=(format!("/projects/{}/edit", project.slug)) {
+                    form class=(styles.class("form")) method="post" action=(format!("/projects/{}/edit", project.slug)) {
                         (hidden_input(CSRF_FORM_FIELD, csrf_token))
                         (text_input(&title))
                         (email_input(&owner_email))
@@ -568,27 +572,32 @@ fn project_edit_page(
                     }
                 })))
 
-                (section(stack(html! {
-                    (card_header("Why it does not persist", html! {
+                (project_story_panel(
+                    &styles,
+                    "Why it does not persist",
+                    html! {
                         p { "The goal is to verify form and page ergonomics before the examples pick a persistence story." }
-                    }))
-                    p class="detail-copy" {
-                        "A successful POST redirects back to the detail page with a flash notice, but the example does not mutate shared state yet. That limitation is intentional."
-                    }
-                    (page_actions(html! {
+                    },
+                    &[
+                        "A successful POST redirects back to the detail page with a flash notice, but the example does not mutate shared state yet. That limitation is intentional.",
+                    ],
+                    Some(html! {
                         (button_with_variant("Server-owned state next", ssw_components::ButtonVariant::Secondary))
-                    }))
-                })))
+                    }),
+                ))
             }
         },
     )
 }
 
 fn project_not_found_page(slug: &str) -> Markup {
+    let styles = project_styles();
+    let slug_message = format!("No project matched the slug {slug}.");
+
     app_page(
         "Project not found",
         "projects",
-        Markup::new(),
+        styles.style_tag(),
         html! {
             (breadcrumbs(&[
                 BreadcrumbItem::link("/projects", "Projects"),
@@ -608,19 +617,18 @@ fn project_not_found_page(slug: &str) -> Markup {
                 })),
             ))
 
-            (section(stack(html! {
-                (card_header("Missing project", html! {
+            (project_story_panel(
+                &styles,
+                "Missing project",
+                html! {
                     p { "A server-rendered app still needs deliberate error pages inside the normal shell." }
-                }))
-                p class="detail-copy" {
-                    "No project matched the slug "
-                    code { (slug) }
-                    "."
-                }
-                p class="detail-copy" {
-                    "This route now uses a real HTML 404 response instead of falling back to plain text."
-                }
-            })))
+                },
+                &[
+                    slug_message.as_str(),
+                    "This route now uses a real HTML 404 response instead of falling back to plain text.",
+                ],
+                None,
+            ))
         },
     )
 }
