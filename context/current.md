@@ -40,6 +40,7 @@
 - `ssw-components` now also includes `stat_list` and `StatItem`, and the projects detail page plus intake style guide now use that denser metadata presentation alongside the existing `meta_list` rows.
 - The repo now includes `CUSTOM_COMPONENTS.md`, and the projects demo now has an app-owned `src/components.rs` module that demonstrates the intended user composition model on top of `ssw-components` and optional local `ssw-css`.
 - The projects demo app-owned component module now also includes a local `project_story_panel`, and the detail, edit, and 404 routes now use it plus local `ssw-css` copy and form-surface styles instead of relying on page-local global CSS.
+- The projects edit flow now also uses an app-owned `EditField::required_field(...)` helper to collapse repeated `Field::new(...).value(...).error(...).required(true)` chains without adding a new framework-level form abstraction.
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.
@@ -77,6 +78,7 @@
 - Keep any future `ssw-css` work narrow enough that plain CSS remains a first-class path and the primitive component layer does not depend on scoped-style tooling.
 - Keep `ssw-workers` adapter-first, so Cloudflare runtime details do not leak into `ssw-core` while the backend remains a narrow proof.
 - Treat successful app-owned component extractions as a test of framework sufficiency; do not add framework helpers when the current primitives and local `ssw-css` already keep the example clear.
+- Prefer app-owned field-binding helpers in real forms before expanding `ssw-components` or `ssw-actix`; repeated `Field` construction alone is not yet enough evidence for a new public API.
 
 ## Open Questions
 
@@ -97,6 +99,7 @@
 - Whether the first default theme should live as a separate crate, a plain CSS package, or example-app assets first.
 - Which current app-owned components in `examples/ssw-projects-demo/src/components.rs` still feel appropriately local, and whether any of them later earn promotion into `ssw-components`.
 - Whether the current field-construction verbosity in the edit flow is acceptable as plain Rust, or whether another small helper belongs in app code first before any framework-level change is justified.
+- Whether app-owned field-binding helpers like `EditField::required_field(...)` remain sufficient as examples grow, or whether a later cross-example pattern finally justifies a framework-level binding convenience.
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.
 - How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.

@@ -130,6 +130,15 @@ struct EditField {
     error: Option<String>,
 }
 
+impl EditField {
+    fn required_field<'a>(&'a self, id: &'a str, name: &'a str, label: &'a str) -> Field<'a> {
+        Field::new(id, name, label)
+            .value(self.value.as_str())
+            .error(self.error.as_deref())
+            .required(true)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 struct EditFormState {
     title: EditField,
@@ -494,26 +503,17 @@ fn project_edit_page(
 ) -> Markup {
     let styles = project_styles();
     let project_href = format!("/projects/{}", project.slug);
-    let title = Field::new("title", "title", "Project title")
-        .value(state.title.value.as_str())
-        .error(state.title.error.as_deref())
-        .required(true);
-    let owner_email = Field::new("owner-email", "owner_email", "Owner email")
-        .value(state.owner_email.value.as_str())
-        .error(state.owner_email.error.as_deref())
-        .required(true);
-    let track = Field::new("track", "track", "Track")
-        .value(state.track.value.as_str())
-        .error(state.track.error.as_deref())
-        .required(true);
-    let status = Field::new("status", "status", "Status")
-        .value(state.status.value.as_str())
-        .error(state.status.error.as_deref())
-        .required(true);
-    let summary = Field::new("summary", "summary", "Project summary")
-        .value(state.summary.value.as_str())
-        .error(state.summary.error.as_deref())
-        .required(true);
+    let title = state
+        .title
+        .required_field("title", "title", "Project title");
+    let owner_email = state
+        .owner_email
+        .required_field("owner-email", "owner_email", "Owner email");
+    let track = state.track.required_field("track", "track", "Track");
+    let status = state.status.required_field("status", "status", "Status");
+    let summary = state
+        .summary
+        .required_field("summary", "summary", "Project summary");
     let status_options = status_options();
     let track_options = track_options();
     let validation_items = edit_validation_items(state);
