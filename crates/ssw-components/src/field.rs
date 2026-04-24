@@ -1,4 +1,4 @@
-use ssw_html::{html, Markup};
+use ssw_html::{Markup, html};
 
 /// A single option for the native select helper.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

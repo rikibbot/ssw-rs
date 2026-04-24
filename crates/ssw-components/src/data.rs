@@ -1,4 +1,4 @@
-use ssw_html::{html, Markup};
+use ssw_html::{Markup, html};
 
 /// The supported semantic variants for badge components.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

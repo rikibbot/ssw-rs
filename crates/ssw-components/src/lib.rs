@@ -7,18 +7,18 @@ mod layout;
 mod notice;
 mod page;
 
-pub use button::{button, button_with_variant, link_button, submit_button, ButtonVariant};
+pub use button::{ButtonVariant, button, button_with_variant, link_button, submit_button};
 pub use data::{
-    badge, badge_with_variant, data_table, stat_list, BadgeVariant, StatItem, TableCell, TableRow,
+    BadgeVariant, StatItem, TableCell, TableRow, badge, badge_with_variant, data_table, stat_list,
 };
 pub use field::{
-    email_input, field, hidden_input, select, text_input, textarea, Field, SelectOption,
+    Field, SelectOption, email_input, field, hidden_input, select, text_input, textarea,
 };
 pub use layout::{container, section, stack};
-pub use notice::{alert, flash_notice, validation_summary, ValidationItem};
+pub use notice::{ValidationItem, alert, flash_notice, validation_summary};
 pub use page::{
-    breadcrumbs, card_header, empty_state, meta_list, page_actions, page_header, page_shell,
-    pagination, top_nav, BreadcrumbItem, MetaItem, NavItem, PaginationItem,
+    BreadcrumbItem, MetaItem, NavItem, PaginationItem, breadcrumbs, card_header, empty_state,
+    meta_list, page_actions, page_header, page_shell, pagination, top_nav,
 };
 
 #[cfg(test)]
@@ -27,12 +27,12 @@ mod tests {
     use ssw_html::Markup;
 
     use super::{
-        alert, badge, badge_with_variant, breadcrumbs, button, button_with_variant, card_header,
-        container, data_table, email_input, empty_state, flash_notice, hidden_input, link_button,
-        meta_list, page_actions, page_header, page_shell, pagination, section, select, stack,
-        stat_list, submit_button, text_input, textarea, top_nav, validation_summary, BadgeVariant,
-        BreadcrumbItem, ButtonVariant, Field, MetaItem, NavItem, PaginationItem, SelectOption,
-        StatItem, TableCell, TableRow, ValidationItem,
+        BadgeVariant, BreadcrumbItem, ButtonVariant, Field, MetaItem, NavItem, PaginationItem,
+        SelectOption, StatItem, TableCell, TableRow, ValidationItem, alert, badge,
+        badge_with_variant, breadcrumbs, button, button_with_variant, card_header, container,
+        data_table, email_input, empty_state, flash_notice, hidden_input, link_button, meta_list,
+        page_actions, page_header, page_shell, pagination, section, select, stack, stat_list,
+        submit_button, text_input, textarea, top_nav, validation_summary,
     };
 
     #[test]
@@ -109,9 +109,11 @@ mod tests {
     fn error_flash_notice_uses_alert_role() {
         let markup = flash_notice(&FlashMessage::error("Failed"));
 
-        assert!(markup
-            .as_str()
-            .contains("data-level=\"error\" role=\"alert\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("data-level=\"error\" role=\"alert\"")
+        );
     }
 
     #[test]
@@ -122,15 +124,21 @@ mod tests {
         ];
         let markup = validation_summary("Please fix the highlighted fields.", &items);
 
-        assert!(markup
-            .as_str()
-            .contains("class=\"ssw-notice ssw-notice--error ssw-validation-summary\""));
-        assert!(markup
-            .as_str()
-            .contains("Please fix the highlighted fields."));
-        assert!(markup
-            .as_str()
-            .contains("<ul class=\"ssw-validation-summary__list\">"));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-notice ssw-notice--error ssw-validation-summary\"")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("Please fix the highlighted fields.")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<ul class=\"ssw-validation-summary__list\">")
+        );
         assert!(markup.as_str().contains(
             "<a class=\"ssw-validation-summary__link\" href=\"#name\">Name is required.</a>"
         ));
@@ -154,9 +162,11 @@ mod tests {
     fn hidden_input_renders_hidden_control() {
         let markup = hidden_input("csrf_token", "abc123");
 
-        assert!(markup
-            .as_str()
-            .contains("type=\"hidden\" name=\"csrf_token\" value=\"abc123\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("type=\"hidden\" name=\"csrf_token\" value=\"abc123\"")
+        );
     }
 
     #[test]
@@ -188,9 +198,11 @@ mod tests {
     fn link_button_renders_stable_link_markup() {
         let markup = link_button("/projects", "Browse projects");
 
-        assert!(markup
-            .as_str()
-            .contains("<a class=\"ssw-link-button\" href=\"/projects\">Browse projects</a>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<a class=\"ssw-link-button\" href=\"/projects\">Browse projects</a>")
+        );
     }
 
     #[test]
@@ -199,9 +211,11 @@ mod tests {
 
         assert!(markup.as_str().contains("<div class=\"ssw-container\">"));
         assert!(markup.as_str().contains("<section class=\"ssw-section\">"));
-        assert!(markup
-            .as_str()
-            .contains("<div class=\"ssw-stack\">Hello</div>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<div class=\"ssw-stack\">Hello</div>")
+        );
     }
 
     #[test]
@@ -226,12 +240,16 @@ mod tests {
         let markup = select(&field, &options);
 
         assert!(markup.as_str().contains("class=\"ssw-select\""));
-        assert!(markup
-            .as_str()
-            .contains("<option value=\"support\" selected>Support</option>"));
-        assert!(markup
-            .as_str()
-            .contains("<label class=\"ssw-field__label\" for=\"topic\">Topic</label>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<option value=\"support\" selected>Support</option>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<label class=\"ssw-field__label\" for=\"topic\">Topic</label>")
+        );
     }
 
     #[test]
@@ -244,27 +262,37 @@ mod tests {
         ));
 
         assert!(markup.as_str().contains("<div class=\"ssw-page-shell\">"));
-        assert!(markup
-            .as_str()
-            .contains("<header class=\"ssw-page-header\">"));
-        assert!(markup
-            .as_str()
-            .contains("<p class=\"ssw-page-header__eyebrow\">Server Side Web</p>"));
-        assert!(markup
-            .as_str()
-            .contains("<h1 class=\"ssw-page-header__title\">Rendered on the server.</h1>"));
-        assert!(markup
-            .as_str()
-            .contains("<div class=\"ssw-page-actions\">Actions</div>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<header class=\"ssw-page-header\">")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<p class=\"ssw-page-header__eyebrow\">Server Side Web</p>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<h1 class=\"ssw-page-header__title\">Rendered on the server.</h1>")
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<div class=\"ssw-page-actions\">Actions</div>")
+        );
     }
 
     #[test]
     fn card_header_escapes_plain_text_body() {
         let markup = card_header("Overview", "<unsafe>");
 
-        assert!(markup
-            .as_str()
-            .contains("<h2 class=\"ssw-card-header__title\">Overview</h2>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<h2 class=\"ssw-card-header__title\">Overview</h2>")
+        );
         assert!(markup.as_str().contains("&lt;unsafe&gt;"));
         assert!(!markup.as_str().contains("<unsafe>"));
     }
@@ -278,9 +306,11 @@ mod tests {
         let markup = top_nav("/", "Server Side Web", &items);
 
         assert!(markup.as_str().contains("class=\"ssw-top-nav\""));
-        assert!(markup
-            .as_str()
-            .contains("class=\"ssw-top-nav__brand\" href=\"/\">Server Side Web</a>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-top-nav__brand\" href=\"/\">Server Side Web</a>")
+        );
         assert!(markup.as_str().contains(
             "href=\"/projects\" data-current=\"true\" aria-current=\"page\">Projects</a>"
         ));
@@ -296,9 +326,11 @@ mod tests {
         let markup = breadcrumbs(&items);
 
         assert!(markup.as_str().contains("class=\"ssw-breadcrumbs\""));
-        assert!(markup
-            .as_str()
-            .contains("<a class=\"ssw-breadcrumbs__link\" href=\"/projects\">Projects</a>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<a class=\"ssw-breadcrumbs__link\" href=\"/projects\">Projects</a>")
+        );
         assert!(markup.as_str().contains(
             "<span class=\"ssw-breadcrumbs__current\" aria-current=\"page\">Northstar launch sprint</span>"
         ));
@@ -313,13 +345,17 @@ mod tests {
         );
 
         assert!(markup.as_str().contains("class=\"ssw-empty-state\""));
-        assert!(markup
-            .as_str()
-            .contains("<h2 class=\"ssw-empty-state__title\">No projects</h2>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<h2 class=\"ssw-empty-state__title\">No projects</h2>")
+        );
         assert!(markup.as_str().contains("Start by adding one."));
-        assert!(markup
-            .as_str()
-            .contains("class=\"ssw-empty-state__actions\""));
+        assert!(
+            markup
+                .as_str()
+                .contains("class=\"ssw-empty-state__actions\"")
+        );
     }
 
     #[test]
@@ -347,18 +383,22 @@ mod tests {
     fn badge_renders_variant_hook_and_escapes_plain_text() {
         let markup = badge_with_variant("<active>", BadgeVariant::Success);
 
-        assert!(markup
-            .as_str()
-            .contains("<span class=\"ssw-badge\" data-variant=\"success\">&lt;active&gt;</span>"));
+        assert!(
+            markup.as_str().contains(
+                "<span class=\"ssw-badge\" data-variant=\"success\">&lt;active&gt;</span>"
+            )
+        );
     }
 
     #[test]
     fn badge_defaults_to_neutral_variant() {
         let markup = badge("Queued");
 
-        assert!(markup
-            .as_str()
-            .contains("<span class=\"ssw-badge\" data-variant=\"neutral\">Queued</span>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<span class=\"ssw-badge\" data-variant=\"neutral\">Queued</span>")
+        );
     }
 
     #[test]
@@ -371,15 +411,19 @@ mod tests {
         let markup = data_table(&["Project", "Status", "Due"], &rows);
 
         assert!(markup.as_str().contains("class=\"ssw-table-wrapper\""));
-        assert!(markup
-            .as_str()
-            .contains("<th class=\"ssw-table__heading\" scope=\"col\">Project</th>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<th class=\"ssw-table__heading\" scope=\"col\">Project</th>")
+        );
         assert!(markup.as_str().contains(
             "<th class=\"ssw-table__cell ssw-table__cell--row-header\" scope=\"row\">Northstar</th>"
         ));
-        assert!(markup
-            .as_str()
-            .contains("<td class=\"ssw-table__cell\">Active</td>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<td class=\"ssw-table__cell\">Active</td>")
+        );
     }
 
     #[test]
@@ -393,12 +437,16 @@ mod tests {
         let markup = pagination(&items);
 
         assert!(markup.as_str().contains("class=\"ssw-pagination\""));
-        assert!(markup
-            .as_str()
-            .contains("<a class=\"ssw-pagination__link\" href=\"/projects?page=1\">Previous</a>"));
-        assert!(markup
-            .as_str()
-            .contains("<span class=\"ssw-pagination__current\" aria-current=\"page\">1</span>"));
+        assert!(
+            markup.as_str().contains(
+                "<a class=\"ssw-pagination__link\" href=\"/projects?page=1\">Previous</a>"
+            )
+        );
+        assert!(
+            markup
+                .as_str()
+                .contains("<span class=\"ssw-pagination__current\" aria-current=\"page\">1</span>")
+        );
     }
 
     #[test]
@@ -413,16 +461,20 @@ mod tests {
         let markup = stat_list(&items);
 
         assert!(markup.as_str().contains("class=\"ssw-stat-list\""));
-        assert!(markup
-            .as_str()
-            .contains("<dt class=\"ssw-stat-list__label\">Status</dt>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<dt class=\"ssw-stat-list__label\">Status</dt>")
+        );
         assert!(
             markup
                 .as_str()
                 .contains("<dd class=\"ssw-stat-list__value\"><span class=\"ssw-badge\" data-variant=\"success\">Active</span></dd>")
         );
-        assert!(markup
-            .as_str()
-            .contains("<div class=\"ssw-stat-list__detail\">Primary contact</div>"));
+        assert!(
+            markup
+                .as_str()
+                .contains("<div class=\"ssw-stat-list__detail\">Primary contact</div>")
+        );
     }
 }

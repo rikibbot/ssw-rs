@@ -1,4 +1,4 @@
-use ssw_html::{html, Markup};
+use ssw_html::{Markup, html};
 
 /// A navigation item for a simple top-level app navigation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

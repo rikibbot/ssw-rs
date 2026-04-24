@@ -1,5 +1,5 @@
 use ssw_core::{FlashLevel, FlashMessage};
-use ssw_html::{html, Markup};
+use ssw_html::{Markup, html};
 
 fn notice_role(level: FlashLevel) -> &'static str {
     match level {

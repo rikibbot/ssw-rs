@@ -187,10 +187,13 @@ mod tests {
             context: context.clone(),
             data: FormData::new(fields),
         }
-            .verify_csrf()
-            .expect("csrf token should verify");
+        .verify_csrf()
+        .expect("csrf token should verify");
 
-        assert_eq!(verified.data().get(CSRF_FORM_FIELD), Some(csrf_token.as_str()));
+        assert_eq!(
+            verified.data().get(CSRF_FORM_FIELD),
+            Some(csrf_token.as_str())
+        );
         assert_eq!(verified.context().csrf_token(), csrf_token);
     }
 
@@ -207,8 +210,8 @@ mod tests {
             context: context.clone(),
             data: FormData::new(fields),
         }
-            .verify_csrf()
-            .expect_err("missing csrf token should fail");
+        .verify_csrf()
+        .expect_err("missing csrf token should fail");
 
         assert_eq!(invalid.data().get("name"), Some("Riccardo"));
         assert_eq!(invalid.context().csrf_token(), csrf_token);
