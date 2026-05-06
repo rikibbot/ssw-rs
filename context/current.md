@@ -44,6 +44,7 @@
 - The screenshot capture workflow now supports wider configurable viewports and full-page mode, and the script now normalizes the output path to avoid relative-path failures with `agent-browser`.
 - The repo now has an `SSW_CSS.md` design note for a proposed `ssw-css` companion crate, scoped narrowly around deterministic component-local CSS with plain browser CSS output and no runtime style injection.
 - An initial experimental `ssw-css` crate now exists with a `css!` macro, deterministic class-based scoping, plain CSS output, `styles.classes(...)`, raw CSS-like declaration values, raw `@media` queries, and proof points in both the intake demo style guide and repeated card or badge UI inside the projects demo.
+- The repo now has an `SSW_MARKDOWN.md` design note for a proposed optional `ssw-markdown` crate, focused on safe Markdown-to-`Markup` rendering, component directives, Markdown typography, and optional `ssw-css` style collection for documentation pages.
 - The repo now has a minimal `ssw-workers` adapter, plus an `SSW_WORKERS.md` design note that keeps the backend scoped narrowly around Cloudflare Workers request/response integration rather than broad backend abstraction.
 - `ssw-workers` now converts `ssw-core::Response` into `worker::Response`, exposes a cookie-backed flash and CSRF `RequestContext`, and is proven through both wasm checks and a locally runnable `wrangler dev` flow in `examples/ssw-workers-demo`.
 - `ssw-workers` now also exposes status-aware page helpers plus a small Worker-first form helper slice (`FormData`, `submitted_form(...)`, `FormSubmission::verify_csrf()`, and `unprocessable_page(...)`), and the Worker demo now uses that path instead of manual request parsing and CSRF wiring in its POST handler.
@@ -76,6 +77,7 @@
 - Keep adding SSR-native primitives only when the examples prove the abstraction is real; avoid overlapping surface helpers such as a dedicated `card` until `section` plus `card_header` stops being enough.
 - Keep optimizing for app-owned component composition, not just framework-owned catalog growth; product-specific UI should stay outside `ssw-components` until multiple examples prove a stable primitive.
 - Keep any future `ssw-css` work narrow enough that plain CSS remains a first-class path and the primitive component layer does not depend on scoped-style tooling.
+- Keep `ssw-markdown` focused on content rendering first; static site generation should build on top later instead of driving the first API.
 - Keep `ssw-workers` adapter-first, so Cloudflare runtime details do not leak into `ssw-core` while the backend remains a narrow proof.
 - Treat successful app-owned component extractions as a test of framework sufficiency; do not add framework helpers when the current primitives and local `ssw-css` already keep the example clear.
 - Prefer app-owned field-binding helpers in real forms before expanding `ssw-components` or `ssw-actix`; repeated `Field` construction alone is not yet enough evidence for a new public API.
@@ -103,6 +105,7 @@
 - Which parts of the current Actix-shaped flash, CSRF, cookie, and request-context model survive the initial Cloudflare Workers adapter cleanly, and which ones still leak assumptions.
 - Whether status-aware helper ergonomics should stop at page or fragment rendering, or whether Actix and Workers now justify a small shared convention for non-redirect error pages.
 - How far `ssw-css` should grow beyond the current prototype, especially around selector coverage, scoping keys, whether the current `1 rem` dimension syntax is acceptable, and whether extraction can arrive without making debugging worse.
+- Which Markdown parser and directive syntax should back `ssw-markdown`, and whether style collection should live directly in `RenderedMarkdown` or in a broader asset collection type.
 - Whether boolean attr handling needs a more explicit opt-in for edge cases outside standard HTML boolean attributes.
 - Which currently explicit example patterns should become first-class helpers without bloating the public API.
 
@@ -117,6 +120,7 @@
 - Keep the visual feedback loop cheap: live preview, style-guide route, and scripted screenshots should stay working as the primary refinement workflow.
 - Keep the primitive layer structurally stable while iterating on the optional default theme separately.
 - Decide whether the current `ssw-css` prototype is good enough to keep expanding, or whether the API should stay frozen until more example-app pressure justifies broader CSS support.
+- Scaffold the first `ssw-markdown` prototype only after the design note is stable enough to keep the initial crate narrow: safe Markdown rendering, stable root markup, one directive shape, and a docs example route.
 - Use the locally runnable `ssw-workers` proof to decide what, if anything, should move out of adapter crates before the backend grows further.
 - Continue tightening the shared backend boundary only where both Actix and Workers already prove the same state or semantics, rather than abstracting ahead of real pressure.
 - Add the next plain-HTML primitives that still fit the no-JS baseline cleanly, such as metadata-heavy detail helpers or link-style action variants that prove themselves through the example apps.

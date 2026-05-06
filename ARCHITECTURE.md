@@ -134,6 +134,20 @@ This crate should remain optional. It should improve component-local CSS ergonom
 
 Current state: an initial experimental crate exists with deterministic class-based scoping, plain CSS output, `@media` support, and inline style-tag rendering. Static extraction and broader CSS coverage are still future work.
 
+### `ssw-markdown`
+
+Responsibilities:
+
+- render Markdown strings into `ssw-html::Markup`
+- provide safe raw HTML handling by default
+- support documentation-oriented features such as heading ids and table of contents extraction
+- allow Markdown to reference app-registered server-rendered components
+- collect optional `ssw-css` styles for Markdown typography and Markdown-owned components
+
+This crate should remain optional. It should not become a full static site generator at first, and it should not execute arbitrary Rust from Markdown. Markdown should name components; Rust code should own component behavior.
+
+Current status: design direction only. See `SSW_MARKDOWN.md`.
+
 ## Backend strategy
 
 `ssw-rs` should start with Actix because:

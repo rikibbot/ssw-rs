@@ -27,6 +27,10 @@ Workspace crates:
 - `ssw-css`
 - `ssw-components`
 
+Proposed companion crate:
+
+- `ssw-markdown`
+
 Internal support crate:
 
 - `ssw-html-macros`
@@ -60,6 +64,7 @@ Currently implemented:
 - a locally runnable Worker example at `examples/ssw-workers-demo`, with `wrangler` workflow, themed HTML pages, POST/redirect/flash flow, and a Worker-served stylesheet route
 - a first `ssw-css` proof-of-concept in the intake style guide
 - a second `ssw-css` proof point in the projects demo, where scoped local styles now own the project-card and status-badge UI without moving that styling into `ssw-components`
+- a design direction for `ssw-markdown`, covering safe Markdown rendering, component directives, Markdown typography, and optional `ssw-css` style collection
 - an end-to-end Actix flow for page rendering, fragments, redirects, form mutation handling, field-level validation, linked validation summaries, flash messages, CSRF verification, and 422 invalid redisplay helpers
 
 ## Example
@@ -86,7 +91,7 @@ let page = page("Dashboard")
     .render();
 ```
 
-See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`CUSTOM_COMPONENTS.md`](./CUSTOM_COMPONENTS.md) for the intended app-owned composition model, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope, and [`examples/README.md`](./examples/README.md) for the example apps and route maps.
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the v0 architecture and roadmap, [`COMPONENTS.md`](./COMPONENTS.md) for the `ssw-components` design and theme split, [`CUSTOM_COMPONENTS.md`](./CUSTOM_COMPONENTS.md) for the intended app-owned composition model, [`SSW_CSS.md`](./SSW_CSS.md) for the scoped CSS design, [`SSW_MARKDOWN.md`](./SSW_MARKDOWN.md) for Markdown rendering, component directives, and documentation styling direction, [`SSW_WORKERS.md`](./SSW_WORKERS.md) for the Cloudflare Workers backend notes and current prototype scope, and [`examples/README.md`](./examples/README.md) for the example apps and route maps.
 
 Run the current example app with:
 
